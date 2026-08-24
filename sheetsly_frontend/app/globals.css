@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular numbers for accurate data table alignment */
+table, .font-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Truthful horizontal indeterminate progress bar for ingestion */
+@keyframes indeterminate-bar {
+  0% {
+    transform: translateX(-100%);
+    width: 35%;
+  }
+  50% {
+    transform: translateX(120%);
+    width: 55%;
+  }
+  100% {
+    transform: translateX(320%);
+    width: 35%;
+  }
+}
+
+.indeterminate-progress-bar {
+  animation: indeterminate-bar 1.5s ease-in-out infinite;
+}
