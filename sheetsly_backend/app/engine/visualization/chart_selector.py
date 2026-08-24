@@ -170,7 +170,7 @@ class ChartSelector:
                     f"Chart type '{requested_type.value}' is incompatible with a SCALAR analytical result. Only single-metric BAR is supported.",
                     details={"result_type": "SCALAR", "requested_type": requested_type.value},
                 )
-            metric_label = result.lineage.target_column or result.operation
+            metric_label = (result.lineage.source_columns[0] if result.lineage.source_columns else None) or result.operation
             val = float(result.scalar_value) if result.scalar_value is not None else 0.0
             title = title_override or f"{result.operation} ({metric_label})"
             return (
@@ -319,8 +319,9 @@ class ChartSelector:
         if result.table_data and result.table_data.rows:
             return result.table_data.columns, result.table_data.rows
         if result.series_data:
-            cols = ["Category", result.lineage.target_column or "Value"]
-            rows = [{"Category": p.label, (result.lineage.target_column or "Value"): p.value} for p in result.series_data]
+            metric_name = (result.lineage.source_columns[0] if result.lineage.source_columns else None) or "Value"
+            cols = ["Category", metric_name]
+            rows = [{"Category": p.label, metric_name: p.value} for p in result.series_data]
             return cols, rows
         return [], []
 

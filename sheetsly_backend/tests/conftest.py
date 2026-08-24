@@ -17,6 +17,11 @@ def client() -> Generator[TestClient, None, None]:
         yield test_client
 
 
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
 @pytest.fixture(scope="session")
 def fixtures_dir(tmp_path_factory) -> Path:
     """Directory holding synthetic Excel workbooks for testing."""

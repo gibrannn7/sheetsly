@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 50
     TEMP_FILE_DIRECTORY: str = "./storage/temp"
 
-    # AI Configuration (Placeholders for future phases, strictly unused in Phase 1 & 2)
+    # AI Configuration (Phase 8 Qwen / DashScope)
     DASHSCOPE_API_KEY: str = ""
     QWEN_MODEL: str = "qwen3.5-plus"
-    QWEN_BASE_URL: str = "https://ws-6avfe6m7o2twqwqw9n.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+    QWEN_BASE_URL: str = "https://ws-6avfe6m7o2twqw9n.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     QWEN_ENABLE_THINKING: bool = True
 
     # Database (Reserved for future, disabled in MVP)
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[str(Path(__file__).resolve().parent.parent.parent / ".env"), ".env"],
         env_file_encoding="utf-8",
         extra="ignore",
     )

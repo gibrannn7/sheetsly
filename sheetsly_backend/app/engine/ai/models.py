@@ -1,0 +1,97 @@
+"""Pydantic data models and schemas for Phase 8 AI Query Planner and Guardrails."""
+
+from enum import Enum
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field
+
+from app.engine.analytics.instruction_model import AnalyticalInstruction
+from app.engine.analytics.result_model import AnalyticalResult
+from app.engine.visualization.chart_model import VisualizationResponse
+
+
+class AIQueryStatus(str, Enum):
+    """Lifecycle status of a natural language analytical query."""
+    EXECUTION_READY = "EXECUTION_READY"
+    CLARIFICATION_REQUIRED = "CLARIFICATION_REQUIRED"
+    UNSUPPORTED_QUERY = "UNSUPPORTED_QUERY"
+    VALIDATION_FAILED = "VALIDATION_FAILED"
+    PROVIDER_ERROR = "PROVIDER_ERROR"
+    EXECUTION_ERROR = "EXECUTION_ERROR"
+
+
+class ClarificationRequest(BaseModel):
+    """Structured clarification payload returned when a query is ambiguous."""
+    question: str = Field(..., description="Actionable clarification question presented to user")
+    reason: str = Field(..., description="Technical rationale why clarification is required")
+    target_parameter: str = Field(..., description="Parameter requiring clarification (e.g. 'target_column', 'sheet_name')")
+    options: List[str] = Field(default_factory=list, description="Explicit schema-derived options for user selection")
+
+
+class EvidenceExplanation(BaseModel):
+    """Factual explanation grounded strictly in the verified AnalyticalResult and CalculationLineage."""
+    summary: str = Field(..., description="Concise, one-sentence plain English summary of the result")
+    factual_statement: str = Field(..., description="Exact numerical statement matching verified Python result")
+    source_evidence: str = Field(..., description="Cell coordinates and dataset range citation (e.g. 'Sales!E2:E6 (5 rows)')")
+    calculation_steps: List[str] = Field(default_factory=list, description="Numbered deterministic execution trace steps")
+    warnings: List[str] = Field(default_factory=list, description="Data hygiene or coverage warnings from calculation")
+
+
+class TimingBreakdown(BaseModel):
+    """Accurate latency measurements (in milliseconds) for each execution phase."""
+    schema_resolution_ms: float = Field(0.0, description="Time spent reading dataset and resolving table schema")
+    qwen_planning_ms: float = Field(0.0, description="Time spent in Qwen AI natural language query planning")
+    guardrail_validation_ms: float = Field(0.0, description="Time spent validating planned instruction against schema")
+    deterministic_execution_ms: float = Field(0.0, description="Time spent in Python calculation engine")
+    visualization_ms: float = Field(0.0, description="Time spent rendering visualization artifact")
+    evidence_explanation_ms: float = Field(0.0, description="Time spent generating evidence summary")
+    total_duration_ms: float = Field(0.0, description="Total wall-clock duration of the request")
+
+
+class NaturalLanguageQueryRequest(BaseModel):
+    """Incoming request payload from user to natural language query planner."""
+    query: str = Field(..., min_length=1, max_length=1000, description="Natural language analytical question")
+    dataset_id: str = Field(..., description="Target dataset UUID")
+    sheet_name: Optional[str] = Field(None, description="Specific worksheet name (defaults to active/first sheet)")
+    table_id: Optional[str] = Field(None, description="Specific table ID within worksheet")
+    generate_visualization: bool = Field(True, description="Whether to automatically generate a deterministic chart")
+    clarification_selection: Optional[Dict[str, str]] = Field(
+        None,
+        description="User response to a previous ClarificationRequest (e.g. {'target_column': 'Revenue'})",
+    )
+    preplanned_instruction: Optional[AnalyticalInstruction] = Field(
+        None,
+        description="Pre-planned instruction from plan-only endpoint, skipping LLM planning stage if already computed",
+    )
+
+
+class QueryPlanOnlyResponse(BaseModel):
+    """Inspection response returning the compiled plan without executing calculations."""
+    status: AIQueryStatus
+    user_query: str
+    intent_summary: str
+    planned_instruction: Optional[AnalyticalInstruction] = None
+    clarification: Optional[ClarificationRequest] = None
+    error_message: Optional[str] = None
+    timing: Optional[TimingBreakdown] = None
+
+
+class NaturalLanguageQueryResponse(BaseModel):
+    """Complete end-to-end response for natural language query execution."""
+    status: AIQueryStatus
+    user_query: str
+    intent_summary: str
+    planned_instruction: Optional[AnalyticalInstruction] = None
+    clarification: Optional[ClarificationRequest] = None
+    analytical_result: Optional[AnalyticalResult] = None
+    visualization: Optional[VisualizationResponse] = None
+    explanation: Optional[EvidenceExplanation] = None
+    suggested_next_queries: List[str] = Field(default_factory=list)
+    error_message: Optional[str] = None
+    timing: Optional[TimingBreakdown] = None
+
+
+class SuggestedQueriesResponse(BaseModel):
+    """Schema-derived sample analytical questions."""
+    dataset_id: str
+    sheet_name: str
+    suggested_queries: List[str]
