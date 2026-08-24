@@ -1,6 +1,8 @@
+<div align="center">
+
 # Sheetsly
 
-<p align="left">
+<p align="center">
   <img src="https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -11,8 +13,12 @@
   <img src="https://img.shields.io/badge/Qwen_3.5_Plus-624AFF?style=flat-square&logo=alibabacloud&logoColor=white" alt="Qwen AI" />
 </p>
 
-> **Deterministic Spreadsheet Intelligence & AI Query Workspace**  
-> *A verifiable analytics platform combining natural-language intent planning with authoritative Python calculations and cell-level provenance.*
+<p align="center">
+  <strong>Deterministic Spreadsheet Intelligence &amp; AI Query Workspace</strong><br />
+  <em>A verifiable analytics platform combining natural-language intent planning with authoritative Python calculations and cell-level provenance.</em>
+</p>
+
+</div>
 
 Sheetsly is a deterministic spreadsheet intelligence platform that transforms raw spreadsheets (`.xlsx`, `.xls`, `.csv`) into structured, verifiable, and visually explainable analytical insights.
 
