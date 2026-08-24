@@ -1,0 +1,60 @@
+# ============================================================
+# ROOT .gitignore — Sheetsly Monorepo
+# ============================================================
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Python backend artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Node / Next.js frontend artifacts
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+
+# Runtime Storage & Temporary Artifacts
+storage/temp/*
+!storage/temp/.gitkeep
+sheetsly_backend/storage/temp/*
+!sheetsly_backend/storage/temp/.gitkeep
+
+# Operating System & IDE Files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.swp
+*.swo
+*~

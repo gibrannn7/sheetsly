@@ -1,0 +1,6 @@
+Region,Product,Units,UnitPrice,Revenue
+West,Widget A,10,15.00,150.00
+East,Widget B,5,20.00,100.00
+West,Widget B,8,20.00,160.00
+East,Widget A,12,15.00,180.00
+North,Widget C,4,50.00,200.00

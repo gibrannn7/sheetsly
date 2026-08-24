@@ -1,0 +1,40 @@
+# ============================================================
+# BACKEND .gitignore — Sheetsly FastAPI Backend
+# ============================================================
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Testing & Coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.cache
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Build & packaging
+build/
+dist/
+*.egg-info/
+
+# Temporary runtime storage (preserving .gitkeep)
+storage/temp/*
+!storage/temp/.gitkeep
+
+# Logs
+*.log
