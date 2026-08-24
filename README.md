@@ -1,7 +1,7 @@
 # Sheetsly
 
-> **AI-Assisted Spreadsheet Intelligence Workspace**  
-> *Full Implementation (Phases 1, 2, 5, 6, 7 & 8)*
+> **Deterministic Spreadsheet Intelligence & AI Query Workspace**  
+> *A verifiable analytics platform combining natural-language intent planning with authoritative Python calculations and cell-level provenance.*
 
 Sheetsly is a deterministic spreadsheet intelligence platform that transforms raw spreadsheets (`.xlsx`, `.xls`, `.csv`) into structured, verifiable, and visually explainable analytical insights.
 
@@ -9,17 +9,19 @@ The platform is engineered around an uncompromised foundational rule: **Python r
 
 ---
 
-## 1. Project Status & Roadmap
+## 1. Architectural Scope & Module Roadmap
 
-| Phase | Module | Status | Architectural Summary |
+| Module / Phase | Scope & Purpose | Status | Architectural Summary |
 |---|---|---|---|
 | **Phase 1** | Spreadsheet Ingestion & Inspection | **COMPLETED** | OpenPyXL raw & evaluated parsing, cell coordinate preservation, format validation, and responsive progressive ingestion state. |
 | **Phase 2** | Sheet Understanding & Table Profiling | **COMPLETED** | Table boundary detection, orientation heuristics (`VERTICAL`, `HORIZONTAL`, `AMBIGUOUS`), semantic data typing, and 0–100 data hygiene scoring. |
-| **Phase 3 & 4** | Advanced Table Relationships & Hybrid Queries | **DEFERRED (Post-MVP)** | Cross-sheet relational join discovery and multi-table semantic reconciliation. |
+| **Phase 3 & 4** | Cross-Sheet Joins & Relational Reconciliation | **PLANNED (Post-MVP)** | Cross-sheet foreign key discovery and multi-table relational joins across separate worksheets (planned for future release). |
 | **Phase 5** | Deterministic Analytical Engine | **COMPLETED** | Explicit operations (`SUM`, `AVERAGE`, `COUNT_ROWS`, `COUNT_VALUES`, `DISTINCT_COUNT`, `MIN`, `MAX`, `MEDIAN`, `FILTER`, `SORT`, `GROUP_BY`, `SUMIFS`, `COUNTIFS`) with pre-execution validation and cell lineage. |
 | **Phase 6** | Deterministic Visualization Engine | **COMPLETED** | Headless Matplotlib/Seaborn rendering (`BAR`, `LINE`, `PIE`, `AREA`, `SCATTER`, `HISTOGRAM`), conservative shape recommendation, and session-scoped PNG artifact generation. |
 | **Phase 7** | Interactive Operation Builder UI | **COMPLETED** | Point-and-click Next.js analytical workspace, type-adaptive filter builder, multi-aggregation group-by builder, scalar/table result views, and execution audit trail. |
 | **Phase 8** | Qwen Natural Language Query Planner & Guardrails | **COMPLETED** | Natural-language query translation to `AnalyticalInstruction`, schema ambiguity disambiguation, hard pre-execution guardrails, latency breakdown grid, and evidence-grounded explanation. |
+
+> **Architecture Note**: In accordance with [`BLUEPRINT.md`](./BLUEPRINT.md), the core system focuses on establishing authoritative single-worksheet multi-table ground truth with cell-level lineage and AI planning before introducing cross-sheet joins (Phases 3 & 4 in future releases).
 
 ---
 
