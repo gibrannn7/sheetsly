@@ -344,7 +344,7 @@ Frontend workspace will be live at: `http://localhost:3000`.
 | `TEMP_FILE_DIRECTORY` | String | `./storage/temp` | Directory for session-scoped dataset files and charts. |
 | `DASHSCOPE_API_KEY` | Secret | `""` | DashScope / Alibaba Cloud Model Studio API key. |
 | `QWEN_MODEL` | String | `qwen3.5-plus` | Qwen model identifier (e.g. `qwen3.5-plus`, `qwen-max`). |
-| `QWEN_BASE_URL` | String | `https://ws-6avfe6m7o2twqw9n.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` | OpenAI-compatible endpoint URL for DashScope Singapore workspace. |
+| `QWEN_BASE_URL` | String | `https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` | OpenAI-compatible endpoint URL for DashScope Singapore workspace. |
 | `QWEN_ENABLE_THINKING` | Boolean | `false` | Set to `false` for rapid sub-5s analytical planning, or `true` for extended reasoning mode. |
 | `DATABASE_ENABLED` | Boolean | `false` | Database toggle (disabled in MVP). |
 
