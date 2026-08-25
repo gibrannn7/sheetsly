@@ -43,7 +43,7 @@ async def execute_natural_language_query(
 ) -> NaturalLanguageQueryResponse:
     """
     Executes an end-to-end natural-language analytical query:
-    1. Qwen Query Planner translates question to AnalyticalInstruction.
+    1. AI Query Planner translates question to AnalyticalInstruction.
     2. AI Guardrail strictly validates schema and operations before execution.
     3. Deterministic Python engine executes calculation.
     4. Deterministic visualization engine renders chart if requested.

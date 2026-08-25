@@ -46,7 +46,7 @@ export const en: TranslationDictionary = {
     heroBadge: 'Deterministic Spreadsheet Intelligence Platform',
     heroTitle: 'Turn your spreadsheet into verified insight.',
     heroDesc:
-      'Upload any spreadsheet to explore detected tables, build calculations without formulas, or ask plain-language questions with Qwen. Every result is computed deterministically in Python with cell-level lineage.',
+      'Upload any spreadsheet to explore detected tables, build calculations without formulas, or ask plain-language questions with AI. Every result is computed deterministically in Python with cell-level lineage.',
     selectOrDrop: 'Select or drop spreadsheet file, or',
     browse: 'browse',
     supports: 'Supports Excel (.xlsx, .xls, .xlsm) and CSV files up to 50MB',
@@ -62,7 +62,7 @@ export const en: TranslationDictionary = {
     pillars: {
       aiTitle: 'AI Query Planner',
       aiDesc:
-        'Qwen translates natural-language intent into structured instructions with proactive ambiguity detection.',
+        'The AI translates natural-language intent into structured instructions with proactive ambiguity detection.',
       engineTitle: 'Deterministic Engine',
       engineDesc:
         'Python calculates numerical truth. No hallucinations, guessing, or estimated arithmetic.',
@@ -79,14 +79,14 @@ export const en: TranslationDictionary = {
     desc: 'Boundary detection, orientation analysis, and semantic column typing',
     orientation: 'Orientation',
     confidence: 'Confidence',
-    dataRange: 'Data Range',
-    headerRows: 'Header Rows',
-    columnsList: 'Columns',
+    dataRange: 'Cell Range',
+    headerRows: 'Header Row',
+    columnsList: 'Columns & Types',
     columnName: 'Column Name',
-    dataType: 'Data Type',
+    dataType: 'Physical Type',
     semanticType: 'Semantic Role',
     nulls: 'Nulls',
-    uniques: 'Uniques',
+    uniques: 'Unique Count',
     samples: 'Sample Values',
     noTables: 'No tables detected in this sheet.',
   },
@@ -217,6 +217,7 @@ export const en: TranslationDictionary = {
     smartChartsTab: 'Smart Generated Charts',
     noSmartChartsTitle: 'No meaningful visualizations found',
     noSmartChartsDesc: 'The dataset does not contain a suitable categorical, temporal, or numeric relationship for the available chart types.',
+    howItWorksBtn: 'How it works',
     charts: {
       bar: 'Bar Chart',
       barDesc: 'Categorical comparisons',
@@ -234,17 +235,17 @@ export const en: TranslationDictionary = {
   },
   ai: {
     title: 'Natural Language Query Planner',
-    desc: 'Ask questions in plain language. Qwen interprets your intent into an Analytical Instruction; Python executes numerical truth.',
+    desc: 'Ask questions in plain language. AI interprets your intent into an Analytical Instruction; Python executes numerical truth.',
     howDoesThisWork: 'How does this work?',
     hideArch: 'Hide Architecture Note',
     coreRule: 'Core Rule',
-    coreRuleText: 'Qwen interprets intent. Python calculates truth.',
+    coreRuleText: 'AI interprets intent. Python calculates truth.',
     archDesc:
-      'Qwen translates your natural-language question into an AnalyticalInstruction. Before calculation, an AI Guardrail validates that columns and operators match your spreadsheet schema. The Python analytical engine then executes the arithmetic with zero hallucination.',
+      'The AI translates your natural-language question into an AnalyticalInstruction. Before calculation, an AI Guardrail validates that columns and operators match your spreadsheet schema. The Python analytical engine then executes the arithmetic with zero hallucination.',
     placeholder: 'e.g. What is the total Revenue? or Show average Units by Region',
     runQuery: 'Run Query',
     processing: 'Processing...',
-    stagePlanning: 'Planning analytical query with Qwen...',
+    stagePlanning: 'Planning analytical query with AI...',
     stageExecuting: 'Executing deterministic analysis in Python...',
     suggestions: 'Suggestions:',
     fallbackMode: 'Deterministic Fallback Mode',
@@ -255,13 +256,13 @@ export const en: TranslationDictionary = {
     unsupported: 'Query Unsupported by Dataset Schema',
     unsupportedDefault: 'The question cannot be mapped to the available table operations.',
     providerUnavailable: 'AI Provider Unavailable',
-    providerOfflineDesc: 'AI analysis is currently unavailable because the Qwen provider could not be reached: {error}',
+    providerOfflineDesc: 'AI analysis is currently unavailable because the configured AI provider could not be reached: {error}',
     providerFallbackHelp:
       'Check your DASHSCOPE_API_KEY in backend .env, or continue using the point-and-click Analysis Builder tab with full deterministic capability.',
     stageLatency: 'Execution Stage Latency',
     total: 'Total: {duration}',
     schemaStage: 'Schema',
-    qwenPlanStage: 'Qwen Plan',
+    qwenPlanStage: 'AI Plan',
     guardrailStage: 'Guardrail',
     pythonCalcStage: 'Python Calc',
     visualizerStage: 'Visualizer',
@@ -308,7 +309,7 @@ export const en: TranslationDictionary = {
         body1:
           'Sheetsly is an interactive spreadsheet intelligence platform designed to eliminate analytical guesswork. It turns raw spreadsheets into structured, verifiable insights with exact cell-level provenance.',
         archTitle: 'Key Architectural Foundation',
-        archRule: '“Qwen interprets intent. Python calculates truth.”',
+        archRule: '“AI interprets intent. Python calculates truth.”',
         archDesc:
           'Unlike ordinary AI chatbots that estimate or hallucinate calculations, Sheetsly routes every analytical question through a validated deterministic Python engine. The AI translates your questions into structured instructions, while Python performs the mathematical calculation directly against your spreadsheet cells.',
         formatsTitle: 'Supported File Formats',
@@ -325,10 +326,10 @@ export const en: TranslationDictionary = {
           'Upload & Ingest: Drop your file. The system inspects structure, parses cells, detects tables, profiles types, and assesses data hygiene.',
         step2Title: 'Step 2',
         step2Desc:
-          'Inspect Structure: Review detected tables, column types (measures vs dimensions), and data quality score.',
+          'Inspect Structure: Review detected tables, column types (measures vs dimensions), paginated raw data, and data quality score.',
         step3Title: 'Step 3',
         step3Desc: 'Choose Analysis Path:',
-        step3Ai: 'AI Query Planner: Ask natural-language questions in plain English or Indonesian.',
+        step3Ai: 'AI Query Planner: Ask natural-language questions in plain English or Indonesian with model selection.',
         step3Builder:
           'Analysis Builder: Use the point-and-click UI to build custom aggregations, multi-grouping, and filters without formulas.',
         step4Title: 'Step 4',
@@ -336,7 +337,7 @@ export const en: TranslationDictionary = {
           'Verify Plan & Lineage: Inspect the planned instruction, row count, and source cell coordinates (e.g. Sheet1!E2:E9801).',
         step5Title: 'Step 5',
         step5Desc:
-          'Visualize & Export: Generate conservative charts (Bar, Line, Pie, Area, Scatter, Histogram) and download high-resolution PNGs.',
+          'Visualize & Export: Use Smart Generate Chart for automatic discovery or manual builder (Bar, Line, Pie, Area, Scatter, Histogram) and download PNGs.',
       },
       ingestion: {
         navTitle: '3. Upload & Ingestion',
@@ -355,7 +356,7 @@ export const en: TranslationDictionary = {
           'Data Quality & Hygiene Scoring: Analyzes missing values, mixed data types, and duplicate rows, producing a 0–100 hygiene score.',
         readyTitle: 'What “Dataset Ready” Means:',
         readyDesc:
-          'Once ingestion completes, the workspace unlocks all tabs: AI Query Planner, Analysis Builder, Detected Tables, Cell Grid, Visualizations, and Quality Report.',
+          'Once ingestion completes, the workspace unlocks all tabs: AI Query Planner, Analysis Builder, Detected Tables, Actual Spreadsheet Grid, Visualizations, and Quality Report.',
       },
       datasetProfiling: {
         navTitle: '4. Tables & Schema Types',
@@ -386,27 +387,27 @@ export const en: TranslationDictionary = {
           '13 operators supported: equals, not_equals, contains, starts_with, ends_with, greater_than, less_than, between, in_list, is_empty, etc. with AND / OR logic.',
       },
       visualization: {
-        navTitle: '6. Visualizations',
-        heading: '6. Deterministic Visualization Engine',
+        navTitle: '6. Visualizations & Smart Generate',
+        heading: '6. Deterministic Visualization Engine & Smart Generate',
         intro:
-          'Sheetsly generates static publication-ready charts using Matplotlib/Seaborn with conservative shape validation.',
+          'Sheetsly generates static publication-ready charts using Matplotlib/Seaborn with conservative shape validation and intelligent automated discovery.',
         rulesTitle: 'Conservative Compatibility Rules',
         pieRule:
-          'Pie / Donut Charts: Recommended only for single-series part-to-whole data with <=10 positive categories. Rejected if negative values exist.',
+          'Pie / Donut Charts: Recommended only for single-series part-to-whole data with <=7 positive categories. Strictly rejected if negative values exist.',
         lineRule:
           'Line / Area Charts: Recommended when the X-axis is a temporal or ordered sequence.',
         scatterRule: 'Scatter Plots: Requires two numeric columns for correlation analysis.',
         histogramRule: 'Histograms: Requires a single continuous numeric metric for distribution binning.',
         footerNote:
-          'Every chart includes an integrated lineage footer linking the visualization directly to its source range (e.g. Sheet1!A1:E6) and row count.',
+          'Smart Generate evaluates schema relationships deterministically to rank meaningful visualizations (up to 5 charts) with complete "Why this chart?" lineage cards.',
       },
       aiArchitecture: {
         navTitle: '7. AI Architecture & Truth',
-        heading: '7. AI Architecture: Why Qwen Does Not Calculate',
+        heading: '7. AI Architecture: Why AI Does Not Calculate',
         intro: 'The core differentiator of Sheetsly is its zero-hallucination execution pipeline:',
         pipelineTitle: 'Execution Pipeline',
         userStep: 'User Natural Language Question',
-        qwenStep: '↓ (Qwen 3.5 Plus Intent Translation)',
+        qwenStep: '↓ (AI Intent Translation — e.g. Qwen 3.5 Plus / Flash)',
         jsonStep: 'Structured AnalyticalInstruction (JSON)',
         guardrailStep: '↓ (AI Guardrail Schema & Type Checks)',
         gateStep: 'Instruction Validation Gate',
@@ -416,7 +417,7 @@ export const en: TranslationDictionary = {
         resultStep: 'Verified Result + Cell Lineage (e.g. Sheet1!E2:E9801)',
         whyMattersTitle: 'Why this matters:',
         whyMattersDesc:
-          'LLMs frequently produce subtle arithmetic errors when summing large numbers or applying complex filters. By confining Qwen strictly to intent parsing, your numbers are 100% mathematically proven and auditable.',
+          'LLMs frequently produce subtle arithmetic errors when summing large numbers or applying complex filters. By confining AI strictly to intent parsing, your numbers are 100% mathematically proven and auditable.',
       },
       aiQuestions: {
         navTitle: '8. Asking Good AI Questions',
@@ -435,12 +436,12 @@ export const en: TranslationDictionary = {
         intro: 'Every AI query response is divided into 4 transparent cards:',
         card1Title: '1. Planned Analytical Instruction:',
         card1Desc:
-          'Shows the operation, target column, filters, and grouping dimensions planned by Qwen.',
+          'Shows the operation, target column, filters, and grouping dimensions planned by the AI model.',
         card2Title: '2. Evidence-Based Analysis:',
         card2Desc: 'Plain factual summary citing exact source cell coordinates and row counts.',
         card3Title: '3. Execution Stage Latency Breakdown:',
         card3Desc:
-          'Monospaced latency badges showing exact milliseconds for Schema, Qwen Planning, Guardrails, Python Calculation, and Visualization.',
+          'Monospaced latency badges showing exact milliseconds for Schema, AI Planning, Guardrails, Python Calculation, and Visualization.',
         card4Title: '4. Verified Result & Lineage Trace:',
         card4Desc:
           'The authoritative numerical answer calculated by Python with complete row inclusion metrics.',
@@ -483,7 +484,7 @@ export const en: TranslationDictionary = {
     title: 'How Does This Work?',
     subtitle: 'End-to-End Analytical Pipeline & Truth Guarantee',
     coreRuleTitle: 'Core Rule',
-    coreRuleText: 'Qwen interprets intent. Python calculates truth.',
+    coreRuleText: 'AI interprets intent. Python calculates truth.',
     steps: {
       step1Title: '1. You ask a question',
       step1Desc:
@@ -534,6 +535,32 @@ export const en: TranslationDictionary = {
     disclaimerTitle: 'Structural Hygiene Scope Note',
     disclaimerText:
       'This assessment describes structural data hygiene, completeness, and typing consistency. It does not determine whether the underlying business data is factually correct.',
+    close: 'Close',
+  },
+  smartGenerateModal: {
+    title: 'How Smart Generate Works',
+    subtitle: 'Deterministic schema-aware chart discovery and ranking engine',
+    howWorksTitle: 'Automatic Heuristic Visualization',
+    howWorksDesc:
+      'Smart Generate evaluates the detected table structure and automatically selects meaningful chart configurations, so you do not have to manually choose dimensions and metrics.',
+    stepsTitle: '5-Step Evaluation Pipeline',
+    step1Title: '1. Classifies Column Roles',
+    step1Desc:
+      'Analyzes physical data types and semantic roles to separate Temporal dimensions, Categorical dimensions, and Numeric Measures.',
+    step2Title: '2. Excludes Identifiers & High-Cardinality Fields',
+    step2Desc:
+      'Protects against unreadable charts by excluding primary keys, SKUs, and unique row IDs (e.g. Order ID, User ID), and filters categorical columns with >35 unique values.',
+    step3Title: '3. Generates Meaningful Candidates',
+    step3Desc:
+      'Discovers candidate pairs: Time Series Trends (Line/Area), Categorical Comparisons (Bar), Part-to-Whole Share (Pie strictly <=7 categories), Bivariate Correlation (Scatter), and Distributions (Histogram).',
+    step4Title: '4. Scores, Ranks & Deduplicates',
+    step4Desc:
+      'Assigns analytical value scores, removes redundant pairs, enforces dimension and metric diversity, and caps output to top 5 visualizations.',
+    step5Title: '5. Deterministic Execution & Rendering',
+    step5Desc:
+      'Executes exact Python aggregations and renders static charts with transparent "Why this chart?" explainability disclosures.',
+    footerNote:
+      'Smart Generate prioritizes analytical usefulness rather than generating every possible column combination. It runs purely deterministic Python logic without hallucinating numbers.',
     close: 'Close',
   },
 };

@@ -214,6 +214,7 @@ export interface TranslationDictionary {
     smartChartsTab: string;
     noSmartChartsTitle: string;
     noSmartChartsDesc: string;
+    howItWorksBtn: string;
     charts: {
       bar: string;
       barDesc: string;
@@ -482,6 +483,25 @@ export interface TranslationDictionary {
     scoringDesc: string;
     disclaimerTitle: string;
     disclaimerText: string;
+    close: string;
+  };
+  smartGenerateModal: {
+    title: string;
+    subtitle: string;
+    howWorksTitle: string;
+    howWorksDesc: string;
+    stepsTitle: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    step4Title: string;
+    step4Desc: string;
+    step5Title: string;
+    step5Desc: string;
+    footerNote: string;
     close: string;
   };
 }

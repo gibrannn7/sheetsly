@@ -217,6 +217,7 @@ export const id: TranslationDictionary = {
     smartChartsTab: 'Grafik Otomatis Terpilih',
     noSmartChartsTitle: 'Tidak ada visualisasi bermakna yang ditemukan',
     noSmartChartsDesc: 'Dataset tidak memiliki hubungan kategoris, temporal, atau numerik yang cocok untuk tipe grafik yang tersedia.',
+    howItWorksBtn: 'Cara kerjanya',
     charts: {
       bar: 'Grafik Batang',
       barDesc: 'Perbandingan antar kategori',
@@ -296,7 +297,7 @@ export const id: TranslationDictionary = {
     },
   },
   howToUse: {
-    title: 'Panduan Penggunaan Sheetsly',
+    title: 'Cara Menggunakan Sheetsly',
     subtitle: 'Panduan lengkap kecerdasan spreadsheet deterministik dan perencanaan kueri AI.',
     tocTitle: 'Daftar Isi',
     footerText: 'Sheetsly v1.0 • Kecerdasan Spreadsheet Deterministik',
@@ -308,7 +309,7 @@ export const id: TranslationDictionary = {
         body1:
           'Sheetsly adalah platform kecerdasan spreadsheet interaktif yang dirancang untuk mengeliminasi keraguan analitis. Mengubah data mentah spreadsheet menjadi wawasan terstruktur dan terverifikasi dengan silsilah hingga tingkat sel.',
         archTitle: 'Prinsip Fondasi Arsitektur',
-        archRule: '“AI memahami maksud. Python menghitung kebenaran.”',
+        archRule: '“AI menginterpretasi maksud. Python menghitung kebenaran.”',
         archDesc:
           'Berbeda dengan chatbot AI biasa yang mengestimasi atau menghalunisasikan angka, Sheetsly mengalirkan setiap pertanyaan analitis melalui engine Python deterministik yang tervalidasi. AI menerjemahkan pertanyaan Anda menjadi instruksi terstruktur, sementara Python yang melakukan kalkulasi matematis langsung terhadap sel spreadsheet Anda.',
         formatsTitle: 'Format File yang Didukung',
@@ -325,10 +326,10 @@ export const id: TranslationDictionary = {
           'Unggah & Ingesti: Tarik dan lepas file Anda. Sistem memeriksa struktur, mengurai sel, mendeteksi tabel, memetakan tipe data, dan menilai kebersihan data.',
         step2Title: 'Langkah 2',
         step2Desc:
-          'Inspeksi Struktur: Tinjau tabel yang terdeteksi, tipe kolom (metrik angka vs dimensi kategori), dan skor kualitas data.',
+          'Inspeksi Struktur: Tinjau tabel yang terdeteksi, tipe kolom (metrik angka vs dimensi kategori), data mentah berpaginasi, dan skor kualitas data.',
         step3Title: 'Langkah 3',
         step3Desc: 'Pilih Jalur Analisis:',
-        step3Ai: 'Perencana Kueri AI: Ajukan pertanyaan dalam bahasa sehari-hari (Bahasa Indonesia atau Inggris).',
+        step3Ai: 'Perencana Kueri AI: Ajukan pertanyaan dalam bahasa sehari-hari (Bahasa Indonesia atau Inggris) dengan pilihan model AI.',
         step3Builder:
           'Pembangun Analisis: Gunakan antarmuka klik-dan-pilih untuk membuat agregasi kustom, multi-pengelompokan, dan filter tanpa rumus.',
         step4Title: 'Langkah 4',
@@ -336,7 +337,7 @@ export const id: TranslationDictionary = {
           'Verifikasi Rencana & Silsilah: Periksa instruksi yang direncanakan, jumlah baris, dan koordinat sel sumber (misal Sheet1!E2:E9801).',
         step5Title: 'Langkah 5',
         step5Desc:
-          'Visualisasikan & Ekspor: Hasilkan grafik konservatif (Batang, Garis, Donat, Area, Scatter, Histogram) dan unduh PNG resolusi tinggi.',
+          'Visualisasikan & Ekspor: Gunakan Buat Grafik Otomatis atau pembangun manual (Batang, Garis, Donat, Area, Scatter, Histogram) dan unduh PNG resolusi tinggi.',
       },
       ingestion: {
         navTitle: '3. Unggah & Ingesti',
@@ -355,7 +356,7 @@ export const id: TranslationDictionary = {
           'Penilaian Kebersihan & Kualitas Data: Menganalisis data kosong, tipe campuran, dan baris duplikat untuk menghasilkan skor 0–100.',
         readyTitle: 'Arti Status “Dataset Ready”:',
         readyDesc:
-          'Setelah ingesti selesai, ruang kerja membuka semua tab: Perencana Kueri AI, Pembangun Analisis, Tabel Terdeteksi, Grid Sel, Visualisasi, dan Laporan Kualitas.',
+          'Setelah ingesti selesai, ruang kerja membuka semua tab: Perencana Kueri AI, Pembangun Analisis, Tabel Terdeteksi, Grid Spreadsheet Aktual, Visualisasi, dan Laporan Kualitas.',
       },
       datasetProfiling: {
         navTitle: '4. Tabel & Tipe Skema',
@@ -386,19 +387,19 @@ export const id: TranslationDictionary = {
           '13 operator didukung: equals (=), not_equals (!=), contains, starts_with, ends_with, greater_than (>), less_than (<), between, in_list, is_empty, dll. dengan logika AND / OR.',
       },
       visualization: {
-        navTitle: '6. Visualisasi',
-        heading: '6. Engine Visualisasi Deterministik',
+        navTitle: '6. Visualisasi & Pembuatan Otomatis',
+        heading: '6. Engine Visualisasi Deterministik & Buat Grafik Otomatis',
         intro:
-          'Sheetsly menghasilkan grafik statis siap publikasi menggunakan Matplotlib/Seaborn dengan validasi bentuk data yang konservatif.',
+          'Sheetsly menghasilkan grafik statis siap publikasi menggunakan Matplotlib/Seaborn dengan validasi bentuk data yang konservatif serta penemuan grafik otomatis yang cerdas.',
         rulesTitle: 'Aturan Kompatibilitas Konservatif',
         pieRule:
-          'Grafik Donat / Lingkaran: Direkomendasikan hanya untuk data proporsi bagian-dari-keseluruhan deret tunggal dengan <=10 kategori positif. Ditolak jika ada nilai negatif.',
+          'Grafik Donat / Lingkaran: Direkomendasikan hanya untuk data proporsi bagian-dari-keseluruhan deret tunggal dengan <=7 kategori positif. Ditolak jika ada nilai negatif.',
         lineRule:
           'Grafik Garis / Area: Direkomendasikan saat sumbu X adalah deret waktu atau urutan berurutan.',
         scatterRule: 'Diagram Tebar (Scatter): Memerlukan dua kolom numerik untuk analisis korelasi.',
         histogramRule: 'Histogram: Memerlukan satu metrik numerik kontinu untuk pengelompokan bin distribusi.',
         footerNote:
-          'Setiap grafik dilengkapi catatan silsilah terintegrasi yang menghubungkan visualisasi langsung ke rentang sel aslinya (misal Sheet1!A1:E6) dan jumlah baris.',
+          'Fitur Buat Grafik Otomatis mengevaluasi hubungan skema secara deterministik untuk meranking visualisasi paling bermakna (hingga 5 grafik) lengkap dengan kartu alasan "Mengapa grafik ini?".',
       },
       aiArchitecture: {
         navTitle: '7. Arsitektur AI & Kebenaran',
@@ -406,7 +407,7 @@ export const id: TranslationDictionary = {
         intro: 'Pembeda utama Sheetsly adalah pipeline eksekusi tanpa halusinasi:',
         pipelineTitle: 'Alur Eksekusi Sistem',
         userStep: 'Pertanyaan Bahasa Alami Pengguna',
-        qwenStep: '↓ (AI Menerjemahkan Maksud)',
+        qwenStep: '↓ (AI Menerjemahkan Maksud — misal Qwen 3.5 Plus / Flash)',
         jsonStep: 'AnalyticalInstruction Terstruktur (JSON)',
         guardrailStep: '↓ (Pemeriksaan Skema & Tipe oleh AI Guardrail)',
         gateStep: 'Gerbang Validasi Instruksi',
@@ -435,7 +436,7 @@ export const id: TranslationDictionary = {
         intro: 'Setiap respons kueri AI dibagi menjadi 4 kartu transparan:',
         card1Title: '1. Rencana Instruksi Analitis:',
         card1Desc:
-          'Menampilkan operasi, kolom target, filter, dan dimensi pengelompokan yang direncanakan oleh AI.',
+          'Menampilkan operasi, kolom target, filter, dan dimensi pengelompokan yang direncanakan oleh model AI.',
         card2Title: '2. Analisis Berbasis Bukti:',
         card2Desc: 'Ringkasan faktual yang menyebutkan koordinat sel sumber data dan jumlah baris.',
         card3Title: '3. Rincian Latensi Tahap Eksekusi:',
@@ -483,7 +484,7 @@ export const id: TranslationDictionary = {
     title: 'Bagaimana Cara Kerjanya?',
     subtitle: 'Alur Kerja Analitis Ujung-ke-Ujung & Jaminan Kebenaran Mutlak',
     coreRuleTitle: 'Prinsip Inti',
-    coreRuleText: 'Qwen menginterpretasi maksud. Python menghitung kebenaran.',
+    coreRuleText: 'AI menginterpretasi maksud. Python menghitung kebenaran.',
     steps: {
       step1Title: '1. Anda mengajukan pertanyaan',
       step1Desc:
@@ -534,6 +535,32 @@ export const id: TranslationDictionary = {
     disclaimerTitle: 'Catatan Ruang Lingkup Higienitas Data',
     disclaimerText:
       'Penilaian ini mendeskripsikan higienitas struktural, kelengkapan, dan konsistensi tipe data. Penilaian ini tidak menentukan apakah data bisnis yang mendasarinya benar secara faktual.',
+    close: 'Tutup',
+  },
+  smartGenerateModal: {
+    title: 'Cara Kerja Pembuatan Grafik Otomatis',
+    subtitle: 'Engine penemuan dan pemeringkatan visualisasi berbasis skema deterministik',
+    howWorksTitle: 'Visualisasi Heuristik Otomatis',
+    howWorksDesc:
+      'Fitur Buat Grafik Otomatis mengevaluasi struktur tabel yang terdeteksi dan memilih konfigurasi grafik paling bermakna secara otomatis, sehingga Anda tidak perlu memilih dimensi dan metrik secara manual.',
+    stepsTitle: 'Pipeline Evaluasi 5 Tahap',
+    step1Title: '1. Klasifikasi Peran Kolom',
+    step1Desc:
+      'Menganalisis tipe data fisik dan peran semantik untuk memisahkan dimensi Temporal, dimensi Kategori, dan Metrik Numerik.',
+    step2Title: '2. Perlindungan Kunci Identifikasi & Kardinalitas Tinggi',
+    step2Desc:
+      'Mencegah grafik yang tidak dapat dibaca dengan mengecualikan kunci primer, SKU, dan ID baris unik (misal ID Pesanan, ID Pengguna), serta memfilter kolom kategori dengan >35 nilai unik.',
+    step3Title: '3. Pembuatan Kandidat Grafik Bermakna',
+    step3Desc:
+      'Menemukan pasangan kandidat: Tren Deret Waktu (Garis/Area), Perbandingan Kategori (Batang), Proporsi Bagian (Donat dengan <=7 kategori), Korelasi Bivariat (Scatter), dan Distribusi Nilai (Histogram).',
+    step4Title: '4. Pemberian Skor, Pemeringkatan & Deduplikasi',
+    step4Desc:
+      'Memberikan skor nilai analitis, menghapus pasangan duplikat, menjaga keragaman dimensi/metrik, dan membatasi keluaran maksimal 5 grafik teratas.',
+    step5Title: '5. Eksekusi & Render Deterministik',
+    step5Desc:
+      'Mengeksekusi agregasi Python murni dan merender grafik statis lengkap dengan kartu alasan "Mengapa grafik ini?".',
+    footerNote:
+      'Fitur ini memprioritaskan kegunaan analitis daripada menghasilkan setiap kombinasi kolom yang mungkin. Berjalan murni dengan logika Python deterministik tanpa halusinasi angka.',
     close: 'Tutup',
   },
 };

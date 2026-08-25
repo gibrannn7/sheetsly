@@ -10,6 +10,7 @@ import {
   TableRegion,
   VisualizationResponse,
 } from '../../lib/types';
+import { SmartGenerateExplanationModal } from './SmartGenerateExplanationModal';
 
 interface VisualizationViewerProps {
   datasetId: string;
@@ -28,6 +29,9 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
 
   // Active sub-tab: 'smart' (Smart Generated Visualizations) vs 'custom' (Custom Manual Builder)
   const [activeTab, setActiveTab] = useState<'smart' | 'custom'>('custom');
+
+  // Modal explanation state
+  const [isHowSmartWorksOpen, setIsHowSmartWorksOpen] = useState<boolean>(false);
 
   // Custom Chart Builder State
   const categoricalCols = activeTable?.columns.filter(
@@ -218,6 +222,19 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               <span>{dictionary.visualization.smartGenerateBtn}</span>
+            </button>
+
+            {/* How it works modal trigger */}
+            <button
+              type="button"
+              onClick={() => setIsHowSmartWorksOpen(true)}
+              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-md text-xs font-medium cursor-pointer transition-colors flex items-center space-x-1 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
+              title={dictionary.visualization.howItWorksBtn}
+            >
+              <span className="font-mono text-[10px] w-3.5 h-3.5 rounded bg-slate-200 text-slate-700 flex items-center justify-center font-bold">
+                ?
+              </span>
+              <span>{dictionary.visualization.howItWorksBtn}</span>
             </button>
           </div>
         </div>
@@ -554,6 +571,12 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
           )}
         </div>
       )}
+
+      {/* Smart Generate Explanation Modal */}
+      <SmartGenerateExplanationModal
+        isOpen={isHowSmartWorksOpen}
+        onClose={() => setIsHowSmartWorksOpen(false)}
+      />
     </div>
   );
 };
