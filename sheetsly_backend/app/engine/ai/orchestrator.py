@@ -2,8 +2,9 @@
 
 import json
 import logging
+import re
 import time
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from app.core.config import settings
 from app.engine.ai.client import ai_client, gemini_client, qwen_client
@@ -11,6 +12,7 @@ from app.engine.ai.explainer import evidence_explainer
 from app.engine.ai.guardrail import ai_guardrail
 from app.engine.ai.models import (
     AIQueryStatus,
+    ClarificationRequest,
     NaturalLanguageQueryRequest,
     NaturalLanguageQueryResponse,
     QueryPlanOnlyResponse,
@@ -20,13 +22,28 @@ from app.engine.ai.models import (
 from app.engine.ai.planner import query_planner
 from app.engine.ai.prompts import SUGGESTION_PROMPT
 from app.engine.analytics.engine import analytical_engine
+from app.engine.analytics.instruction_model import (
+    AggregationOpEnum,
+    AggregationSpec,
+    AnalyticalInstruction,
+    OperationEnum,
+    SortSpec,
+)
 from app.engine.pipeline import ingestion_pipeline
 from app.engine.visualization.chart_model import VisualizationRequest
 from app.engine.visualization.engine import visualization_engine
-from app.models.schemas import TableRegion
+from app.models.schemas import DataTypeEnum, SemanticTypeEnum, TableRegion
 from app.storage.file_manager import file_manager
 
 logger = logging.getLogger("sheetsly.ai.orchestrator")
+
+
+class SheetResolutionError(Exception):
+    """Raised when a specific sheet is requested in the query or parameter but not found in workbook."""
+    def __init__(self, requested_sheet: str, available_sheets: List[str]):
+        super().__init__(f"Sheet '{requested_sheet}' not found in workbook.")
+        self.requested_sheet = requested_sheet
+        self.available_sheets = available_sheets
 
 
 class AIOrchestrator:
@@ -62,22 +79,22 @@ class AIOrchestrator:
         if not overview.sheets:
             raise ValueError(f"Dataset '{dataset_id}' contains no detected sheets.")
 
+        available_sheet_names = [s.name for s in overview.sheets]
+
         # Resolve sheet (respect explicit sheet_name or detect sheet mention in query)
         target_sheet = None
         if sheet_name:
             target_sheet = next((s for s in overview.sheets if s.name.lower() == sheet_name.lower()), None)
-        elif query and len(overview.sheets) > 1:
+            if not target_sheet:
+                raise SheetResolutionError(sheet_name, available_sheet_names)
+        elif query:
             q_lower = query.lower()
-            for s in overview.sheets:
-                s_name_lower = s.name.lower()
-                if (
-                    f"sheet {s_name_lower}" in q_lower
-                    or f"di sheet {s_name_lower}" in q_lower
-                    or f"sheet '{s_name_lower}'" in q_lower
-                    or f"sheet \"{s_name_lower}\"" in q_lower
-                ):
-                    target_sheet = s
-                    break
+            sheet_match = re.search(r"\b(?:pada sheet|di sheet|in sheet|sheet)\s+['\"]?([A-Za-z0-9_ -]+)['\"]?", q_lower)
+            if sheet_match:
+                extracted_sheet = sheet_match.group(1).strip()
+                target_sheet = next((s for s in overview.sheets if s.name.lower() == extracted_sheet.lower()), None)
+                if not target_sheet:
+                    raise SheetResolutionError(extracted_sheet, available_sheet_names)
 
         if not target_sheet:
             target_sheet = overview.sheets[0]
@@ -94,6 +111,79 @@ class AIOrchestrator:
             target_table = target_sheet.tables[0]
 
         return actual_sheet_name, target_table
+
+    def _build_multi_analysis_specs(self, dataset_id: str, table_region: TableRegion) -> List[Tuple[str, AnalyticalInstruction]]:
+        """Constructs canonical instructions for comprehensive multi-analysis report."""
+        date_col = next(
+            (c.name for c in table_region.columns if c.data_type in {DataTypeEnum.DATE, DataTypeEnum.DATETIME} or c.semantic_type == SemanticTypeEnum.TEMPORAL),
+            None,
+        ) or "Order Date"
+
+        # Metric column
+        metric_col = "Sales"
+        for col in table_region.columns:
+            if col.name.lower() in {"sales", "revenue", "penjualan", "total", "amount"}:
+                metric_col = col.name
+                break
+        else:
+            for col in table_region.columns:
+                if col.data_type in {DataTypeEnum.FLOAT, DataTypeEnum.INTEGER, DataTypeEnum.CURRENCY}:
+                    metric_col = col.name
+                    break
+
+        col_map = {c.name.lower(): c.name for c in table_region.columns}
+        region_col = col_map.get("region", "Region")
+        cat_col = col_map.get("category", col_map.get("kategori", "Category"))
+
+        specs = [
+            (
+                f"Tren Penjualan Bulanan ({metric_col})",
+                AnalyticalInstruction(
+                    operation=OperationEnum.GROUP_BY,
+                    dataset_id=dataset_id,
+                    sheet_name=table_region.sheet_name,
+                    table_id=table_region.table_id,
+                    group_by_columns=[f"YEAR_MONTH({date_col})"],
+                    aggregations=[AggregationSpec(column=metric_col, operation=AggregationOpEnum.SUM, alias=f"Total_{metric_col}")],
+                ),
+            ),
+            (
+                f"Total {metric_col} per Region",
+                AnalyticalInstruction(
+                    operation=OperationEnum.GROUP_BY,
+                    dataset_id=dataset_id,
+                    sheet_name=table_region.sheet_name,
+                    table_id=table_region.table_id,
+                    group_by_columns=[region_col],
+                    aggregations=[AggregationSpec(column=metric_col, operation=AggregationOpEnum.SUM, alias=f"Total_{metric_col}")],
+                    sort=SortSpec(column=f"Total_{metric_col}", ascending=False),
+                ),
+            ),
+            (
+                f"Total {metric_col} per Kategori",
+                AnalyticalInstruction(
+                    operation=OperationEnum.GROUP_BY,
+                    dataset_id=dataset_id,
+                    sheet_name=table_region.sheet_name,
+                    table_id=table_region.table_id,
+                    group_by_columns=[cat_col],
+                    aggregations=[AggregationSpec(column=metric_col, operation=AggregationOpEnum.SUM, alias=f"Total_{metric_col}")],
+                    sort=SortSpec(column=f"Total_{metric_col}", ascending=False),
+                ),
+            ),
+            (
+                f"Pola Musiman Bulanan ({metric_col})",
+                AnalyticalInstruction(
+                    operation=OperationEnum.GROUP_BY,
+                    dataset_id=dataset_id,
+                    sheet_name=table_region.sheet_name,
+                    table_id=table_region.table_id,
+                    group_by_columns=[f"MONTH_NAME({date_col})"],
+                    aggregations=[AggregationSpec(column=metric_col, operation=AggregationOpEnum.AVERAGE, alias=f"Avg_{metric_col}")],
+                ),
+            ),
+        ]
+        return specs
 
     async def plan_only(self, request: NaturalLanguageQueryRequest) -> QueryPlanOnlyResponse:
         """Plans an AnalyticalInstruction or ClarificationRequest without running calculations."""
@@ -112,6 +202,24 @@ class AIOrchestrator:
             )
             workbook_summary = self._build_workbook_summary(request.dataset_id)
             t_resolve_ms = (time.perf_counter() - t_res_start) * 1000
+        except SheetResolutionError as sre:
+            t_resolve_ms = (time.perf_counter() - t_res_start) * 1000
+            clarification = ClarificationRequest(
+                question=f"Sheet '{sre.requested_sheet}' tidak ditemukan dalam workbook. Silakan pilih sheet yang tersedia:",
+                reason=f"Sheet '{sre.requested_sheet}' tidak ada dalam metadata workbook.",
+                target_parameter="sheet_name",
+                options=sre.available_sheets,
+            )
+            return QueryPlanOnlyResponse(
+                status=AIQueryStatus.CLARIFICATION_REQUIRED,
+                user_query=request.query,
+                intent_summary=f"Clarification required: sheet '{sre.requested_sheet}' not found",
+                clarification=clarification,
+                timing=TimingBreakdown(
+                    schema_resolution_ms=round(t_resolve_ms, 2),
+                    total_duration_ms=round((time.perf_counter() - t0) * 1000, 2),
+                ),
+            )
         except Exception as ex:
             return QueryPlanOnlyResponse(
                 status=AIQueryStatus.EXECUTION_ERROR,
@@ -125,6 +233,40 @@ class AIOrchestrator:
             )
 
         target_model = request.model or settings.QWEN_MODEL or "qwen3.5-plus"
+
+        # Check for multi-analysis "Semua Analisis" selection
+        is_multi_all = bool(
+            request.clarification_selection
+            and "multi_analysis_scope" in request.clarification_selection
+            and any(kw in str(request.clarification_selection["multi_analysis_scope"]).lower() for kw in ["semua", "all", "menyeluruh"])
+        )
+
+        if is_multi_all:
+            specs = self._build_multi_analysis_specs(request.dataset_id, table_region)
+            sub_plans = []
+            for label, inst in specs:
+                sub_plans.append(
+                    QueryPlanOnlyResponse(
+                        status=AIQueryStatus.EXECUTION_READY,
+                        user_query=label,
+                        intent_summary=label,
+                        model_used=target_model,
+                        planned_instruction=inst,
+                    )
+                )
+            return QueryPlanOnlyResponse(
+                status=AIQueryStatus.EXECUTION_READY,
+                user_query=request.query,
+                intent_summary="Laporan Analisis Menyeluruh (Multi-Analysis Report)",
+                model_used=target_model,
+                planned_instruction=specs[0][1],
+                sub_plans=sub_plans,
+                timing=TimingBreakdown(
+                    schema_resolution_ms=round(t_resolve_ms, 2),
+                    total_duration_ms=round((time.perf_counter() - t0) * 1000, 2),
+                ),
+            )
+
         t_plan_start = time.perf_counter()
         status, intent_summary, instruction, clarification, error_msg = await query_planner.plan_query(
             query=request.query,
@@ -197,6 +339,24 @@ class AIOrchestrator:
             )
             workbook_summary = self._build_workbook_summary(request.dataset_id)
             t_resolve_ms = (time.perf_counter() - t_res_start) * 1000
+        except SheetResolutionError as sre:
+            t_resolve_ms = (time.perf_counter() - t_res_start) * 1000
+            clarification = ClarificationRequest(
+                question=f"Sheet '{sre.requested_sheet}' tidak ditemukan dalam workbook. Silakan pilih sheet yang tersedia:",
+                reason=f"Sheet '{sre.requested_sheet}' tidak ada dalam metadata workbook.",
+                target_parameter="sheet_name",
+                options=sre.available_sheets,
+            )
+            return NaturalLanguageQueryResponse(
+                status=AIQueryStatus.CLARIFICATION_REQUIRED,
+                user_query=request.query,
+                intent_summary=f"Clarification required: sheet '{sre.requested_sheet}' not found",
+                clarification=clarification,
+                timing=TimingBreakdown(
+                    schema_resolution_ms=round(t_resolve_ms, 2),
+                    total_duration_ms=round((time.perf_counter() - t0) * 1000, 2),
+                ),
+            )
         except Exception as ex:
             return NaturalLanguageQueryResponse(
                 status=AIQueryStatus.EXECUTION_ERROR,
@@ -210,6 +370,61 @@ class AIOrchestrator:
             )
 
         target_model = request.model or settings.QWEN_MODEL or "qwen3.5-plus"
+
+        # Check for multi-analysis "Semua Analisis" selection
+        is_multi_all = bool(
+            request.clarification_selection
+            and "multi_analysis_scope" in request.clarification_selection
+            and any(kw in str(request.clarification_selection["multi_analysis_scope"]).lower() for kw in ["semua", "all", "menyeluruh"])
+        )
+
+        if is_multi_all:
+            specs = self._build_multi_analysis_specs(request.dataset_id, table_region)
+            sub_analyses: List[NaturalLanguageQueryResponse] = []
+
+            for label, inst in specs:
+                sub_res = analytical_engine.execute(inst)
+                sub_viz = None
+                if request.generate_visualization:
+                    try:
+                        sub_viz = visualization_engine.render(
+                            VisualizationRequest(dataset_id=request.dataset_id, analytical_result=sub_res)
+                        )
+                    except Exception:
+                        pass
+                sub_exp = await evidence_explainer.explain_result(sub_res, label, model=target_model)
+                sub_analyses.append(
+                    NaturalLanguageQueryResponse(
+                        status=AIQueryStatus.EXECUTION_READY,
+                        user_query=label,
+                        intent_summary=label,
+                        model_used=target_model,
+                        planned_instruction=inst,
+                        analytical_result=sub_res,
+                        visualization=sub_viz,
+                        explanation=sub_exp,
+                    )
+                )
+
+            total_ms = (time.perf_counter() - t0) * 1000
+            return NaturalLanguageQueryResponse(
+                status=AIQueryStatus.EXECUTION_READY,
+                user_query=request.query,
+                intent_summary="Laporan Analisis Menyeluruh (Multi-Analysis Report)",
+                model_used=target_model,
+                planned_instruction=specs[0][1],
+                analytical_result=sub_analyses[0].analytical_result,
+                visualization=sub_analyses[0].visualization,
+                explanation=sub_analyses[0].explanation,
+                sub_analyses=sub_analyses,
+                suggested_next_queries=self._derive_followup_suggestions(table_region, specs[0][1]),
+                timing=TimingBreakdown(
+                    schema_resolution_ms=round(t_resolve_ms, 2),
+                    deterministic_execution_ms=round(total_ms - t_resolve_ms, 2),
+                    total_duration_ms=round(total_ms, 2),
+                ),
+            )
+
         # Stage 2: Query Planning (or use preplanned instruction)
         if request.preplanned_instruction:
             instruction = request.preplanned_instruction

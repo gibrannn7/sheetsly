@@ -14,7 +14,10 @@ from app.engine.analytics.instruction_model import (
     OperationEnum,
     SortSpec,
 )
-from app.models.schemas import TableRegion
+from app.engine.analytics.normalizer import deterministic_normalizer
+from app.models.schemas import DataTypeEnum, SemanticTypeEnum, TableRegion
+
+import re
 
 logger = logging.getLogger("sheetsly.ai.planner")
 
@@ -29,8 +32,19 @@ class QwenQueryPlanner:
             samples_str = ", ".join([f"'{s}'" for s in col.sample_values[:4]]) if col.sample_values else "N/A"
             dt_str = col.data_type.value if hasattr(col.data_type, "value") else str(col.data_type)
             st_str = col.semantic_type.value if hasattr(col.semantic_type, "value") else str(col.semantic_type)
+            
+            temporal_info = ""
+            if col.data_type in {DataTypeEnum.DATE, DataTypeEnum.DATETIME} or col.semantic_type == SemanticTypeEnum.TEMPORAL:
+                bounds = deterministic_normalizer.get_dataset_temporal_bounds(table_region, col.name)
+                if bounds:
+                    min_y = bounds.get("min_year")
+                    max_y = bounds.get("max_year")
+                    latest_y = bounds.get("latest_year")
+                    latest_ym = bounds.get("latest_year_month")
+                    temporal_info = f", temporal_bounds: {min_y}..{max_y}, latest_year: {latest_y}, latest_year_month: '{latest_ym}'"
+
             cols_summary.append(
-                f"- {col.name} (type: {dt_str}, role: {st_str}, nulls: {col.null_count}, samples: [{samples_str}])"
+                f"- {col.name} (type: {dt_str}, role: {st_str}, nulls: {col.null_count}, samples: <untrusted_table_data>[{samples_str}]</untrusted_table_data>{temporal_info})"
             )
 
         active_context = (
@@ -58,6 +72,13 @@ class QwenQueryPlanner:
         Translates a natural language query into an AnalyticalInstruction or ClarificationRequest.
         Returns (status, intent_summary, planned_instruction, clarification, error_message).
         """
+        # Fast deterministic pre-checks (sheet validation, multi-analysis, unsupported operations, vague ambiguity)
+        pre_result = deterministic_normalizer.pre_check_special_intents(
+            query, table_region, clarification_selection=clarification_selection
+        )
+        if pre_result is not None:
+            return pre_result
+
         schema_context = self._format_schema_context(table_region, workbook_summary=workbook_summary)
         
         clarification_context = ""
@@ -183,6 +204,12 @@ class QwenQueryPlanner:
                     aggregations=aggs_list,
                     sort=sort_spec,
                     limit=raw_inst.get("limit"),
+                    top_n_per_group=raw_inst.get("top_n_per_group"),
+                )
+
+                # Post-normalize instruction to guarantee canonical parameters
+                instruction = deterministic_normalizer.post_normalize_instruction(
+                    instruction, query, table_region
                 )
 
                 return AIQueryStatus.EXECUTION_READY, intent_summary, instruction, None, None

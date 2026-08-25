@@ -7,7 +7,9 @@ from openpyxl.utils import get_column_letter
 from app.engine.parser.sheet_reader import RawSheetGrid
 from app.models.schemas import (
     ColumnMetadata,
+    DataTypeEnum,
     OrientationEnum,
+    SemanticTypeEnum,
     TableRegion,
 )
 from .orientation_detector import OrientationDetector
@@ -98,6 +100,9 @@ class TableDetector:
                 dt, sem, conf, nulls, uniq, samples = TypeDetector.profile_column_vector(
                     data_values, column_name=col_name
                 )
+                temporal_bounds = None
+                if dt in {DataTypeEnum.DATE, DataTypeEnum.DATETIME} or sem == SemanticTypeEnum.TEMPORAL:
+                    temporal_bounds = TypeDetector.extract_temporal_bounds(data_values)
 
                 columns_meta.append(
                     ColumnMetadata(
@@ -112,6 +117,7 @@ class TableDetector:
                         null_count=nulls,
                         unique_count=uniq,
                         sample_values=samples,
+                        temporal_bounds=temporal_bounds,
                     )
                 )
 

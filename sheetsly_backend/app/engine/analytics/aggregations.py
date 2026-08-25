@@ -13,6 +13,25 @@ class DeterministicAggregator:
     """Calculates deterministic numerical and categorical aggregations with explicit COUNT semantics."""
 
     @classmethod
+    def _extract_numeric_values(cls, series: pd.Series) -> List[float]:
+        """Extracts valid numeric float values from numeric or currency/formatted string series."""
+        numeric_vals: List[float] = []
+        for v in series:
+            if v is None or (isinstance(v, float) and np.isnan(v)):
+                continue
+            if isinstance(v, (int, float)) and not isinstance(v, bool):
+                numeric_vals.append(float(v))
+            elif isinstance(v, str):
+                clean = v.replace("$", "").replace(",", "").replace("%", "").strip()
+                try:
+                    numeric_vals.append(float(clean))
+                except (ValueError, TypeError):
+                    dt, parsed = TypeDetector.detect_value_type(v)
+                    if dt in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE} and parsed is not None:
+                        numeric_vals.append(float(parsed))
+        return numeric_vals
+
+    @classmethod
     def calculate_scalar(
         cls,
         series: pd.Series,
@@ -35,43 +54,20 @@ class DeterministicAggregator:
 
         # 2. COUNT_VALUES: Non-null values in column
         if op_name == "COUNT_VALUES":
-            non_null_count = 0
-            for v in series:
-                if v is None:
-                    continue
-                dt, _ = TypeDetector.detect_value_type(v)
-                if dt != DataTypeEnum.NULL:
-                    non_null_count += 1
+            non_null_count = int(series.notna().sum())
             null_count = total_rows_in_selection - non_null_count
             notes.append(f"Counted non-null values: {non_null_count} (excluded {null_count} null/empty cells)")
             return non_null_count, f"{non_null_count:,}", notes
 
         # 3. DISTINCT_COUNT: Unique non-null values
         if op_name == "DISTINCT_COUNT":
-            distinct_set = set()
-            for v in series:
-                if v is None:
-                    continue
-                dt, parsed = TypeDetector.detect_value_type(v)
-                if dt != DataTypeEnum.NULL and parsed is not None:
-                    distinct_set.add(parsed if isinstance(parsed, (int, float, bool)) else str(parsed).strip().lower())
-            distinct_val = len(distinct_set)
+            non_null_series = series.dropna()
+            distinct_val = int(non_null_series.nunique())
             notes.append(f"Counted distinct unique values: {distinct_val}")
             return distinct_val, f"{distinct_val:,}", notes
 
         # For numeric aggregations (SUM, AVERAGE, MIN, MAX, MEDIAN)
-        numeric_vals: List[float] = []
-        for v in series:
-            if v is None:
-                continue
-            if isinstance(v, (int, float)) and not isinstance(v, bool):
-                numeric_vals.append(float(v))
-            else:
-                dt, parsed = TypeDetector.detect_value_type(v)
-                if dt in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}:
-                    if parsed is not None:
-                        numeric_vals.append(float(parsed))
-
+        numeric_vals = cls._extract_numeric_values(series)
         valid_count = len(numeric_vals)
         excluded_count = total_rows_in_selection - valid_count
 
@@ -127,4 +123,4 @@ class DeterministicAggregator:
             notes.append(f"Found maximum value: {formatted}")
             return val, formatted, notes
 
-        raise ValueError(f"Unsupported scalar operation: {op_name}")
+        return None, "N/A", [f"Unsupported aggregation operation '{op_name}'."]

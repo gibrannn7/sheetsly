@@ -261,6 +261,8 @@ export interface TranslationDictionary {
     rejectedPlan: string;
     unsupported: string;
     unsupportedDefault: string;
+    executionErrorTitle: string;
+    executionErrorDesc: string;
     providerUnavailable: string;
     providerOfflineDesc: string;
     providerFallbackHelp: string;

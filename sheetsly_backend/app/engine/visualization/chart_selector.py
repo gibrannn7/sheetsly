@@ -31,6 +31,40 @@ class IncompatibleChartError(SheetslyError):
 class ChartSelector:
     """Determines chart compatibility and provides conservative, rule-based recommendations."""
 
+    @staticmethod
+    def _safe_to_float(v: Any) -> Optional[float]:
+        """Safely extracts a float value from numeric types or currency/formatted numeric strings, rejecting temporal/categorical strings."""
+        if v is None or isinstance(v, bool):
+            return None
+        if isinstance(v, (int, float)):
+            return float(v)
+        
+        v_str = str(v).strip()
+        if not v_str:
+            return None
+        
+        # Explicitly reject temporal strings from numeric conversion
+        if re.match(r"^\d{4}[-/]\d{2}(?:[-/]\d{2})?$", v_str) or re.match(r"^(?:Q[1-4]|\d{4}\s+Q[1-4])$", v_str, re.IGNORECASE):
+            return None
+        if v_str.lower() in {"january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december",
+                             "januari", "februari", "maret", "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember",
+                             "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+                             "senin", "selasa", "rabu", "kamis", "jumat", "sabtu", "minggu"}:
+            return None
+
+        dt, parsed = TypeDetector.detect_value_type(v)
+        if dt in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE} and parsed is not None:
+            try:
+                return float(parsed)
+            except (ValueError, TypeError):
+                pass
+
+        try:
+            clean = v_str.replace("$", "").replace("Rp", "").replace(",", "").replace("%", "").strip()
+            return float(clean)
+        except (ValueError, TypeError):
+            return None
+
     @classmethod
     def recommend(cls, result: AnalyticalResult) -> ChartRecommendation:
         """
@@ -38,7 +72,8 @@ class ChartSelector:
         """
         # 1. SCALAR Result
         if result.result_type == ResultTypeEnum.SCALAR:
-            if result.scalar_value is not None and isinstance(result.scalar_value, (int, float)):
+            val = cls._safe_to_float(result.scalar_value)
+            if val is not None:
                 return ChartRecommendation(
                     preferred_type=ChartTypeEnum.BAR,
                     compatible_types=[ChartTypeEnum.BAR],
@@ -62,19 +97,24 @@ class ChartSelector:
                 confidence=1.0,
             )
 
+        group_dims = [g for g in result.lineage.grouping_applied] if (result.lineage and result.lineage.grouping_applied) else []
+        group_dims_set = set(group_dims)
         col_types = cls._profile_result_columns(columns, rows)
-        numeric_cols = [c for c in columns if col_types[c] in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}]
+        numeric_cols = [
+            c for c in columns
+            if c not in group_dims_set and col_types[c] in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}
+        ]
         non_numeric_cols = [c for c in columns if c not in numeric_cols]
 
         compatible: List[ChartTypeEnum] = []
         preferred: Optional[ChartTypeEnum] = None
         reason: str = ""
 
-        # Case A: 1 Categorical/Temporal column + 1 or more Numeric columns
+        # Case A: 1 or more Categorical/Temporal column + 1 or more Numeric columns
         if len(non_numeric_cols) >= 1 and len(numeric_cols) >= 1:
             dim_col = non_numeric_cols[0]
             dim_values = [str(r.get(dim_col, "")) for r in rows]
-            is_temporal = cls._is_temporal_dimension(dim_col, dim_values)
+            is_temporal = cls._is_temporal_dimension(dim_col, dim_values) or any("year" in str(g).lower() or "quarter" in str(g).lower() or "month" in str(g).lower() for g in group_dims)
 
             # BAR is universally compatible for categorical/temporal + numeric
             compatible.append(ChartTypeEnum.BAR)
@@ -86,7 +126,7 @@ class ChartSelector:
             # AREA is compatible if temporal and non-negative
             all_non_negative = True
             for num_col in numeric_cols:
-                if any(isinstance(r.get(num_col), (int, float)) and float(r[num_col]) < 0 for r in rows):
+                if any(cls._safe_to_float(r.get(num_col)) is not None and cls._safe_to_float(r.get(num_col)) < 0 for r in rows):
                     all_non_negative = False
                     break
 
@@ -138,11 +178,12 @@ class ChartSelector:
                 confidence=0.85,
             )
 
+        # Case D: No Numeric Measures
         return ChartRecommendation(
             preferred_type=None,
             compatible_types=[],
-            reason="Result structure lacks sufficient numeric measures for plotting.",
-            confidence=0.9,
+            reason="Result contains no numeric columns suitable for charting.",
+            confidence=1.0,
         )
 
     @classmethod
@@ -171,7 +212,7 @@ class ChartSelector:
                     details={"result_type": "SCALAR", "requested_type": requested_type.value},
                 )
             metric_label = (result.lineage.source_columns[0] if result.lineage.source_columns else None) or result.operation
-            val = float(result.scalar_value) if result.scalar_value is not None else 0.0
+            val = cls._safe_to_float(result.scalar_value) or 0.0
             title = title_override or f"{result.operation} ({metric_label})"
             return (
                 [metric_label],
@@ -186,15 +227,19 @@ class ChartSelector:
         if not rows or not columns:
             raise IncompatibleChartError("Cannot generate chart from an empty AnalyticalResult.")
 
+        group_dims = [g for g in result.lineage.grouping_applied] if (result.lineage and result.lineage.grouping_applied) else []
+        group_dims_set = set(group_dims)
         col_types = cls._profile_result_columns(columns, rows)
-        numeric_cols = [c for c in columns if col_types[c] in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}]
+        numeric_cols = [
+            c for c in columns
+            if c not in group_dims_set and col_types[c] in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}
+        ]
         non_numeric_cols = [c for c in columns if c not in numeric_cols]
 
         # -------------------------------------------------------------
         # 1. SCATTER Validation
         # -------------------------------------------------------------
         if requested_type == ChartTypeEnum.SCATTER:
-            # Requires at least 2 continuous numeric variables
             if len(numeric_cols) < 2:
                 raise IncompatibleChartError(
                     f"SCATTER chart requires 2 continuous numeric columns. Available numeric columns: {numeric_cols}, categorical columns: {non_numeric_cols}.",
@@ -209,7 +254,7 @@ class ChartSelector:
                 )
 
             x_vals = [str(r.get(x_col, 0)) for r in rows]
-            y_vals = [float(r.get(y_col, 0)) if r.get(y_col) is not None else None for r in rows]
+            y_vals = [cls._safe_to_float(r.get(y_col)) for r in rows]
             title = title_override or f"{y_col} vs {x_col}"
             return (
                 x_vals,
@@ -235,7 +280,7 @@ class ChartSelector:
                     f"HISTOGRAM column '{target_num_col}' must be numeric (detected type: {col_types.get(target_num_col, 'unknown').value}).",
                     details={"column": target_num_col},
                 )
-            y_vals = [float(r.get(target_num_col, 0)) for r in rows if r.get(target_num_col) is not None]
+            y_vals = [cls._safe_to_float(r.get(target_num_col)) for r in rows if r.get(target_num_col) is not None]
             title = title_override or f"Distribution of {target_num_col}"
             return (
                 [],
@@ -263,7 +308,7 @@ class ChartSelector:
             y_vals = []
             for r in rows:
                 v = r.get(metric_col)
-                num_v = float(v) if v is not None else 0.0
+                num_v = cls._safe_to_float(v) or 0.0
                 if num_v < 0:
                     raise IncompatibleChartError(
                         f"PIE chart cannot display negative values (found {num_v} in category '{r.get(dim_col)}').",
@@ -271,7 +316,12 @@ class ChartSelector:
                     )
                 y_vals.append(num_v)
 
-            x_cats = [str(r.get(dim_col, "")) for r in rows]
+            if len(group_dims) > 1 and not x_col_override:
+                x_cats = [" ".join(str(r.get(g, "")) for g in group_dims if g in r) for r in rows]
+                dim_col = " ".join(group_dims)
+            else:
+                x_cats = [str(r.get(dim_col, "")) for r in rows]
+
             title = title_override or f"{metric_col} by {dim_col}"
             return (
                 x_cats,
@@ -291,15 +341,19 @@ class ChartSelector:
         dim_col = x_col_override or (non_numeric_cols[0] if non_numeric_cols else columns[0])
         metric_cols_to_plot = [y_col_override] if (y_col_override and y_col_override in numeric_cols) else numeric_cols
 
-        x_cats = [str(r.get(dim_col, "")) for r in rows]
+        if len(group_dims) > 1 and not x_col_override:
+            x_cats = [" ".join(str(r.get(g, "")) for g in group_dims if g in r) for r in rows]
+            dim_col = " ".join(group_dims)
+        else:
+            x_cats = [str(r.get(dim_col, "")) for r in rows]
+
         series_list: List[ChartSeriesSpec] = []
 
         for m_col in metric_cols_to_plot:
-            vals = [float(r.get(m_col, 0)) if r.get(m_col) is not None else None for r in rows]
+            vals = [cls._safe_to_float(r.get(m_col)) for r in rows]
             series_list.append(ChartSeriesSpec(name=m_col, values=vals))
 
         if requested_type == ChartTypeEnum.AREA:
-            # Check for negative values
             for s in series_list:
                 if any(v is not None and v < 0 for v in s.values):
                     warnings.append("AREA chart contains negative values which may cause overlapping baseline regions.")
@@ -341,6 +395,7 @@ class ChartSelector:
         col_clean = col_name.lower().replace("_", " ").replace("-", " ")
         if any(kw in col_clean for kw in ["date", "tanggal", "month", "bulan", "year", "tahun", "period", "periode", "quarter"]):
             return True
-        # Check sample values
         period_matches = sum(1 for v in values if PERIOD_HEADER_REGEX.match(v.strip()))
         return period_matches >= 3 or (len(values) > 0 and (period_matches / len(values)) >= 0.5)
+
+    validate_and_extract = validate_and_extract_plot_data

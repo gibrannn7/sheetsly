@@ -232,3 +232,47 @@ class TypeDetector:
             semantic = SemanticTypeEnum.UNKNOWN
 
         return best_type, semantic, confidence, null_count, unique_count, sample_values
+
+    @classmethod
+    def extract_temporal_bounds(cls, values: List[Any]) -> Optional[dict]:
+        """Scans all values in a column vector and deterministically computes exact min/max date and year bounds."""
+        valid_dates = []
+        for v in values:
+            if v is None:
+                continue
+            str_v = str(v).strip()
+            if not str_v or str_v.lower() in {"null", "none", "nan", "#n/a", "na", "n/a", "-"}:
+                continue
+            parsed_dt = None
+            for fmt in DATE_FORMATS:
+                try:
+                    parsed_dt = datetime.strptime(str_v, fmt)
+                    break
+                except (ValueError, TypeError):
+                    continue
+            if parsed_dt is None:
+                # Fast regex for YYYY-MM-DD or YYYY/MM/DD
+                ymd_m = re.match(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})", str_v)
+                if ymd_m:
+                    try:
+                        parsed_dt = datetime(int(ymd_m.group(1)), int(ymd_m.group(2)), int(ymd_m.group(3)))
+                    except ValueError:
+                        pass
+
+            if parsed_dt is not None:
+                valid_dates.append(parsed_dt)
+
+        if not valid_dates:
+            return None
+
+        min_dt = min(valid_dates)
+        max_dt = max(valid_dates)
+
+        return {
+            "min_year": int(min_dt.year),
+            "max_year": int(max_dt.year),
+            "latest_year": int(max_dt.year),
+            "latest_year_month": f"{max_dt.year:04d}-{max_dt.month:02d}",
+            "min_date": min_dt.strftime("%Y-%m-%d"),
+            "max_date": max_dt.strftime("%Y-%m-%d"),
+        }

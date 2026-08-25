@@ -2,7 +2,8 @@
 
 from typing import List, Optional
 from app.core.errors import SheetslyError
-from app.models.schemas import DataTypeEnum, TableRegion
+from app.models.schemas import DataTypeEnum, SemanticTypeEnum, TableRegion
+from .expressions import DimensionParser
 from .instruction_model import (
     AggregationOpEnum,
     AnalyticalInstruction,
@@ -18,7 +19,12 @@ NUMERIC_TYPES = {
     DataTypeEnum.PERCENTAGE,
 }
 
-ORDERABLE_TYPES = NUMERIC_TYPES | {DataTypeEnum.DATE, DataTypeEnum.DATETIME}
+DATE_COMPATIBLE_TYPES = {
+    DataTypeEnum.DATE,
+    DataTypeEnum.DATETIME,
+}
+
+ORDERABLE_TYPES = NUMERIC_TYPES | DATE_COMPATIBLE_TYPES
 
 
 class AnalyticalValidationError(SheetslyError):
@@ -89,7 +95,7 @@ class InstructionValidator:
                     )
 
         # -------------------------------------------------------------
-        # 2. GROUP_BY Validation
+        # 2. GROUP_BY Validation (Supports Physical & Derived Dimensions)
         # -------------------------------------------------------------
         if op == OperationEnum.GROUP_BY:
             if not instruction.group_by_columns:
@@ -98,10 +104,41 @@ class InstructionValidator:
                     details={"operation": op.value},
                 )
             for g_col in instruction.group_by_columns:
-                if g_col not in col_names:
+                if g_col in col_names:
+                    continue
+
+                dim_spec = DimensionParser.parse(g_col)
+                if dim_spec is None:
                     raise AnalyticalValidationError(
                         f"Group-by column '{g_col}' not found in table '{table.name}'. Available columns: {sorted(col_names)}",
                         details={"group_by_column": g_col, "available_columns": list(col_names)},
+                    )
+
+                if dim_spec.source_column not in col_names:
+                    raise AnalyticalValidationError(
+                        f"Source column '{dim_spec.source_column}' for derived dimension '{g_col}' not found in table '{table.name}'. Available columns: {sorted(col_names)}",
+                        details={
+                            "derived_dimension": g_col,
+                            "source_column": dim_spec.source_column,
+                            "available_columns": list(col_names),
+                        },
+                    )
+
+                source_col_meta = table_columns_map[dim_spec.source_column]
+                is_date_compatible = (
+                    source_col_meta.data_type in DATE_COMPATIBLE_TYPES
+                    or source_col_meta.semantic_type == SemanticTypeEnum.TEMPORAL
+                    or (source_col_meta.data_type == DataTypeEnum.STRING and source_col_meta.data_type not in NUMERIC_TYPES)
+                )
+
+                if source_col_meta.data_type in NUMERIC_TYPES or not is_date_compatible:
+                    raise AnalyticalValidationError(
+                        f"Cannot apply date dimension '{dim_spec.operation.value}' to non-date column '{dim_spec.source_column}' (detected type: {source_col_meta.data_type.value}).",
+                        details={
+                            "operation": dim_spec.operation.value,
+                            "column": dim_spec.source_column,
+                            "detected_type": source_col_meta.data_type.value,
+                        },
                     )
 
             if not instruction.aggregations:
@@ -124,17 +161,62 @@ class InstructionValidator:
                             details={"operation": agg.operation.value, "column": agg.column},
                         )
 
+            if instruction.top_n_per_group is not None:
+                if len(instruction.group_by_columns) < 2:
+                    raise AnalyticalValidationError(
+                        f"top_n_per_group requires at least two columns in 'group_by_columns' (primary group and ranking group). Found: {instruction.group_by_columns}",
+                        details={"top_n_per_group": instruction.top_n_per_group, "group_by_columns": instruction.group_by_columns},
+                    )
+                if instruction.top_n_per_group < 1:
+                    raise AnalyticalValidationError(
+                        f"top_n_per_group must be an integer >= 1. Found: {instruction.top_n_per_group}",
+                        details={"top_n_per_group": instruction.top_n_per_group},
+                    )
+
         # -------------------------------------------------------------
-        # 3. Filter Validation
+        # 3. Filter Validation (Supports Physical & Derived Dimensions)
         # -------------------------------------------------------------
         for f in instruction.filters:
-            if f.column not in col_names:
-                raise AnalyticalValidationError(
-                    f"Filter column '{f.column}' not found in table '{table.name}'. Available columns: {sorted(col_names)}",
-                    details={"filter_column": f.column, "available_columns": list(col_names)},
+            is_derived_filter = False
+            f_meta = None
+
+            if f.column in col_names:
+                f_meta = table_columns_map[f.column]
+            else:
+                dim_spec = DimensionParser.parse(f.column)
+                if dim_spec is None:
+                    raise AnalyticalValidationError(
+                        f"Filter column '{f.column}' not found in table '{table.name}'. Available columns: {sorted(col_names)}",
+                        details={"filter_column": f.column, "available_columns": list(col_names)},
+                    )
+
+                if dim_spec.source_column not in col_names:
+                    raise AnalyticalValidationError(
+                        f"Source column '{dim_spec.source_column}' for derived dimension filter '{f.column}' not found in table '{table.name}'. Available columns: {sorted(col_names)}",
+                        details={
+                            "derived_filter": f.column,
+                            "source_column": dim_spec.source_column,
+                            "available_columns": list(col_names),
+                        },
+                    )
+
+                source_col_meta = table_columns_map[dim_spec.source_column]
+                is_date_compatible = (
+                    source_col_meta.data_type in DATE_COMPATIBLE_TYPES
+                    or source_col_meta.semantic_type == SemanticTypeEnum.TEMPORAL
+                    or (source_col_meta.data_type == DataTypeEnum.STRING and source_col_meta.data_type not in NUMERIC_TYPES)
                 )
 
-            f_meta = table_columns_map[f.column]
+                if source_col_meta.data_type in NUMERIC_TYPES or not is_date_compatible:
+                    raise AnalyticalValidationError(
+                        f"Cannot apply date dimension '{dim_spec.operation.value}' to non-date column '{dim_spec.source_column}' (detected type: {source_col_meta.data_type.value}).",
+                        details={
+                            "operation": dim_spec.operation.value,
+                            "column": dim_spec.source_column,
+                            "detected_type": source_col_meta.data_type.value,
+                        },
+                    )
+                is_derived_filter = True
 
             # Validate BETWEEN operand
             if f.operator == FilterOperatorEnum.BETWEEN:
@@ -160,20 +242,27 @@ class InstructionValidator:
                 FilterOperatorEnum.LESS_OR_EQUAL,
                 FilterOperatorEnum.BETWEEN,
             }:
-                if f_meta.data_type not in ORDERABLE_TYPES:
-                    raise AnalyticalValidationError(
-                        f"Comparison filter '{f.operator.value}' cannot be applied to non-orderable column '{f.column}' of type {f_meta.data_type.value}.",
-                        details={"filter_operator": f.operator.value, "column": f.column, "data_type": f_meta.data_type.value},
-                    )
+                if not is_derived_filter and f_meta:
+                    if f_meta.data_type not in ORDERABLE_TYPES and f_meta.semantic_type != SemanticTypeEnum.TEMPORAL:
+                        raise AnalyticalValidationError(
+                            f"Comparison filter '{f.operator.value}' cannot be applied to non-orderable column '{f.column}' of type {f_meta.data_type.value}.",
+                            details={"filter_operator": f.operator.value, "column": f.column, "data_type": f_meta.data_type.value},
+                        )
 
         # -------------------------------------------------------------
         # 4. Sort Validation
         # -------------------------------------------------------------
         if instruction.sort:
             sort_col = instruction.sort.column
-            # For GROUP_BY, sort_col could be an aggregation alias
             valid_sort_targets = col_names.copy()
             if op == OperationEnum.GROUP_BY:
+                for g in instruction.group_by_columns:
+                    valid_sort_targets.add(g)
+                    dim_parsed = DimensionParser.parse(g)
+                    if dim_parsed:
+                        valid_sort_targets.add(dim_parsed.source_column)
+                        valid_sort_targets.add(dim_parsed.operation.value)
+
                 for agg in instruction.aggregations:
                     if agg.alias:
                         valid_sort_targets.add(agg.alias)
@@ -181,7 +270,9 @@ class InstructionValidator:
                     valid_sort_targets.add(agg.column)
 
             if sort_col not in valid_sort_targets:
-                raise AnalyticalValidationError(
-                    f"Sort column '{sort_col}' not recognized.",
-                    details={"sort_column": sort_col, "valid_sort_targets": list(valid_sort_targets)},
-                )
+                matched = any(sort_col.lower() == v.lower() for v in valid_sort_targets)
+                if not matched and DimensionParser.parse(sort_col) is None:
+                    raise AnalyticalValidationError(
+                        f"Sort column '{sort_col}' not recognized.",
+                        details={"sort_column": sort_col, "valid_sort_targets": list(valid_sort_targets)},
+                    )

@@ -124,6 +124,7 @@ class QueryPlanOnlyResponse(BaseModel):
     model_used: Optional[str] = None
     planned_instruction: Optional[AnalyticalInstruction] = None
     clarification: Optional[ClarificationRequest] = None
+    sub_plans: Optional[List["QueryPlanOnlyResponse"]] = None
     error_message: Optional[str] = None
     timing: Optional[TimingBreakdown] = None
 
@@ -141,6 +142,7 @@ class NaturalLanguageQueryResponse(BaseModel):
     analytical_result: Optional[AnalyticalResult] = None
     visualization: Optional[VisualizationResponse] = None
     explanation: Optional[EvidenceExplanation] = None
+    sub_analyses: Optional[List["NaturalLanguageQueryResponse"]] = None
     suggested_next_queries: List[str] = Field(default_factory=list)
     error_message: Optional[str] = None
     timing: Optional[TimingBreakdown] = None

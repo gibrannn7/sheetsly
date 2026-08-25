@@ -83,6 +83,7 @@ class ColumnMetadata(BaseModel):
     null_count: int = Field(0, description="Count of empty or null cells")
     unique_count: int = Field(0, description="Count of distinct non-null values")
     sample_values: List[Any] = Field(default_factory=list, description="First few non-null sample values")
+    temporal_bounds: Optional[Dict[str, Any]] = Field(None, description="Exact dataset-relative temporal bounds {min_year, max_year, latest_year, latest_year_month, min_date, max_date}")
 
 
 class TableRegion(BaseModel):

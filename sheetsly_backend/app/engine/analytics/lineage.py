@@ -2,9 +2,9 @@
 
 import time
 from typing import List, Optional
-from openpyxl.utils import get_column_letter
 
 from app.models.schemas import TableRegion
+from .expressions import DimensionParser
 from .result_model import CalculationLineage
 
 
@@ -25,6 +25,8 @@ class LineageBuilder:
         operations_performed: List[str],
         calculation_steps: List[str],
         start_time_seconds: float,
+        aggregation_columns: Optional[List[str]] = None,
+        filter_columns: Optional[List[str]] = None,
     ) -> CalculationLineage:
         """Assembles a complete CalculationLineage object."""
         elapsed_ms = round((time.perf_counter() - start_time_seconds) * 1000.0, 2)
@@ -32,10 +34,8 @@ class LineageBuilder:
         # Determine physical source range
         source_range = table.range_address
         if target_column:
-            # Find column letter for target column
             matching_col = next((c for c in table.columns if c.name == target_column), None)
             if matching_col and table.data_range:
-                # E.g. If data range is A5:F50, target column is E, then E5:E50
                 try:
                     start_ref, end_ref = table.data_range.split(":")
                     start_row = "".join(ch for ch in start_ref if ch.isdigit())
@@ -47,10 +47,25 @@ class LineageBuilder:
         source_columns = []
         if target_column:
             source_columns.append(target_column)
+
         if grouping_applied:
             for g in grouping_applied:
-                if g not in source_columns:
-                    source_columns.append(g)
+                dim_parsed = DimensionParser.parse(g)
+                resolved_col = dim_parsed.source_column if dim_parsed else g
+                if resolved_col not in source_columns:
+                    source_columns.append(resolved_col)
+
+        if aggregation_columns:
+            for agg_col in aggregation_columns:
+                if agg_col and agg_col not in source_columns:
+                    source_columns.append(agg_col)
+
+        if filter_columns:
+            for f_col in filter_columns:
+                dim_parsed = DimensionParser.parse(f_col)
+                resolved_col = dim_parsed.source_column if dim_parsed else f_col
+                if resolved_col and resolved_col not in source_columns:
+                    source_columns.append(resolved_col)
 
         return CalculationLineage(
             dataset_id=dataset_id,

@@ -372,6 +372,7 @@ export interface QueryPlanOnlyResponse {
   model_used?: string | null;
   planned_instruction?: AnalyticalInstruction | null;
   clarification?: ClarificationRequest | null;
+  sub_plans?: QueryPlanOnlyResponse[] | null;
   error_message?: string | null;
   timing?: TimingBreakdown | null;
 }
@@ -386,6 +387,7 @@ export interface NaturalLanguageQueryResponse {
   analytical_result?: AnalyticalResult | null;
   visualization?: VisualizationResponse | null;
   explanation?: EvidenceExplanation | null;
+  sub_analyses?: NaturalLanguageQueryResponse[] | null;
   suggested_next_queries?: string[];
   error_message?: string | null;
   timing?: TimingBreakdown | null;

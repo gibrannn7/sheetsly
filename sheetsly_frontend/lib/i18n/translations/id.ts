@@ -265,6 +265,8 @@ export const id: TranslationDictionary = {
     rejectedPlan: 'Rencana Instruksi yang Ditolak:',
     unsupported: 'Kueri Tidak Didukung oleh Skema Dataset',
     unsupportedDefault: 'Pertanyaan tidak dapat dipetakan ke operasi tabel yang tersedia.',
+    executionErrorTitle: 'Kegagalan Eksekusi Engine Kalkulasi',
+    executionErrorDesc: 'Terjadi kesalahan selama kalkulasi deterministik. Perhitungan dihentikan demi menjaga integritas numerik data.',
     providerUnavailable: 'Layanan AI Sementara Tidak Tersedia',
     providerOfflineDesc:
       'Layanan AI yang dipilih saat ini tidak tersedia. Silakan coba lagi sebentar lagi, atau lanjutkan dengan Pembangun Analisis untuk analisis deterministik.',

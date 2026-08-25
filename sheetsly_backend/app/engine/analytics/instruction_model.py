@@ -144,6 +144,7 @@ class AnalyticalInstruction(BaseModel):
     # Ordering & Slicing
     sort: Optional[SortSpec] = Field(None, description="Sorting instruction")
     limit: Optional[int] = Field(None, ge=1, description="Row limit for top/bottom results")
+    top_n_per_group: Optional[int] = Field(None, ge=1, description="Limits results to top N rows per primary grouping dimension")
 
     # Extra parameters (e.g. for conditional classification)
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Optional operation-specific parameters")

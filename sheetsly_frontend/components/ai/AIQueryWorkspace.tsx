@@ -320,6 +320,32 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
               </div>
             )}
 
+            {/* D2. Calculation Engine Execution Error */}
+            {lastResponse.status === 'EXECUTION_ERROR' && (
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-900 dark:text-rose-200 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <span className="px-1.5 py-0.5 rounded bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-100 font-bold text-[10px] uppercase">
+                    {dictionary.common.error}
+                  </span>
+                  <span className="font-bold">{dictionary.ai.executionErrorTitle}</span>
+                </div>
+                <p className="leading-relaxed">
+                  {lastResponse.error_message || dictionary.ai.executionErrorDesc}
+                </p>
+                {lastResponse.planned_instruction && (
+                  <div className="pt-2">
+                    <span className="text-[10px] font-bold uppercase text-rose-700 dark:text-rose-400 block mb-1">
+                      {dictionary.ai.rejectedPlan}
+                    </span>
+                    <PlanInterpretationCard
+                      instruction={lastResponse.planned_instruction}
+                      intentSummary={lastResponse.intent_summary}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* E. Successful Deterministic Execution */}
             {lastResponse.status === 'EXECUTION_READY' && (
               <div className="space-y-4">
@@ -376,12 +402,34 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
                   </div>
                 )}
 
-                {/* 4. Verified Result View */}
-                {lastResponse.analytical_result && (
-                  <AnalysisResultView
-                    datasetId={datasetId}
-                    result={lastResponse.analytical_result}
-                  />
+                {/* 4. Verified Result View (Single or Multi-Analysis Report) */}
+                {lastResponse.sub_analyses && lastResponse.sub_analyses.length > 0 ? (
+                  <div className="space-y-6 pt-2">
+                    <div className="px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-md text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                      <span>Laporan Analisis Menyeluruh ({lastResponse.sub_analyses.length} Modul Analisis Terverifikasi)</span>
+                    </div>
+                    {lastResponse.sub_analyses.map((sub, idx) => (
+                      <div key={idx} className="p-4 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 space-y-3 shadow-2xs">
+                        <div className="flex items-center space-x-2 text-xs font-bold text-slate-900 dark:text-slate-100 pb-2 border-b border-slate-100 dark:border-slate-800">
+                          <span className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[11px]">{idx + 1}</span>
+                          <span>{sub.intent_summary}</span>
+                        </div>
+                        {sub.explanation && (
+                          <EvidenceExplanationCard explanation={sub.explanation} />
+                        )}
+                        {sub.analytical_result && (
+                          <AnalysisResultView datasetId={datasetId} result={sub.analytical_result} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  lastResponse.analytical_result && (
+                    <AnalysisResultView
+                      datasetId={datasetId}
+                      result={lastResponse.analytical_result}
+                    />
+                  )
                 )}
 
                 {/* 5. Suggested Follow-Up Queries */}

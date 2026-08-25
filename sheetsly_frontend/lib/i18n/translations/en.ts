@@ -265,6 +265,8 @@ export const en: TranslationDictionary = {
     rejectedPlan: 'Rejected Instruction Plan:',
     unsupported: 'Query Unsupported by Dataset Schema',
     unsupportedDefault: 'The question cannot be mapped to the available table operations.',
+    executionErrorTitle: 'Calculation Engine Execution Failure',
+    executionErrorDesc: 'An error occurred during deterministic calculation. The calculation was halted to ensure numerical integrity.',
     providerUnavailable: 'AI service temporarily unavailable',
     providerOfflineDesc:
       'The selected AI service is currently unavailable. Please try again in a moment, or continue with Analysis Builder for deterministic analysis.',

@@ -30,8 +30,22 @@ class EvidenceExplainer:
         else:
             row_count = len(result.table_data.rows) if result.table_data else 0
             cols_str = ", ".join(result.table_data.columns) if result.table_data else ""
-            factual_statement = f"Generated table with {row_count} grouped records across columns [{cols_str}]."
-            summary = f"Grouped {result.lineage.rows_included} records into {row_count} distinct categories."
+            
+            # Check for extreme period and seasonality notes in calculation steps
+            evidence_highlights = [
+                step for step in result.lineage.calculation_steps
+                if any(kw in step for kw in ["Highest period", "Lowest period", "Seasonality evidence"])
+            ]
+            
+            if evidence_highlights:
+                factual_statement = (
+                    f"Generated {row_count} grouped periods across [{cols_str}]. "
+                    + " ".join(evidence_highlights)
+                )
+                summary = f"Grouped {result.lineage.rows_included} records into {row_count} periods with verified trend & seasonality analysis."
+            else:
+                factual_statement = f"Generated table with {row_count} grouped records across columns [{cols_str}]."
+                summary = f"Grouped {result.lineage.rows_included} records into {row_count} distinct categories."
 
         return EvidenceExplanation(
             summary=summary,
@@ -56,12 +70,38 @@ class EvidenceExplainer:
 
         # Prepare verified metadata payload for LLM
         lineage = result.lineage
+        total_records = len(result.table_data.rows) if result.table_data and result.table_data.rows else 0
+        first_record = result.table_data.rows[0] if total_records > 0 else None
+        last_record = result.table_data.rows[-1] if total_records > 0 else None
+
+        temporal_span = None
+        if total_records > 0 and result.table_data.columns:
+            first_col = result.table_data.columns[0]
+            if any(kw in first_col.lower() for kw in ["year", "month", "quarter", "date", "period"]):
+                first_val = first_record.get(first_col)
+                last_val = last_record.get(first_col)
+                temporal_span = f"From '{first_val}' to '{last_val}' (total {total_records} chronological periods)"
+
+        table_data_payload = None
+        if result.table_data and result.table_data.rows:
+            if len(result.table_data.rows) <= 50:
+                table_data_payload = result.table_data.rows
+            else:
+                table_data_payload = {
+                    "total_records": total_records,
+                    "first_10_records": result.table_data.rows[:10],
+                    "last_10_records": result.table_data.rows[-10:],
+                    "period_span": temporal_span,
+                }
+
         result_payload = {
             "operation": result.operation,
             "result_type": result.result_type,
             "scalar_value": result.scalar_value,
             "scalar_formatted": result.scalar_formatted,
-            "table_data_preview": result.table_data.rows[:10] if result.table_data else None,
+            "total_result_records": total_records if result.table_data else 1,
+            "temporal_period_span": temporal_span,
+            "table_data": table_data_payload,
             "source_sheet": lineage.sheet_name,
             "source_range": lineage.source_range,
             "rows_included": lineage.rows_included,
