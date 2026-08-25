@@ -10,7 +10,7 @@ export const id: TranslationDictionary = {
     openAnotherFile: 'Buka File Lain',
     sheet: 'Lembar',
     sheets: 'Lembar',
-    hygiene: 'Kebersihan Data',
+    hygiene: 'Kebersihan',
     loading: 'Memuat...',
     error: 'Kesalahan',
     success: 'Berhasil',
@@ -33,7 +33,7 @@ export const id: TranslationDictionary = {
     confirm: 'Lanjutkan ke Workspace',
   },
   nav: {
-    howToUse: 'Panduan & Arsitektur',
+    howToUse: 'Panduan',
     aiQuery: 'Perencana Kueri AI',
     analysisBuilder: 'Pembangun Analisis',
     detectedTables: 'Tabel Terdeteksi & Skema',

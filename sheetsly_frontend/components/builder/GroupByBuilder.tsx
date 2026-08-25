@@ -76,18 +76,18 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
   };
 
   return (
-    <div className="space-y-4 p-3.5 bg-slate-50 border border-slate-200 rounded-lg">
+    <div className="space-y-4 p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg transition-colors">
       {/* 1. Grouping Dimension Selection */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+          <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
             {dictionary.builder.groupByDimensions}
           </label>
           <button
             type="button"
             onClick={handleAddGroupByCol}
             disabled={groupByColumns.length >= columns.length}
-            className="text-xs text-slate-700 hover:text-slate-950 font-semibold cursor-pointer disabled:opacity-40"
+            className="text-xs text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white font-semibold cursor-pointer disabled:opacity-40"
           >
             {dictionary.builder.addDimension}
           </button>
@@ -96,11 +96,11 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
         <div className="space-y-1.5">
           {groupByColumns.map((colName, idx) => (
             <div key={idx} className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-mono w-4">{idx + 1}.</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono w-4">{idx + 1}.</span>
               <select
                 value={colName}
                 onChange={(e) => handleUpdateGroupByCol(idx, e.target.value)}
-                className="flex-1 bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-slate-900"
+                className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 cursor-pointer"
               >
                 {columns.map((c) => (
                   <option key={c.name} value={c.name}>
@@ -113,7 +113,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveGroupByCol(idx)}
-                  className="px-2 py-1 text-slate-400 hover:text-rose-600 text-xs font-bold"
+                  className="px-2 py-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-bold cursor-pointer"
                   title="Remove dimension"
                 >
                   ✕
@@ -125,15 +125,15 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
       </div>
 
       {/* 2. Multi-Aggregation Specs */}
-      <div className="space-y-2 pt-3 border-t border-slate-200">
+      <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+          <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
             {dictionary.builder.aggregatedMetrics} ({aggregations.length})
           </label>
           <button
             type="button"
             onClick={handleAddAggregation}
-            className="text-xs text-slate-700 hover:text-slate-950 font-semibold cursor-pointer"
+            className="text-xs text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white font-semibold cursor-pointer"
           >
             {dictionary.builder.addMetric}
           </button>
@@ -141,8 +141,8 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
 
         <div className="space-y-2">
           {aggregations.map((agg, idx) => (
-            <div key={idx} className="flex flex-wrap items-center gap-2 p-2 bg-white border border-slate-200 rounded-md text-xs">
-              <span className="text-[11px] font-semibold text-slate-500">{dictionary.builder.calculate}</span>
+            <div key={idx} className="flex flex-wrap items-center gap-2 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-xs">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{dictionary.builder.calculate}</span>
 
               {/* Aggregation Function */}
               <select
@@ -154,7 +154,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                     alias: `${op}_${agg.column}`,
                   });
                 }}
-                className="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-semibold focus:ring-1 focus:ring-slate-900"
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-200 font-semibold focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 cursor-pointer"
               >
                 {AGGREGATION_OPS.map((op) => (
                   <option key={op.value} value={op.value}>
@@ -163,7 +163,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                 ))}
               </select>
 
-              <span className="text-[11px] font-semibold text-slate-500">{dictionary.builder.of}</span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{dictionary.builder.of}</span>
 
               {/* Target Column */}
               <select
@@ -175,7 +175,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                     alias: `${agg.operation}_${cName}`,
                   });
                 }}
-                className="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-slate-900"
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-200 font-medium focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 cursor-pointer"
               >
                 {columns.map((c) => (
                   <option key={c.name} value={c.name}>
@@ -184,7 +184,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                 ))}
               </select>
 
-              <span className="text-[11px] font-semibold text-slate-500">{dictionary.builder.as}</span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{dictionary.builder.as}</span>
 
               {/* Custom Alias */}
               <input
@@ -192,7 +192,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                 placeholder="Column header"
                 value={agg.alias || ''}
                 onChange={(e) => handleUpdateAggregation(idx, { alias: e.target.value })}
-                className="flex-1 min-w-[100px] bg-slate-50 border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 focus:ring-1 focus:ring-slate-900"
+                className="flex-1 min-w-[100px] bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100"
               />
 
               {aggregations.length > 1 && (
@@ -200,7 +200,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                   type="button"
                   onClick={() => handleRemoveAggregation(idx)}
                   aria-label={`Remove aggregation metric for ${agg.column}`}
-                  className="px-1.5 py-0.5 text-slate-400 hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 text-xs font-bold"
+                  className="px-1.5 py-0.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 focus-visible:ring-2 focus-visible:ring-rose-500 text-xs font-bold cursor-pointer"
                   title="Remove metric"
                 >
                   ✕

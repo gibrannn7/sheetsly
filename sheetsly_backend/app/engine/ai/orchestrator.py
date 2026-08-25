@@ -32,21 +32,53 @@ logger = logging.getLogger("sheetsly.ai.orchestrator")
 class AIOrchestrator:
     """Coordinates end-to-end natural-language analytical query workflows."""
 
+    def _build_workbook_summary(self, dataset_id: str) -> str:
+        """Generates concise structural summary of all sheets and detected tables in the workbook."""
+        try:
+            overview = ingestion_pipeline.get_overview(dataset_id)
+            if not overview or not overview.sheets:
+                return ""
+            lines = []
+            for s in overview.sheets:
+                tables_info = []
+                for t in s.tables:
+                    col_names = [c.name for c in t.columns]
+                    col_preview = ", ".join(col_names[:6]) + ("..." if len(col_names) > 6 else "")
+                    tables_info.append(f"Table '{t.table_id}' ({len(t.columns)} cols: [{col_preview}])")
+                lines.append(f"- Sheet '{s.name}': {s.total_rows} rows, {len(s.tables)} table(s) [{'; '.join(tables_info)}]")
+            return "\n".join(lines)
+        except Exception:
+            return ""
+
     def _resolve_target_table(
         self,
         dataset_id: str,
         sheet_name: Optional[str] = None,
         table_id: Optional[str] = None,
+        query: Optional[str] = None,
     ) -> tuple[str, TableRegion]:
-        """Resolves target worksheet and table region from dataset inspection cache."""
+        """Resolves target worksheet and table region from dataset inspection cache with query-aware sheet resolution."""
         overview = ingestion_pipeline.get_overview(dataset_id)
         if not overview.sheets:
             raise ValueError(f"Dataset '{dataset_id}' contains no detected sheets.")
 
-        # Resolve sheet
+        # Resolve sheet (respect explicit sheet_name or detect sheet mention in query)
         target_sheet = None
         if sheet_name:
             target_sheet = next((s for s in overview.sheets if s.name.lower() == sheet_name.lower()), None)
+        elif query and len(overview.sheets) > 1:
+            q_lower = query.lower()
+            for s in overview.sheets:
+                s_name_lower = s.name.lower()
+                if (
+                    f"sheet {s_name_lower}" in q_lower
+                    or f"di sheet {s_name_lower}" in q_lower
+                    or f"sheet '{s_name_lower}'" in q_lower
+                    or f"sheet \"{s_name_lower}\"" in q_lower
+                ):
+                    target_sheet = s
+                    break
+
         if not target_sheet:
             target_sheet = overview.sheets[0]
 
@@ -76,7 +108,9 @@ class AIOrchestrator:
                 request.dataset_id,
                 request.sheet_name,
                 request.table_id,
+                query=request.query,
             )
+            workbook_summary = self._build_workbook_summary(request.dataset_id)
             t_resolve_ms = (time.perf_counter() - t_res_start) * 1000
         except Exception as ex:
             return QueryPlanOnlyResponse(
@@ -99,6 +133,7 @@ class AIOrchestrator:
             table_region=table_region,
             clarification_selection=request.clarification_selection,
             model=target_model,
+            workbook_summary=workbook_summary,
         )
         t_plan_ms = (time.perf_counter() - t_plan_start) * 1000
 
@@ -158,7 +193,9 @@ class AIOrchestrator:
                 request.dataset_id,
                 request.sheet_name,
                 request.table_id,
+                query=request.query,
             )
+            workbook_summary = self._build_workbook_summary(request.dataset_id)
             t_resolve_ms = (time.perf_counter() - t_res_start) * 1000
         except Exception as ex:
             return NaturalLanguageQueryResponse(
@@ -190,6 +227,7 @@ class AIOrchestrator:
                 table_region=table_region,
                 clarification_selection=request.clarification_selection,
                 model=target_model,
+                workbook_summary=workbook_summary,
             )
             t_plan_ms = (time.perf_counter() - t_plan_start) * 1000
 

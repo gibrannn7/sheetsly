@@ -22,8 +22,8 @@ logger = logging.getLogger("sheetsly.ai.planner")
 class QwenQueryPlanner:
     """Translates user natural-language questions into structured AnalyticalInstruction objects."""
 
-    def _format_schema_context(self, table_region: TableRegion) -> str:
-        """Formats table schema into rich structural context for the LLM prompt."""
+    def _format_schema_context(self, table_region: TableRegion, workbook_summary: Optional[str] = None) -> str:
+        """Formats table schema into rich structural context for the LLM prompt with optional workbook-level multi-sheet overview."""
         cols_summary = []
         for col in table_region.columns:
             samples_str = ", ".join([f"'{s}'" for s in col.sample_values[:4]]) if col.sample_values else "N/A"
@@ -33,12 +33,16 @@ class QwenQueryPlanner:
                 f"- {col.name} (type: {dt_str}, role: {st_str}, nulls: {col.null_count}, samples: [{samples_str}])"
             )
 
-        return (
+        active_context = (
             f"Table ID: {table_region.table_id}\n"
             f"Range: {table_region.range_address} (Data: {table_region.data_range})\n"
             f"Total Data Rows: {table_region.row_count}\n"
             f"Columns ({len(table_region.columns)}):\n" + "\n".join(cols_summary)
         )
+
+        if workbook_summary:
+            return f"WORKBOOK MULTI-SHEET STRUCTURE:\n{workbook_summary}\n\nACTIVE WORKSHEET TARGET TABLE:\n{active_context}"
+        return active_context
 
     async def plan_query(
         self,
@@ -48,12 +52,13 @@ class QwenQueryPlanner:
         table_region: TableRegion,
         clarification_selection: Optional[Dict[str, str]] = None,
         model: Optional[str] = None,
+        workbook_summary: Optional[str] = None,
     ) -> Tuple[AIQueryStatus, str, Optional[AnalyticalInstruction], Optional[ClarificationRequest], Optional[str]]:
         """
         Translates a natural language query into an AnalyticalInstruction or ClarificationRequest.
         Returns (status, intent_summary, planned_instruction, clarification, error_message).
         """
-        schema_context = self._format_schema_context(table_region)
+        schema_context = self._format_schema_context(table_region, workbook_summary=workbook_summary)
         
         clarification_context = ""
         if clarification_selection:

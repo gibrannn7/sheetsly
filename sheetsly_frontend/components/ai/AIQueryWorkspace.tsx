@@ -9,6 +9,7 @@ import {
   TableRegion,
   TimingBreakdown,
 } from '../../lib/types';
+import { useWorkspace } from '../../lib/workspace/WorkspaceContext';
 import { AnalysisResultView } from '../builder/AnalysisResultView';
 import { AIModelSelector } from './AIModelSelector';
 import { ClarificationPrompt } from './ClarificationPrompt';
@@ -28,31 +29,21 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
   tables,
 }) => {
   const { dictionary, t } = useTranslation();
-  const [query, setQuery] = useState('');
+  const { aiState, updateAIState, addAIHistoryItem } = useWorkspace();
+
+  const query = aiState.query;
+  const lastResponse = aiState.lastResponse;
+  const selectedModel = aiState.selectedModel;
+  const suggestedQueries = aiState.suggestedQueries;
+
   const [loading, setLoading] = useState(false);
   const [currentStage, setCurrentStage] = useState<string>('');
   const [aiStatus, setAiStatus] = useState<AIStatusResponse | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('qwen3.5-plus');
   const [showHowItWorksModal, setShowHowItWorksModal] = useState<boolean>(false);
-  const [suggestedQueries, setSuggestedQueries] = useState<string[]>([]);
-  const [lastResponse, setLastResponse] = useState<NaturalLanguageQueryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize selected model from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedModel = localStorage.getItem('sheetsly_selected_model');
-      if (savedModel) {
-        setSelectedModel(savedModel);
-      }
-    } catch {}
-  }, []);
-
   const handleModelChange = (newModelId: string) => {
-    setSelectedModel(newModelId);
-    try {
-      localStorage.setItem('sheetsly_selected_model', newModelId);
-    } catch {}
+    updateAIState({ selectedModel: newModelId });
   };
 
   // Fetch AI Status & Suggested Queries on sheet change
@@ -65,17 +56,19 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
       })
       .catch(() => {});
 
-    api
-      .getSuggestedQueries(datasetId, sheetName)
-      .then((res) => {
-        if (isMounted) setSuggestedQueries(res.suggested_queries || []);
-      })
-      .catch(() => {});
+    if (suggestedQueries.length === 0) {
+      api
+        .getSuggestedQueries(datasetId, sheetName)
+        .then((res) => {
+          if (isMounted) updateAIState({ suggestedQueries: res.suggested_queries || [] });
+        })
+        .catch(() => {});
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [datasetId, sheetName]);
+  }, [datasetId, sheetName, suggestedQueries.length]);
 
   const handleExecuteQuery = async (
     customQuery?: string,
@@ -88,7 +81,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
     setError(null);
 
     try {
-      // Stage 1: Network call to Qwen Planner
+      // Stage 1: Network call to AI Planner
       setCurrentStage(dictionary.ai.stagePlanning);
       const planRes = await api.planQueryWithAI({
         query: q,
@@ -100,7 +93,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
       // Handle early exit outcomes (Clarification, Rejection, Unsupported, Provider Error)
       if (planRes.status !== 'EXECUTION_READY' || !planRes.planned_instruction) {
-        setLastResponse({
+        const partialResponse: NaturalLanguageQueryResponse = {
           status: planRes.status,
           user_query: planRes.user_query,
           intent_summary: planRes.intent_summary,
@@ -109,8 +102,9 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
           clarification: planRes.clarification,
           error_message: planRes.error_message,
           timing: planRes.timing,
-        });
-        if (customQuery) setQuery(customQuery);
+        };
+        addAIHistoryItem(q, partialResponse);
+        if (customQuery) updateAIState({ query: customQuery });
         return;
       }
 
@@ -138,20 +132,21 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
         ),
       };
 
-      setLastResponse({
+      const finalResponse: NaturalLanguageQueryResponse = {
         ...fullRes,
         model_used: fullRes.model_used || selectedModel,
         timing: mergedTiming,
-      });
+      };
 
-      if (customQuery) setQuery(customQuery);
+      addAIHistoryItem(q, finalResponse);
+      if (customQuery) updateAIState({ query: customQuery });
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
         setError(err.message || 'An unexpected error occurred during query processing.');
       }
-      setLastResponse(null);
+      updateAIState({ lastResponse: null });
     } finally {
       setLoading(false);
       setCurrentStage('');
@@ -167,13 +162,13 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
     <>
       <div className="space-y-5">
         {/* 1. Header & AI Model Selector / Provider Status */}
-        <div className="bg-white rounded-lg border border-slate-200 shadow-2xs p-4 space-y-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs p-4 space-y-3.5 transition-colors">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+              <h2 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
                 {dictionary.ai.title}
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {dictionary.ai.desc}
               </p>
             </div>
@@ -182,7 +177,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setShowHowItWorksModal(true)}
-                className="text-[11px] font-semibold text-slate-600 hover:text-slate-900 underline cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 rounded px-1"
+                className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 underline cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 rounded px-1"
               >
                 {dictionary.ai.howDoesThisWork}
               </button>
@@ -195,7 +190,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
                   disabled={loading}
                 />
               ) : (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                   {dictionary.ai.fallbackMode}
                 </span>
               )}
@@ -214,15 +209,15 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
               <input
                 type="text"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => updateAIState({ query: e.target.value })}
                 placeholder={dictionary.ai.placeholder}
                 disabled={loading}
-                className="w-full pl-3.5 pr-32 py-2 bg-white border border-slate-300 rounded-md text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-slate-900 font-sans disabled:opacity-50"
+                className="w-full pl-3.5 pr-32 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-100 focus:border-slate-900 dark:focus:border-slate-100 font-sans disabled:opacity-50 transition-colors"
               />
               <button
                 type="submit"
                 disabled={loading || !query.trim()}
-                className="absolute right-1 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold shadow-2xs disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
+                className="absolute right-1 px-3.5 py-1.5 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded text-xs font-semibold shadow-2xs disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? dictionary.ai.processing : dictionary.ai.runQuery}
               </button>
@@ -230,8 +225,8 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
             {/* Truthful Stage Indicator (during live execution) */}
             {loading && currentStage && (
-              <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700 font-sans">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-700" />
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-xs text-slate-700 dark:text-slate-300 font-sans">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-700 dark:bg-slate-300 animate-pulse" />
                 <span className="font-medium">{currentStage}</span>
               </div>
             )}
@@ -239,7 +234,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
             {/* Schema-Derived Suggestions */}
             {!loading && suggestedQueries.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider select-none">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none">
                   {dictionary.ai.suggestions}
                 </span>
                 {suggestedQueries.map((sq, idx) => (
@@ -248,7 +243,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
                     type="button"
                     disabled={loading}
                     onClick={() => handleExecuteQuery(sq)}
-                    className="px-2.5 py-0.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded text-[11px] transition-colors cursor-pointer disabled:opacity-40 text-left font-medium"
+                    className="px-2.5 py-0.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded text-[11px] transition-colors cursor-pointer disabled:opacity-40 text-left font-medium"
                   >
                     {sq}
                   </button>
@@ -260,7 +255,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
         {/* Global Error Banner */}
         {error && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800 space-y-1">
+          <div className="p-3.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-800 dark:text-rose-300 space-y-1">
             <div className="font-bold">{dictionary.common.error}</div>
             <p>{error}</p>
           </div>
@@ -280,9 +275,9 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
             {/* B. Validation Rejection (Guardrail caught an invalid operation) */}
             {lastResponse.status === 'VALIDATION_FAILED' && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-900 space-y-2">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-900 dark:text-rose-200 space-y-2">
                 <div className="flex items-center space-x-2">
-                  <span className="px-1.5 py-0.2 rounded bg-rose-200 text-rose-900 font-bold text-[10px] uppercase">
+                  <span className="px-1.5 py-0.2 rounded bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-100 font-bold text-[10px] uppercase">
                     {dictionary.ai.guardrailBlocked}
                   </span>
                   <span className="font-bold">{dictionary.ai.schemaViolation}</span>
@@ -290,7 +285,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
                 <p>{lastResponse.error_message}</p>
                 {lastResponse.planned_instruction && (
                   <div className="pt-2">
-                    <span className="text-[10px] font-bold uppercase text-rose-700 block mb-1">
+                    <span className="text-[10px] font-bold uppercase text-rose-700 dark:text-rose-400 block mb-1">
                       {dictionary.ai.rejectedPlan}
                     </span>
                     <PlanInterpretationCard
@@ -304,7 +299,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
             {/* C. Unsupported Query */}
             {lastResponse.status === 'UNSUPPORTED_QUERY' && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-900 space-y-1">
+              <div className="p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-900 dark:text-amber-200 space-y-1">
                 <div className="font-bold">{dictionary.ai.unsupported}</div>
                 <p>{lastResponse.error_message || dictionary.ai.unsupportedDefault}</p>
               </div>
@@ -312,9 +307,9 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
             {/* D. Provider Error */}
             {lastResponse.status === 'PROVIDER_ERROR' && (
-              <div className="p-4 bg-slate-50 border border-slate-300 rounded-md text-xs text-slate-800 space-y-1.5">
-                <div className="font-bold text-slate-900">{dictionary.ai.providerUnavailable}</div>
-                <p className="text-slate-600 leading-relaxed">
+              <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md text-xs text-slate-800 dark:text-slate-200 space-y-1.5">
+                <div className="font-bold text-slate-900 dark:text-slate-100">{dictionary.ai.providerUnavailable}</div>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
                   {lastResponse.error_message &&
                   (lastResponse.error_message.includes('not configured') ||
                     lastResponse.error_message.includes('not set') ||
@@ -343,45 +338,45 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
                 {/* 3. Stage Latency Breakdown Badge */}
                 {lastResponse.timing && (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs space-y-2 transition-colors">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {dictionary.ai.stageLatency}
                       </span>
-                      <span className="font-mono text-[11px] font-semibold text-slate-700">
+                      <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                         {t('ai.total', { duration: formatSeconds(lastResponse.timing.total_duration_ms) })}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-1 font-mono text-[11px]">
-                      <div className="bg-white p-2 rounded border border-slate-200">
-                        <div className="text-[10px] font-sans text-slate-400 uppercase">{dictionary.ai.schemaStage}</div>
-                        <div className="font-semibold text-slate-800">{lastResponse.timing.schema_resolution_ms}ms</div>
+                      <div className="bg-white dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800">
+                        <div className="text-[10px] font-sans text-slate-400 dark:text-slate-500 uppercase">{dictionary.ai.schemaStage}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">{lastResponse.timing.schema_resolution_ms}ms</div>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-200">
-                        <div className="text-[10px] font-sans text-slate-400 uppercase">{dictionary.ai.qwenPlanStage}</div>
-                        <div className="font-semibold text-slate-800">{formatSeconds(lastResponse.timing.qwen_planning_ms)}</div>
+                      <div className="bg-white dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800">
+                        <div className="text-[10px] font-sans text-slate-400 dark:text-slate-500 uppercase">{dictionary.ai.qwenPlanStage}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">{formatSeconds(lastResponse.timing.qwen_planning_ms)}</div>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-200">
-                        <div className="text-[10px] font-sans text-slate-400 uppercase">{dictionary.ai.guardrailStage}</div>
-                        <div className="font-semibold text-slate-800">{lastResponse.timing.guardrail_validation_ms}ms</div>
+                      <div className="bg-white dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800">
+                        <div className="text-[10px] font-sans text-slate-400 dark:text-slate-500 uppercase">{dictionary.ai.guardrailStage}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">{lastResponse.timing.guardrail_validation_ms}ms</div>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-200">
-                        <div className="text-[10px] font-sans text-slate-400 uppercase">{dictionary.ai.pythonCalcStage}</div>
-                        <div className="font-semibold text-slate-800">{lastResponse.timing.deterministic_execution_ms}ms</div>
+                      <div className="bg-white dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800">
+                        <div className="text-[10px] font-sans text-slate-400 dark:text-slate-500 uppercase">{dictionary.ai.pythonCalcStage}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">{lastResponse.timing.deterministic_execution_ms}ms</div>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-200">
-                        <div className="text-[10px] font-sans text-slate-400 uppercase">{dictionary.ai.visualizerStage}</div>
-                        <div className="font-semibold text-slate-800">{lastResponse.timing.visualization_ms}ms</div>
+                      <div className="bg-white dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800">
+                        <div className="text-[10px] font-sans text-slate-400 dark:text-slate-500 uppercase">{dictionary.ai.visualizerStage}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">{lastResponse.timing.visualization_ms}ms</div>
                       </div>
-                      <div className="bg-white p-2 rounded border border-slate-200">
-                        <div className="text-[10px] font-sans text-slate-400 uppercase">{dictionary.ai.explainerStage}</div>
-                        <div className="font-semibold text-slate-800">{formatSeconds(lastResponse.timing.evidence_explanation_ms)}</div>
+                      <div className="bg-white dark:bg-slate-950 p-2 rounded border border-slate-200 dark:border-slate-800">
+                        <div className="text-[10px] font-sans text-slate-400 dark:text-slate-500 uppercase">{dictionary.ai.explainerStage}</div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-200">{formatSeconds(lastResponse.timing.evidence_explanation_ms)}</div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* 4. Verified Result View (Scalar / Table / Chart / Lineage Trace) */}
+                {/* 4. Verified Result View */}
                 {lastResponse.analytical_result && (
                   <AnalysisResultView
                     datasetId={datasetId}
@@ -391,8 +386,8 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
 
                 {/* 5. Suggested Follow-Up Queries */}
                 {lastResponse.suggested_next_queries && lastResponse.suggested_next_queries.length > 0 && (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs space-y-2 transition-colors">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       {dictionary.ai.suggestedNext}
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -401,7 +396,7 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
                           key={idx}
                           type="button"
                           onClick={() => handleExecuteQuery(nq)}
-                          className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded text-xs font-medium cursor-pointer transition-colors shadow-2xs text-left"
+                          className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs font-medium cursor-pointer transition-colors shadow-2xs text-left"
                         >
                           {nq}
                         </button>
@@ -414,14 +409,14 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
           </div>
         ) : (
           /* Empty State before any query is run */
-          <div className="bg-white rounded-lg border border-dashed border-slate-300 p-8 text-center space-y-2">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center space-y-2 transition-colors">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
               {dictionary.ai.readyTitle}
             </h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               {dictionary.ai.readyDesc}
             </p>
-            <div className="pt-2 text-[11px] font-mono text-slate-400">
+            <div className="pt-2 text-[11px] font-mono text-slate-400 dark:text-slate-500">
               {dictionary.ai.readyExample}
             </div>
           </div>

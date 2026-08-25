@@ -68,20 +68,20 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+        <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
           {dictionary.builder.filters} ({filters.length})
         </label>
 
         {filters.length > 1 && (
           <div className="flex items-center space-x-1.5 text-xs">
-            <span className="text-slate-500 font-medium">{dictionary.builder.match}</span>
+            <span className="text-slate-500 dark:text-slate-400 font-medium">{dictionary.builder.match}</span>
             <button
               type="button"
               onClick={() => onChangeCombination('AND')}
               className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-colors cursor-pointer ${
                 filterCombination === 'AND'
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                  ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               {dictionary.builder.matchAll}
@@ -91,8 +91,8 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               onClick={() => onChangeCombination('OR')}
               className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-colors cursor-pointer ${
                 filterCombination === 'OR'
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                  ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               {dictionary.builder.matchAny}
@@ -102,12 +102,12 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
       </div>
 
       {filters.length === 0 ? (
-        <div className="p-3 bg-slate-50 border border-dashed border-slate-300 rounded-md text-center">
-          <p className="text-xs text-slate-500 mb-2">{dictionary.builder.noFilters}</p>
+        <div className="p-3 bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-300 dark:border-slate-700 rounded-md text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{dictionary.builder.noFilters}</p>
           <button
             type="button"
             onClick={handleAddFilter}
-            className="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md shadow-2xs cursor-pointer transition-colors"
+            className="px-3 py-1 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-md shadow-2xs cursor-pointer transition-colors"
           >
             {dictionary.builder.addFilter}
           </button>
@@ -122,13 +122,13 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             return (
               <div
                 key={idx}
-                className="flex flex-wrap items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs"
+                className="flex flex-wrap items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-xs"
               >
                 {/* Column Dropdown */}
                 <select
                   value={filter.column}
                   onChange={(e) => handleUpdateFilter(idx, { column: e.target.value })}
-                  className="bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-slate-900"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 cursor-pointer"
                 >
                   {columns.map((c) => (
                     <option key={c.name} value={c.name}>
@@ -141,7 +141,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                 <select
                   value={filter.operator}
                   onChange={(e) => handleUpdateFilter(idx, { operator: e.target.value as FilterOperator })}
-                  className="bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 focus:ring-1 focus:ring-slate-900"
+                  className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 cursor-pointer"
                 >
                   {compatibleOps.map((op) => (
                     <option key={op.operator} value={op.operator}>
@@ -163,9 +163,9 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                             const currentMax = Array.isArray(filter.value) ? filter.value[1] || '' : '';
                             handleUpdateFilter(idx, { value: [e.target.value, currentMax] });
                           }}
-                          className="w-1/2 bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 focus:ring-1 focus:ring-slate-900"
+                          className="w-1/2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100"
                         />
-                        <span className="text-slate-400 text-xs font-semibold">to</span>
+                        <span className="text-slate-400 dark:text-slate-500 text-xs font-semibold">to</span>
                         <input
                           type="text"
                           placeholder="Max"
@@ -174,7 +174,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                             const currentMin = Array.isArray(filter.value) ? filter.value[0] || '' : '';
                             handleUpdateFilter(idx, { value: [currentMin, e.target.value] });
                           }}
-                          className="w-1/2 bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 focus:ring-1 focus:ring-slate-900"
+                          className="w-1/2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100"
                         />
                       </div>
                     ) : (
@@ -186,7 +186,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                           const val = filter.operator === 'in_list' ? e.target.value.split(',').map((s) => s.trim()) : e.target.value;
                           handleUpdateFilter(idx, { value: val });
                         }}
-                        className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 focus:ring-1 focus:ring-slate-900"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100"
                       />
                     )}
                   </div>
@@ -197,7 +197,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                   type="button"
                   onClick={() => handleRemoveFilter(idx)}
                   aria-label={`Remove filter condition for ${filter.column}`}
-                  className="px-2 py-1 text-slate-400 hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 text-xs font-bold rounded cursor-pointer transition-colors"
+                  className="px-2 py-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 focus-visible:ring-2 focus-visible:ring-rose-500 text-xs font-bold rounded cursor-pointer transition-colors"
                   title="Remove condition"
                 >
                   ✕
@@ -209,7 +209,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
           <button
             type="button"
             onClick={handleAddFilter}
-            className="text-xs text-slate-700 hover:text-slate-900 font-semibold py-1 flex items-center gap-1 cursor-pointer"
+            className="text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-semibold py-1 flex items-center gap-1 cursor-pointer"
           >
             {dictionary.builder.addAnotherFilter}
           </button>

@@ -94,10 +94,10 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
         }}
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
           isUploading
-            ? 'border-slate-300 bg-slate-50/80 cursor-wait'
+            ? 'border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/80 cursor-wait'
             : isDragging
-            ? 'border-slate-800 bg-slate-100/80 cursor-copy'
-            : 'border-slate-300 hover:border-slate-500 bg-white cursor-pointer shadow-2xs hover:shadow-xs'
+            ? 'border-slate-800 dark:border-slate-200 bg-slate-100/80 dark:bg-slate-800/80 cursor-copy'
+            : 'border-slate-300 dark:border-slate-700 hover:border-slate-500 dark:hover:border-slate-400 bg-white dark:bg-slate-900 cursor-pointer shadow-2xs hover:shadow-xs'
         }`}
       >
         <input
@@ -116,10 +116,10 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
             /* Active Progressive Loading View */
             <div className="w-full max-w-xs space-y-3 py-2">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
                   {dictionary.upload.ingestionActive}
                 </span>
-                <p className="text-xs font-semibold text-slate-800">
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {dictionary.upload.processing}
                 </p>
               </div>
@@ -129,19 +129,19 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
                 role="progressbar"
                 aria-label="Dataset ingestion in progress"
                 aria-busy="true"
-                className="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden"
+                className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full overflow-hidden"
               >
-                <div className="h-full bg-slate-900 rounded-full indeterminate-progress-bar" />
+                <div className="h-full bg-slate-900 dark:bg-slate-100 rounded-full indeterminate-progress-bar" />
               </div>
 
-              <p className="text-[11px] text-slate-500 max-w-sm mx-auto leading-relaxed">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                 {dictionary.upload.ingestionDesc}
               </p>
             </div>
           ) : (
             /* Default Dropzone View */
             <>
-              <div className="w-11 h-11 rounded-md bg-slate-100 flex items-center justify-center text-slate-700 border border-slate-200">
+              <div className="w-11 h-11 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 <svg
                   className="w-6 h-6"
                   fill="none"
@@ -159,19 +159,19 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-slate-800">
-                  {dictionary.upload.selectOrDrop} <span className="text-slate-900 underline font-bold">{dictionary.upload.browse}</span>
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {dictionary.upload.selectOrDrop} <span className="text-slate-900 dark:text-slate-100 underline font-bold">{dictionary.upload.browse}</span>
                 </p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {dictionary.upload.supports}
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3 text-[11px] text-slate-500 pt-1">
+              <div className="flex items-center space-x-3 text-[11px] text-slate-500 dark:text-slate-400 pt-1">
                 <span>{dictionary.upload.featureDeterministic}</span>
-                <span className="text-slate-300">|</span>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
                 <span>{dictionary.upload.featureLineage}</span>
-                <span className="text-slate-300">|</span>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
                 <span>{dictionary.upload.featureQuality}</span>
               </div>
             </>
@@ -181,12 +181,12 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
 
       {/* Actionable Error Banner */}
       {errorMessage && (
-        <div className="mt-3 p-3.5 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-xs space-y-1">
+        <div className="mt-3 p-3.5 rounded-md bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 text-xs space-y-1">
           <div className="font-bold flex items-center space-x-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-600" />
             <span>{dictionary.upload.errorTitle}</span>
           </div>
-          <p className="text-[11px] text-rose-700">{errorMessage}</p>
+          <p className="text-[11px] text-rose-700 dark:text-rose-300">{errorMessage}</p>
         </div>
       )}
     </div>

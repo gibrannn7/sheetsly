@@ -33,7 +33,7 @@ export const en: TranslationDictionary = {
     confirm: 'Continue to Workspace',
   },
   nav: {
-    howToUse: 'How to Use & Architecture',
+    howToUse: 'How to Use',
     aiQuery: 'AI Query Planner',
     analysisBuilder: 'Analysis Builder',
     detectedTables: 'Detected Tables & Schema',

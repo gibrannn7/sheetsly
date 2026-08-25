@@ -104,14 +104,14 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
 
   return (
     <div className="space-y-2.5">
-      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
+      <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
         {dictionary.builder.operation}
       </label>
 
       {/* Categorized Operation Grid */}
       <div className="space-y-2.5">
         <div>
-          <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
             {dictionary.builder.summarizeCategory}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -124,8 +124,8 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
                   onClick={() => onSelectOperation(op.value)}
                   className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
                     selectedOperation === op.value
-                      ? 'bg-slate-900 border-slate-900 text-white font-semibold'
-                      : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                      ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 font-semibold shadow-2xs'
+                      : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                 >
                   {op.label}
@@ -136,7 +136,7 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
-            <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
               {dictionary.builder.groupCategory}
             </div>
             <div className="grid grid-cols-1 gap-1.5">
@@ -149,8 +149,8 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
                     onClick={() => onSelectOperation(op.value)}
                     className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
                       selectedOperation === op.value
-                        ? 'bg-slate-900 border-slate-900 text-white font-semibold'
-                        : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                        ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 font-semibold shadow-2xs'
+                        : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                   >
                     {op.label}
@@ -160,7 +160,7 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
           </div>
 
           <div>
-            <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
               {dictionary.builder.sliceCategory}
             </div>
             <div className="grid grid-cols-2 gap-1.5">
@@ -173,8 +173,8 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
                     onClick={() => onSelectOperation(op.value)}
                     className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
                       selectedOperation === op.value
-                        ? 'bg-slate-900 border-slate-900 text-white font-semibold'
-                        : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                        ? 'bg-slate-900 dark:bg-slate-100 border-slate-900 dark:border-slate-100 text-white dark:text-slate-900 font-semibold shadow-2xs'
+                        : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                   >
                     {op.label}
@@ -186,8 +186,8 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
       </div>
 
       {/* Description helper text */}
-      <div className="p-2 bg-slate-50 border border-slate-200 rounded-md text-[11px] text-slate-600">
-        <span className="font-semibold text-slate-800">{currentOp.label}:</span> {currentOp.description}
+      <div className="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px] text-slate-600 dark:text-slate-400">
+        <span className="font-semibold text-slate-800 dark:text-slate-200">{currentOp.label}:</span> {currentOp.description}
       </div>
     </div>
   );

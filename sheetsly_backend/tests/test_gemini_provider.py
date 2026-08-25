@@ -83,7 +83,7 @@ def test_gemini_client_configuration_detection():
 
     with patch.object(settings, "GEMINI_API_KEY", "test-gemini-api-key"):
         assert gem_client.is_configured is True
-        assert gem_client.get_sanitized_key_prefix() == "AQ.Ab8****"
+        assert gem_client.get_sanitized_key_prefix() == "test-g****"
 
     with patch.object(settings, "GEMINI_API_KEY", ""):
         assert gem_client.is_configured is False

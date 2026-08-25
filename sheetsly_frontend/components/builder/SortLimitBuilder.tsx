@@ -22,21 +22,21 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
   const { dictionary, t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 p-3.5 bg-slate-50/80 border border-slate-200 rounded-lg text-xs">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 p-3.5 bg-slate-50/80 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-xs transition-colors">
       {/* 1. Sort Results Card */}
-      <div className="bg-white border border-slate-200/90 rounded-md p-3 space-y-2 flex flex-col justify-between shadow-2xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-md p-3 space-y-2 flex flex-col justify-between shadow-2xs">
         <div>
           <div className="flex items-center justify-between">
-            <label className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
+            <label className="block text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
               {dictionary.builder.sortResults}
             </label>
             {sort && (
-              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                 {sort.ascending ? 'ASC' : 'DESC'}
               </span>
             )}
           </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
             {dictionary.builder.sortHelper}
           </p>
         </div>
@@ -56,7 +56,7 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
               }
             }}
             aria-label={dictionary.builder.sortResults}
-            className="flex-1 min-w-0 bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-slate-900 focus:outline-hidden cursor-pointer truncate"
+            className="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 focus:outline-hidden cursor-pointer truncate"
           >
             <option value="">{dictionary.builder.naturalOrder}</option>
             {columns.map((c) => (
@@ -71,7 +71,7 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
               type="button"
               onClick={() => onChangeSort({ ...sort, ascending: !sort.ascending })}
               title={sort.ascending ? dictionary.builder.asc : dictionary.builder.descending}
-              className="shrink-0 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md text-xs font-semibold text-slate-800 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+              className="shrink-0 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
             >
               <span>{sort.ascending ? dictionary.builder.sortAscendingShort : dictionary.builder.sortDescendingShort}</span>
             </button>
@@ -82,7 +82,7 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
               type="button"
               onClick={() => onChangeSort(null)}
               title={dictionary.builder.clearSort}
-              className="shrink-0 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
+              className="shrink-0 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -93,19 +93,19 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
       </div>
 
       {/* 2. Limit Output Rows Card */}
-      <div className="bg-white border border-slate-200/90 rounded-md p-3 space-y-2 flex flex-col justify-between shadow-2xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-md p-3 space-y-2 flex flex-col justify-between shadow-2xs">
         <div>
           <div className="flex items-center justify-between">
-            <label className="block text-[11px] font-bold text-slate-800 uppercase tracking-wide">
+            <label className="block text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
               {dictionary.builder.limitRows}
             </label>
             {limit !== null && (
-              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                 TOP {limit}
               </span>
             )}
           </div>
-          <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
             {dictionary.builder.limitHelper}
           </p>
         </div>
@@ -118,7 +118,7 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
               onChangeLimit(val);
             }}
             aria-label={dictionary.builder.limitRows}
-            className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-slate-900 focus:outline-hidden cursor-pointer truncate"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 focus:outline-hidden cursor-pointer truncate"
           >
             <option value="">{dictionary.builder.allRecords}</option>
             <option value="5">{t('builder.limitTo', { count: 5 })}</option>
@@ -132,4 +132,3 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
     </div>
   );
 };
-

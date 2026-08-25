@@ -24,18 +24,20 @@ export const LanguageOnboardingModal: React.FC = () => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-lang-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
     >
-      <div className="bg-white w-full max-w-md rounded-xl border border-slate-300 shadow-xl p-6 space-y-5">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl border border-slate-300 dark:border-slate-800 shadow-xl p-6 space-y-5 transition-colors">
         {/* Header */}
         <div className="space-y-1.5">
-          <div className="w-8 h-8 rounded-md bg-slate-900 text-white font-mono font-bold text-sm flex items-center justify-center mb-3">
-            S
-          </div>
-          <h2 id="onboarding-lang-title" className="text-base font-bold text-slate-900">
+          <img
+            src="/assets/logo.png"
+            alt="Sheetsly Logo"
+            className="w-8 h-8 object-contain rounded-md shadow-2xs mb-3"
+          />
+          <h2 id="onboarding-lang-title" className="text-base font-bold text-slate-900 dark:text-slate-100">
             {dictionary.onboarding.title}
           </h2>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             {dictionary.onboarding.subtitle}
           </p>
         </div>
@@ -47,12 +49,12 @@ export const LanguageOnboardingModal: React.FC = () => {
             onClick={() => setLanguage('en')}
             className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
               language === 'en'
-                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs'
+                : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <span className="block text-xs font-bold">English</span>
-            <span className={`block text-[10px] mt-0.5 ${language === 'en' ? 'text-slate-300' : 'text-slate-500'}`}>
+            <span className={`block text-[10px] mt-0.5 ${language === 'en' ? 'text-slate-300 dark:text-slate-700' : 'text-slate-500 dark:text-slate-400'}`}>
               Default / Canonical
             </span>
           </button>
@@ -62,18 +64,18 @@ export const LanguageOnboardingModal: React.FC = () => {
             onClick={() => setLanguage('id')}
             className={`p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
               language === 'id'
-                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs'
+                : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <span className="block text-xs font-bold">Bahasa Indonesia</span>
-            <span className={`block text-[10px] mt-0.5 ${language === 'id' ? 'text-slate-300' : 'text-slate-500'}`}>
+            <span className={`block text-[10px] mt-0.5 ${language === 'id' ? 'text-slate-300 dark:text-slate-700' : 'text-slate-500 dark:text-slate-400'}`}>
               Lokalisasi Penuh
             </span>
           </button>
         </div>
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
           {dictionary.onboarding.changeLater}
         </p>
 
@@ -82,7 +84,7 @@ export const LanguageOnboardingModal: React.FC = () => {
           <button
             type="button"
             onClick={dismissOnboarding}
-            className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-900"
+            className="w-full py-2 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-md text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-slate-100"
           >
             {dictionary.onboarding.confirm}
           </button>

@@ -6,13 +6,13 @@ import { useTranslation } from '../../lib/i18n';
 import {
   AggregationSpec,
   AnalyticalInstruction,
-  AnalyticalResult,
   ColumnMetadata,
   FilterCondition,
   OperationType,
   SortSpec,
   TableRegion,
 } from '../../lib/types';
+import { useWorkspace } from '../../lib/workspace/WorkspaceContext';
 import { AnalysisResultView } from './AnalysisResultView';
 import { FilterBuilder } from './FilterBuilder';
 import { GroupByBuilder } from './GroupByBuilder';
@@ -31,7 +31,9 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
   tables,
 }) => {
   const { dictionary } = useTranslation();
-  const [selectedTableId, setSelectedTableId] = useState<string>(tables[0]?.table_id || '');
+  const { builderState, updateBuilderState } = useWorkspace();
+
+  const selectedTableId = builderState.selectedTableId || tables[0]?.table_id || '';
   const activeTable = tables.find((t) => t.table_id === selectedTableId) || tables[0];
 
   const columns: ColumnMetadata[] = activeTable?.columns || [];
@@ -39,26 +41,25 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
     ['integer', 'float', 'currency', 'percentage'].includes(c.data_type)
   );
 
-  // Operation Builder State
-  const [operation, setOperation] = useState<OperationType>('SUM');
-  const [targetColumn, setTargetColumn] = useState<string>(numericColumns[0]?.name || columns[0]?.name || '');
-  const [filters, setFilters] = useState<FilterCondition[]>([]);
-  const [filterCombination, setFilterCombination] = useState<'AND' | 'OR'>('AND');
-  const [groupByColumns, setGroupByColumns] = useState<string[]>([columns[0]?.name || '']);
-  const [aggregations, setAggregations] = useState<AggregationSpec[]>([
+  const operation = builderState.operation;
+  const targetColumn = builderState.targetColumn || numericColumns[0]?.name || columns[0]?.name || '';
+  const filters = builderState.filters;
+  const filterCombination = builderState.filterCombination;
+  const groupByColumns = builderState.groupByColumns.length > 0 ? builderState.groupByColumns : [columns[0]?.name || ''];
+  const aggregations: AggregationSpec[] = builderState.aggregations.length > 0 ? builderState.aggregations : [
     {
       column: numericColumns[0]?.name || columns[0]?.name || '',
-      operation: 'SUM',
+      operation: 'SUM' as const,
       alias: `SUM_${numericColumns[0]?.name || columns[0]?.name || ''}`,
     },
-  ]);
-  const [sort, setSort] = useState<SortSpec | null>(null);
-  const [limit, setLimit] = useState<number | null>(null);
+  ];
+  const sort = builderState.sort;
+  const limit = builderState.limit;
+  const result = builderState.result;
 
   // Execution State
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalyticalResult | null>(null);
 
   const isNumericOperation = ['SUM', 'AVERAGE', 'MEDIAN'].includes(operation);
   const requiresTargetColumn = [
@@ -96,14 +97,14 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
       };
 
       const res = await api.analyzeDataset(datasetId, instruction);
-      setResult(res);
+      updateBuilderState({ result: res });
     } catch (err: any) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
         setError(err.message || 'An error occurred during calculation.');
       }
-      setResult(null);
+      updateBuilderState({ result: null });
     } finally {
       setLoading(false);
     }
@@ -112,11 +113,11 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
   return (
     <div className="space-y-5">
       {/* Configuration Form Card */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-2xs p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs p-5 space-y-4 transition-colors">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.builder.title}</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">{dictionary.builder.title}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {dictionary.builder.desc}
             </p>
           </div>
@@ -124,14 +125,13 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
           {/* Table Selector */}
           {tables.length > 1 && (
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold text-slate-600">Target Table:</span>
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Target Table:</span>
               <select
                 value={selectedTableId}
                 onChange={(e) => {
-                  setSelectedTableId(e.target.value);
-                  setResult(null);
+                  updateBuilderState({ selectedTableId: e.target.value, result: null });
                 }}
-                className="text-xs bg-slate-50 border border-slate-300 rounded-md px-2.5 py-1 font-medium text-slate-800"
+                className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-2.5 py-1 font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
               >
                 {tables.map((t) => (
                   <option key={t.table_id} value={t.table_id}>
@@ -147,21 +147,20 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
         <OperationSelector
           selectedOperation={operation}
           onSelectOperation={(op) => {
-            setOperation(op);
-            setResult(null);
+            updateBuilderState({ operation: op, result: null });
           }}
         />
 
         {/* 2. Target Column Selection (for scalar ops) */}
         {requiresTargetColumn && (
-          <div className="space-y-1.5 pt-2 border-t border-slate-200">
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
-              {dictionary.builder.targetColumn} {isNumericOperation && <span className="text-slate-500 font-normal">(numeric measures only)</span>}
+          <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+              {dictionary.builder.targetColumn} {isNumericOperation && <span className="text-slate-500 dark:text-slate-400 font-normal">(numeric measures only)</span>}
             </label>
             <select
               value={targetColumn}
-              onChange={(e) => setTargetColumn(e.target.value)}
-              className="w-full sm:w-80 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs text-slate-800 font-medium focus:ring-1 focus:ring-slate-900"
+              onChange={(e) => updateBuilderState({ targetColumn: e.target.value })}
+              className="w-full sm:w-80 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-100 cursor-pointer"
             >
               {(isNumericOperation ? numericColumns : columns).map((c) => (
                 <option key={c.name} value={c.name}>
@@ -174,50 +173,50 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
 
         {/* 3. Group By Configuration (for GROUP_BY op) */}
         {operation === 'GROUP_BY' && (
-          <div className="pt-2 border-t border-slate-200">
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
             <GroupByBuilder
               columns={columns}
               groupByColumns={groupByColumns}
               aggregations={aggregations}
-              onChangeGroupByColumns={setGroupByColumns}
-              onChangeAggregations={setAggregations}
+              onChangeGroupByColumns={(cols) => updateBuilderState({ groupByColumns: cols })}
+              onChangeAggregations={(aggs) => updateBuilderState({ aggregations: aggs })}
             />
           </div>
         )}
 
         {/* 4. Filters Configuration */}
-        <div className="pt-2 border-t border-slate-200">
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
           <FilterBuilder
             columns={columns}
             filters={filters}
             filterCombination={filterCombination}
-            onChangeFilters={setFilters}
-            onChangeCombination={setFilterCombination}
+            onChangeFilters={(f) => updateBuilderState({ filters: f })}
+            onChangeCombination={(c) => updateBuilderState({ filterCombination: c })}
           />
         </div>
 
         {/* 5. Sort and Limit Controls */}
-        <div className="pt-2 border-t border-slate-200">
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
           <SortLimitBuilder
             columns={columns}
             sort={sort}
             limit={limit}
-            onChangeSort={setSort}
-            onChangeLimit={setLimit}
+            onChangeSort={(s) => updateBuilderState({ sort: s })}
+            onChangeLimit={(l) => updateBuilderState({ limit: l })}
           />
         </div>
 
         {/* Execute Action Bar */}
-        <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-          <div className="text-xs text-slate-500 font-mono text-[11px]">
-            Target: <span className="font-semibold text-slate-800">{activeTable?.name}</span> ({activeTable?.data_range || activeTable?.range_address})
+        <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="text-xs text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+            Target: <span className="font-semibold text-slate-800 dark:text-slate-200">{activeTable?.name}</span> ({activeTable?.data_range || activeTable?.range_address})
           </div>
 
           <button
             type="button"
             onClick={handleExecute}
             disabled={loading || !activeTable}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-2xs disabled:opacity-50 cursor-pointer transition-colors"
+            className="px-4 py-2 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-md text-xs font-semibold shadow-2xs disabled:opacity-50 cursor-pointer transition-colors"
           >
             {loading ? dictionary.builder.executing : dictionary.builder.runAnalysis}
           </button>
@@ -226,7 +225,7 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
 
       {/* Error Alert */}
       {error && (
-        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800 space-y-1">
+        <div className="p-3.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-md text-xs text-rose-800 dark:text-rose-300 space-y-1">
           <div className="font-bold">{dictionary.builder.validationError}</div>
           <p>{error}</p>
         </div>
@@ -237,14 +236,14 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
         <AnalysisResultView
           datasetId={datasetId}
           result={result}
-          onReset={() => setResult(null)}
+          onReset={() => updateBuilderState({ result: null })}
         />
       ) : (
         !loading &&
         !error && (
-          <div className="bg-white rounded-lg border border-dashed border-slate-300 p-8 text-center space-y-1.5">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.builder.noAnalysisYet}</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center space-y-1.5 transition-colors">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">{dictionary.builder.noAnalysisYet}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               {dictionary.builder.noAnalysisDesc}
             </p>
           </div>
