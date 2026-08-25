@@ -98,11 +98,13 @@ def test_ai_query_full_execution_pipeline(uploaded_sales_dataset_id):
 
 def test_ai_suggested_queries_endpoint(uploaded_sales_dataset_id):
     """Verifies suggestion generation on dataset."""
-    res = client.get(f"/api/v1/ai/suggest/{uploaded_sales_dataset_id}")
-    assert res.status_code == 200
-    data = res.json()
-    assert data["dataset_id"] == uploaded_sales_dataset_id
-    assert len(data["suggested_queries"]) >= 1
+    with patch("app.engine.ai.client.qwen_client.generate_json", new_callable=AsyncMock) as mock_gen:
+        mock_gen.return_value = {"suggested_queries": ["What is total revenue?", "Average units by region?"]}
+        res = client.get(f"/api/v1/ai/suggest/{uploaded_sales_dataset_id}")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["dataset_id"] == uploaded_sales_dataset_id
+        assert len(data["suggested_queries"]) >= 1
 
 
 def test_ai_status_endpoint_returns_available_models():

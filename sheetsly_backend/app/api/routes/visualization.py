@@ -7,6 +7,9 @@ from app.engine.analytics import AnalyticalResult, analytical_engine
 from app.engine.visualization import (
     ChartRecommendation,
     InstructionVisualizationRequest,
+    SmartChartGenerator,
+    SmartGenerateRequest,
+    SmartGenerateResponse,
     VisualizationEngine,
     VisualizationRequest,
     VisualizationResponse,
@@ -51,6 +54,18 @@ async def generate_chart_from_instruction(
         include_base64=request.include_base64,
     )
     return visualization_engine.render(viz_request)
+
+
+@router.post("/datasets/{dataset_id}/visualize/smart-generate", response_model=SmartGenerateResponse)
+async def smart_generate_charts(
+    dataset_id: str = Path(..., description="Target dataset UUID"),
+    request: SmartGenerateRequest = SmartGenerateRequest(),
+) -> SmartGenerateResponse:
+    """
+    Deterministically analyzes dataset & table schema to discover, score, rank,
+    and render the most meaningful visualizations without manual chart configuration.
+    """
+    return SmartChartGenerator.generate(dataset_id=dataset_id, request=request)
 
 
 @router.post("/visualization/recommend", response_model=ChartRecommendation)

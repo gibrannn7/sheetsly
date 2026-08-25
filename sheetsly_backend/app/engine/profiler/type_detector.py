@@ -197,17 +197,25 @@ class TypeDetector:
 
         semantic = SemanticTypeEnum.UNKNOWN
 
-        # 1. Identifier check
-        if bool(name_tokens & IDENTIFIER_KEYWORDS) or (
-            unique_count == non_null_count and non_null_count > 3 and best_type in {DataTypeEnum.STRING, DataTypeEnum.INTEGER}
+        # 1. Explicit Measure check (measure keywords or currency/percentage)
+        is_measure_name = bool(name_tokens & MEASURE_KEYWORDS) or any(
+            kw in clean_name
+            for kw in ["revenue", "sales", "penjualan", "pendapatan", "profit", "omset", "laba", "cost", "biaya", "price", "harga", "total", "amount", "jumlah", "qty", "quantity", "unit", "score", "nilai", "rate"]
+        )
+
+        if is_measure_name and best_type in {DataTypeEnum.INTEGER, DataTypeEnum.FLOAT, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}:
+            semantic = SemanticTypeEnum.NUMERIC_MEASURE
+        # 2. Identifier check
+        elif bool(name_tokens & IDENTIFIER_KEYWORDS) or (
+            unique_count == non_null_count and non_null_count > 3 and best_type in {DataTypeEnum.STRING, DataTypeEnum.INTEGER} and not is_measure_name
         ):
             semantic = SemanticTypeEnum.IDENTIFIER
-        # 2. Temporal check
+        # 3. Temporal check
         elif best_type in {DataTypeEnum.DATE, DataTypeEnum.DATETIME} or bool(name_tokens & TEMPORAL_KEYWORDS):
             semantic = SemanticTypeEnum.TEMPORAL
-        # 3. Numeric measure check
+        # 4. Numeric measure check (other currency/percentage/float or integers with >10 values)
         elif best_type in {DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE, DataTypeEnum.FLOAT} or (
-            best_type == DataTypeEnum.INTEGER and (bool(name_tokens & MEASURE_KEYWORDS) or unique_count > 10)
+            best_type == DataTypeEnum.INTEGER and unique_count > 10
         ):
             semantic = SemanticTypeEnum.NUMERIC_MEASURE
         # 4. Boolean

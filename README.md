@@ -105,6 +105,7 @@ User Natural Language Query                          Point-and-Click Operation B
 - **Cell Preservation**: Reads both raw cell values, evaluated values, and formula strings (`fx`) using OpenPyXL with coordinate retention (`CellCoordinate`).
 - **File Validation**: Supports `.xlsx`, `.xls`, `.xlsm`, `.xltx`, and `.csv` up to 50 MB.
 - **Truthful Ingestion UX**: Responsive horizontal indeterminate progress bar reflecting actual background parsing and profiling operations.
+- **Dynamic Actual Spreadsheet Viewer**: High-performance paginated grid table with adaptive CSS truncation, rich hover inspection tooltips, cell coordinate inspection card, selectable page sizes (`10`, `25`, `50`, `100`), compact pagination with smart ellipsis (`1 2 3 ... 10`), and tabular numeral row count tracking (`Showing 51–100 of 9,800 rows`).
 
 ### B. Sheet Understanding & Table Profiling (Phase 2)
 - **Table Detection**: Boundary detection identifying multi-table layouts within a single worksheet.
@@ -118,9 +119,13 @@ User Natural Language Query                          Point-and-Click Operation B
 - **Pre-execution Guardrails**: Immediate rejection of invalid operations (e.g. calculating arithmetic mean on text strings).
 - **Calculation Lineage**: Every result includes exact source worksheet and cell range addresses (e.g. `Sheet1!E2:E9801`), included/excluded row counts, filter conditions, and deterministic execution steps.
 
-### D. Deterministic Visualization Engine (Phase 6)
+### D. Deterministic Visualization Engine & Smart Generate (Phase 6 & Smart Generator)
 - **Supported Chart Types**: `BAR`, `LINE`, `PIE`, `AREA`, `SCATTER`, `HISTOGRAM`.
-- **Conservative Compatibility**: Rule-based shape validation (e.g. pie charts rejected if negative values exist or categories $> 10$; scatter plots require two numeric columns).
+- **Intelligent "Smart Generate Chart"**: Deterministic, schema-aware visualization engine that evaluates table semantics without requiring manual chart configuration or LLM inference.
+  - Automatically derives time-series trends (`LINE` / `AREA`), categorical comparisons (`BAR`), part-to-whole proportions (`PIE` strictly $\le 7$ non-negative categories), numeric correlations (`SCATTER`), and continuous distributions (`HISTOGRAM`).
+  - **Identifier & High-Cardinality Protection**: Automatically filters primary keys and unique identifiers (e.g. `Order ID`, `SKU`, `User ID`) and rejects unreadable charts on high-cardinality columns (e.g. 9,800-bar charts).
+  - **Deduplication & Ranking**: Ranks candidates by analytical business value, enforces dimension and metric diversity, and caps output to top 5 visualizations with complete "Why this chart?" explainability disclosures.
+- **Conservative Compatibility**: Rule-based shape validation (e.g. pie charts rejected if negative values exist or categories $> 7$; scatter plots require two numeric columns).
 - **Headless Static Rendering**: High-resolution Matplotlib/Seaborn image generation stored in session storage and served via `/api/v1/datasets/{id}/charts/{chart_id}/image`.
 - **Integrated Lineage Footers**: Rendered charts include an audit footer linking the graphic to its source worksheet, cell range, and record count.
 
@@ -213,7 +218,7 @@ sheetsly/
 │   ├── storage/
 │   │   └── temp/                        # Session storage for uploaded files and charts
 │   │       └── .gitkeep
-│   ├── tests/                           # 57 automated unit & integration tests
+│   ├── tests/                           # 70 automated unit & integration tests
 │   └── app/
 │       ├── main.py                      # FastAPI application entrypoint & lifespan
 │       ├── core/                        # Configuration, logging, domain errors
@@ -224,7 +229,7 @@ sheetsly/
 │       └── engine/
 │           ├── ingestion/               # OpenPyXL parser, orientation, quality engine
 │           ├── analytics/               # Analytical engine, filters, aggregations, lineage
-│           ├── visualization/           # Chart selector, renderer, recommendation
+│           ├── visualization/           # Chart selector, renderer, recommendation, smart generator
 │           └── ai/                      # Qwen client, planner, guardrails, explainer, orchestrator
 │
 └── sheetsly_frontend/                   # Next.js 16 Frontend Workspace

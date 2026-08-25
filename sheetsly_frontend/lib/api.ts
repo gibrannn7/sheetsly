@@ -13,6 +13,8 @@ import {
   QueryPlanOnlyResponse,
   SheetDataGridResponse,
   SheetMetadata,
+  SmartGenerateRequest,
+  SmartGenerateResponse,
   SuggestedQueriesResponse,
   VisualizationResponse,
   WorkbookOverview,
@@ -147,6 +149,18 @@ export const api = {
       }),
     });
     return handleResponse<VisualizationResponse>(res);
+  },
+
+  async smartGenerateCharts(
+    datasetId: string,
+    request: SmartGenerateRequest = {}
+  ): Promise<SmartGenerateResponse> {
+    const res = await fetch(`${API_BASE}/datasets/${encodeURIComponent(datasetId)}/visualize/smart-generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    return handleResponse<SmartGenerateResponse>(res);
   },
 
   async recommendChart(result: AnalyticalResult): Promise<ChartRecommendation> {

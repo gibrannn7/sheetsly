@@ -99,6 +99,10 @@ export interface TranslationDictionary {
     pageOf: string;
     prev: string;
     next: string;
+    showingRows: string;
+    rowsPerPage: string;
+    noRows: string;
+    clickToInspect: string;
   };
   quality: {
     hygieneScore: string;
@@ -200,6 +204,16 @@ export interface TranslationDictionary {
     sheetAndTable: string;
     sourceRange: string;
     rowsInScope: string;
+    smartGenerateBtn: string;
+    smartGenerateDesc: string;
+    analyzingStructure: string;
+    selectingVisualizations: string;
+    generatingCharts: string;
+    whyThisChart: string;
+    customBuilderTab: string;
+    smartChartsTab: string;
+    noSmartChartsTitle: string;
+    noSmartChartsDesc: string;
     charts: {
       bar: string;
       barDesc: string;

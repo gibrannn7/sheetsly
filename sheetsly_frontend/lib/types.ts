@@ -279,6 +279,35 @@ export interface VisualizationResponse {
   image_base64?: string | null;
 }
 
+export interface SmartChartItem {
+  chart_id: string;
+  title: string;
+  chart_type: ChartType;
+  dimension_column?: string | null;
+  metric_column?: string | null;
+  analytical_intent: string;
+  why_this_chart: string;
+  rank_score: number;
+  instruction: AnalyticalInstruction;
+  visualization: VisualizationResponse;
+}
+
+export interface SmartGenerateRequest {
+  sheet_name?: string | null;
+  table_id?: string | null;
+  max_charts?: number;
+}
+
+export interface SmartGenerateResponse {
+  dataset_id: string;
+  sheet_name: string;
+  table_id: string;
+  total_candidates_evaluated: number;
+  selected_charts_count: number;
+  charts: SmartChartItem[];
+  empty_reason?: string | null;
+}
+
 // ----------------------------------------------------------------------------
 // AI Natural Language Query Models (Phase 8)
 // ----------------------------------------------------------------------------

@@ -83,3 +83,38 @@ class VisualizationResponse(BaseModel):
     chart_metadata: ChartMetadata = Field(..., description="Structured chart metadata and lineage")
     image_url: str = Field(..., description="Relative API URL to retrieve the rendered PNG artifact")
     image_base64: Optional[str] = Field(None, description="Optional Base64-encoded PNG image payload")
+
+
+class SmartChartItem(BaseModel):
+    """A single deterministic smart-generated chart with lineage and explainability."""
+
+    chart_id: str = Field(..., description="Unique chart identifier")
+    title: str = Field(..., description="Descriptive chart title")
+    chart_type: ChartTypeEnum = Field(..., description="Rendered chart type")
+    dimension_column: Optional[str] = Field(None, description="Primary grouping or X-axis dimension")
+    metric_column: Optional[str] = Field(None, description="Primary quantitative measure")
+    analytical_intent: str = Field(..., description="Analytical purpose of the visualization")
+    why_this_chart: str = Field(..., description="Deterministic explanation of why this chart was selected")
+    rank_score: float = Field(..., description="Deterministic ranking score")
+    instruction: AnalyticalInstruction = Field(..., description="Compiled instruction used to produce this chart")
+    visualization: VisualizationResponse = Field(..., description="Rendered chart response and image URL")
+
+
+class SmartGenerateRequest(BaseModel):
+    """Request payload for smart chart generation."""
+
+    sheet_name: Optional[str] = Field(None, description="Target worksheet name (defaults to active/first sheet)")
+    table_id: Optional[str] = Field(None, description="Target table ID (defaults to active/first table)")
+    max_charts: int = Field(5, ge=1, le=5, description="Maximum number of meaningful charts to return")
+
+
+class SmartGenerateResponse(BaseModel):
+    """Response containing the ranked set of smart-generated charts."""
+
+    dataset_id: str = Field(..., description="Target dataset UUID")
+    sheet_name: str = Field(..., description="Target worksheet name")
+    table_id: str = Field(..., description="Target table ID")
+    total_candidates_evaluated: int = Field(0, description="Total candidate charts analyzed before filtering")
+    selected_charts_count: int = Field(0, description="Number of charts generated and returned")
+    charts: List[SmartChartItem] = Field(default_factory=list, description="Ranked meaningful visualizations")
+    empty_reason: Optional[str] = Field(None, description="Truthful explanation if no charts could be generated")
