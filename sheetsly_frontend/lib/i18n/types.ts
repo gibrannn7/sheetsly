@@ -103,6 +103,11 @@ export interface TranslationDictionary {
     rowsPerPage: string;
     noRows: string;
     clickToInspect: string;
+    searchPlaceholder: string;
+    clearSearch: string;
+    matchingRows: string;
+    noMatchingRowsTitle: string;
+    noMatchingRowsDesc: string;
   };
   quality: {
     hygieneScore: string;
@@ -141,6 +146,11 @@ export interface TranslationDictionary {
     naturalOrder: string;
     asc: string;
     descending: string;
+    sortHelper: string;
+    limitHelper: string;
+    sortAscendingShort: string;
+    sortDescendingShort: string;
+    clearSort: string;
     limitRows: string;
     allRecords: string;
     limitTo: string;
@@ -254,6 +264,7 @@ export interface TranslationDictionary {
     providerUnavailable: string;
     providerOfflineDesc: string;
     providerFallbackHelp: string;
+    providerUnconfiguredDesc: string;
     stageLatency: string;
     total: string;
     schemaStage: string;

@@ -6,7 +6,7 @@ import time
 from typing import List, Optional
 
 from app.core.config import settings
-from app.engine.ai.client import qwen_client
+from app.engine.ai.client import ai_client, gemini_client, qwen_client
 from app.engine.ai.explainer import evidence_explainer
 from app.engine.ai.guardrail import ai_guardrail
 from app.engine.ai.models import (
@@ -337,7 +337,7 @@ class AIOrchestrator:
         """Generates schema-derived sample queries."""
         actual_sheet, table = self._resolve_target_table(dataset_id, sheet_name)
 
-        if not qwen_client.is_configured:
+        if not qwen_client.is_configured and not gemini_client.is_configured:
             fallback_qs = self._derive_followup_suggestions(table, None)
             return SuggestedQueriesResponse(
                 dataset_id=dataset_id,
@@ -349,7 +349,7 @@ class AIOrchestrator:
         user_prompt = f"TABLE SCHEMA:\n{schema_context}\n\nGenerate sample questions JSON:"
 
         try:
-            res = await qwen_client.generate_json(
+            res = await ai_client.generate_json(
                 system_prompt=SUGGESTION_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.3,

@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Optional
 
-from app.engine.ai.client import AIProviderError, qwen_client
+from app.engine.ai.client import AIProviderError, ai_client, qwen_client
 from app.engine.ai.models import EvidenceExplanation
 from app.engine.ai.prompts import EXPLAINER_SYSTEM_PROMPT
 from app.engine.analytics.result_model import AnalyticalResult
@@ -48,10 +48,10 @@ class EvidenceExplainer:
         model: Optional[str] = None,
     ) -> EvidenceExplanation:
         """
-        Explains verified result using Qwen with strict evidence grounding,
+        Explains verified result using selected AI model with strict evidence grounding,
         falling back to deterministic template if provider is unconfigured or unavailable.
         """
-        if not qwen_client.is_configured:
+        if not ai_client.is_configured(model):
             return self._generate_fallback_explanation(result, user_query)
 
         # Prepare verified metadata payload for LLM
@@ -80,7 +80,7 @@ class EvidenceExplainer:
         )
 
         try:
-            llm_response = await qwen_client.generate_json(
+            llm_response = await ai_client.generate_json(
                 system_prompt=EXPLAINER_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.0,

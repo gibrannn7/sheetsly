@@ -81,7 +81,7 @@ class QwenQueryPlanner:
             intent_summary = llm_response.get("intent_summary", query)
 
             if res_type == "CLARIFICATION":
-                options = llm_response.get("options", [])
+                options = llm_response.get("options") or []
                 # Ensure options are valid strings from table columns or explicit choices
                 valid_options = [str(opt) for opt in options if opt]
                 clarification = ClarificationRequest(
@@ -108,7 +108,7 @@ class QwenQueryPlanner:
                     )
 
                 # Parse and validate operation
-                op_str = raw_inst.get("operation", "").upper()
+                op_str = str(raw_inst.get("operation") or "").upper()
                 try:
                     op_enum = OperationEnum(op_str)
                 except ValueError:
@@ -122,32 +122,36 @@ class QwenQueryPlanner:
 
                 # Parse filters
                 filters_list = []
-                for f_data in raw_inst.get("filters", []):
-                    if isinstance(f_data, dict) and "column" in f_data and "operator" in f_data:
-                        val = f_data.get("value") if "value" in f_data else f_data.get("operand")
-                        filters_list.append(
-                            FilterCondition(
-                                column=f_data["column"],
-                                operator=f_data["operator"],
-                                value=val,
+                raw_filters = raw_inst.get("filters") or []
+                if isinstance(raw_filters, list):
+                    for f_data in raw_filters:
+                        if isinstance(f_data, dict) and "column" in f_data and "operator" in f_data:
+                            val = f_data.get("value") if "value" in f_data else f_data.get("operand")
+                            filters_list.append(
+                                FilterCondition(
+                                    column=f_data["column"],
+                                    operator=f_data["operator"],
+                                    value=val,
+                                )
                             )
-                        )
 
                 # Parse aggregations (for GROUP_BY)
                 aggs_list = []
-                for agg_data in raw_inst.get("aggregations", []):
-                    if isinstance(agg_data, dict) and "column" in agg_data and "operation" in agg_data:
-                        try:
-                            agg_op = OperationEnum(agg_data["operation"].upper())
-                            aggs_list.append(
-                                AggregationSpec(
-                                    column=agg_data["column"],
-                                    operation=agg_op,
-                                    alias=agg_data.get("alias"),
+                raw_aggs = raw_inst.get("aggregations") or []
+                if isinstance(raw_aggs, list):
+                    for agg_data in raw_aggs:
+                        if isinstance(agg_data, dict) and "column" in agg_data and "operation" in agg_data:
+                            try:
+                                agg_op = OperationEnum(str(agg_data["operation"]).upper())
+                                aggs_list.append(
+                                    AggregationSpec(
+                                        column=agg_data["column"],
+                                        operation=agg_op,
+                                        alias=agg_data.get("alias"),
+                                    )
                                 )
-                            )
-                        except ValueError:
-                            pass
+                            except ValueError:
+                                pass
 
                 # Parse sort
                 sort_spec = None
@@ -158,6 +162,10 @@ class QwenQueryPlanner:
                         ascending=bool(sort_data.get("ascending", True)),
                     )
 
+                raw_group_by = raw_inst.get("group_by_columns") or []
+                if not isinstance(raw_group_by, list):
+                    raw_group_by = [str(raw_group_by)]
+
                 instruction = AnalyticalInstruction(
                     operation=op_enum,
                     dataset_id=dataset_id,
@@ -165,8 +173,8 @@ class QwenQueryPlanner:
                     table_id=table_region.table_id,
                     target_column=raw_inst.get("target_column") or None,
                     filters=filters_list,
-                    filter_combination=raw_inst.get("filter_combination", "AND"),
-                    group_by_columns=raw_inst.get("group_by_columns", []),
+                    filter_combination=raw_inst.get("filter_combination") or "AND",
+                    group_by_columns=raw_group_by,
                     aggregations=aggs_list,
                     sort=sort_spec,
                     limit=raw_inst.get("limit"),

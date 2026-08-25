@@ -123,10 +123,12 @@ class IngestionPipeline:
         sheet_name: str,
         page: int = 1,
         page_size: int = 50,
+        search_query: Optional[str] = None,
     ) -> SheetDataGridResponse:
         """
         Retrieves a paginated 2D cell slice of actual spreadsheet data for the frontend viewer.
         Preserves row numbers, column headers, cell coordinates, and raw/parsed values.
+        Supports case-insensitive keyword search across all cells with accurate matching row pagination.
         """
         grid = self.get_sheet_grid(dataset_id, sheet_name)
 
@@ -146,13 +148,56 @@ class IngestionPipeline:
                 merged_cells=grid.merged_ranges,
             )
 
-        start_row_idx = grid.min_row + (page - 1) * page_size
-        end_row_idx = min(grid.max_row, start_row_idx + page_size - 1)
-
-        # Generate column headers (A, B, C... or column letters)
         from openpyxl.utils import get_column_letter
 
         column_headers = [get_column_letter(c) for c in range(grid.min_col, grid.max_col + 1)]
+
+        clean_q = search_query.strip().lower() if search_query and search_query.strip() else None
+
+        if clean_q:
+            # Deterministic multi-column row search
+            matching_row_indices = []
+            for r in range(grid.min_row, grid.max_row + 1):
+                row_matches = False
+                for c in range(grid.min_col, grid.max_col + 1):
+                    cell = grid.get_cell(r, c)
+                    if cell.original_value is not None and clean_q in str(cell.original_value).lower():
+                        row_matches = True
+                        break
+                    if cell.parsed_value is not None and clean_q in str(cell.parsed_value).lower():
+                        row_matches = True
+                        break
+                    if cell.formula and clean_q in cell.formula.lower():
+                        row_matches = True
+                        break
+                if row_matches:
+                    matching_row_indices.append(r)
+
+            total_matching_rows = len(matching_row_indices)
+            start_offset = (page - 1) * page_size
+            end_offset = min(total_matching_rows, start_offset + page_size)
+            selected_rows = matching_row_indices[start_offset:end_offset]
+
+            rows_slice = []
+            for r in selected_rows:
+                row_cells = [grid.get_cell(r, c) for c in range(grid.min_col, grid.max_col + 1)]
+                rows_slice.append(row_cells)
+
+            return SheetDataGridResponse(
+                dataset_id=dataset_id,
+                sheet_name=sheet_name,
+                page=page,
+                page_size=page_size,
+                total_rows=total_matching_rows,
+                total_columns=total_cols,
+                column_headers=column_headers,
+                rows=rows_slice,
+                merged_cells=grid.merged_ranges,
+            )
+
+        # Standard unsearched pagination
+        start_row_idx = grid.min_row + (page - 1) * page_size
+        end_row_idx = min(grid.max_row, start_row_idx + page_size - 1)
 
         rows_slice = []
         if start_row_idx <= grid.max_row:

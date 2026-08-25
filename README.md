@@ -159,14 +159,10 @@ User Natural Language Query                          Point-and-Click Operation B
 - **Bilingual AI Query Planning**: AI understands questions in both Indonesian (e.g. *"Berapa total pendapatan?"*, *"Tampilkan rata-rata unit per wilayah"*) and English, mapping terms accurately to physical column names without hallucination.
 
 ### H. AI Model Selector, Help Modals & Quality UX (Phase 8.1)
-- **Interactive Model Selector**: Compact UI dropdown in the AI Query Planner supporting 7 allowlisted models:
-  1. `qwen3.5-plus` &mdash; Qwen 3.5 Plus (`Based` / default)
-  2. `qwen3.6-plus` &mdash; Qwen 3.6 Plus
-  3. `qwen3.7-plus` &mdash; Qwen 3.7 Plus
-  4. `qwen3.5-flash` &mdash; Qwen 3.5 Flash
-  5. `qwen3.6-flash` &mdash; Qwen 3.6 Flash
-  6. `qwen3.7-flash` &mdash; Qwen 3.7 Flash
-  7. `deepseek-v4-flash` &mdash; DeepSeek V4 Flash
+- **Interactive Model Selector**: Compact UI dropdown in the AI Query Planner supporting 11 allowlisted models grouped by provider:
+  - **Qwen**: `qwen3.5-plus` (`Based` / default), `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
+  - **DeepSeek**: `deepseek-v4-flash`
+  - **Google Gemini**: `gemini-2.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-3.6-flash`, `gemini-3.7-flash`
 - **Authoritative Backend Allowlist**: Strict Pydantic model validation on `NaturalLanguageQueryRequest` rejecting arbitrary or unapproved model names with HTTP 422 before execution.
 - **Consistent Educational Modals**:
   - `How does this work?` modal detailing the 6-step analytical pipeline and the core principle *"AI interprets intent. Python calculates truth."*
@@ -395,7 +391,7 @@ Frontend workspace will be live at: `http://localhost:3000`.
 cd sheetsly_backend
 python -m pytest -p no:pytest_ethereum
 ```
-*Current test suite: **70 unit & integration tests** covering ingestion, quality scoring, scalar aggregations, multi-grouping, filters, lineage, chart rendering, deterministic smart chart generation (10 scenarios in `test_smart_visualization.py`), AI planning, guardrails, explainer, and REST API routes (**100% passing**).*
+*Current test suite: **71 unit & integration tests** covering ingestion, data grid search, quality scoring, scalar aggregations, multi-grouping, filters, lineage, chart rendering, deterministic smart chart generation (10 scenarios in `test_smart_visualization.py`), AI planning, guardrails, explainer, and REST API routes (**100% passing**).*
 
 ### Running Frontend Production Build
 ```powershell

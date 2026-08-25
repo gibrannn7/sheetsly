@@ -108,24 +108,33 @@ def test_ai_suggested_queries_endpoint(uploaded_sales_dataset_id):
 
 
 def test_ai_status_endpoint_returns_available_models():
-    """Verifies that /status returns full list of 7 allowlisted models."""
+    """Verifies that /status returns full list of 12 allowlisted models (including qwen3.5-flash, gemini-3.1-flash-lite, and without gemini-3.7-flash)."""
     res = client.get("/api/v1/ai/status")
     assert res.status_code == 200
     data = res.json()
     assert "available_models" in data
-    assert len(data["available_models"]) == 7
+    assert len(data["available_models"]) == 12
     model_ids = [m["id"] for m in data["available_models"]]
+    # Qwen (qwen3.5-flash remains available)
     assert "qwen3.5-plus" in model_ids
+    assert "qwen3.5-flash" in model_ids
     assert "qwen3.6-plus" in model_ids
     assert "qwen3.7-plus" in model_ids
-    assert "qwen3.5-flash" in model_ids
     assert "qwen3.6-flash" in model_ids
     assert "qwen3.7-flash" in model_ids
+    # DeepSeek
     assert "deepseek-v4-flash" in model_ids
+    # Gemini
+    assert "gemini-2.5-flash" in model_ids
+    assert "gemini-3.1-flash-lite" in model_ids
+    assert "gemini-3.5-flash-lite" in model_ids
+    assert "gemini-3.5-flash" in model_ids
+    assert "gemini-3.6-flash" in model_ids
+    assert "gemini-3.7-flash" not in model_ids
 
 
 def test_ai_model_allowlist_validation(uploaded_sales_dataset_id):
-    """Verifies that unapproved model names are rejected before execution."""
+    """Verifies that unapproved model names (such as gemini-3.7-flash) are rejected with 422 before execution."""
     invalid_payload = {
         "query": "Total revenue",
         "dataset_id": uploaded_sales_dataset_id,
@@ -134,9 +143,38 @@ def test_ai_model_allowlist_validation(uploaded_sales_dataset_id):
     res = client.post("/api/v1/ai/query", json=invalid_payload)
     assert res.status_code == 422
 
+    # Verify removed gemini-3.7-flash is rejected as no longer supported
+    removed_gemini_payload = {
+        "query": "Total revenue",
+        "dataset_id": uploaded_sales_dataset_id,
+        "model": "gemini-3.7-flash",
+    }
+    res_removed = client.post("/api/v1/ai/query", json=removed_gemini_payload)
+    assert res_removed.status_code == 422
+
+    # Verify qwen3.5-flash is valid and accepted
+    qwen_flash_payload = {
+        "query": "Total revenue",
+        "dataset_id": uploaded_sales_dataset_id,
+        "model": "qwen3.5-flash",
+    }
+    with patch("app.engine.ai.planner.qwen_client.generate_json", new_callable=AsyncMock) as mock_plan:
+        mock_plan.return_value = {
+            "type": "INSTRUCTION",
+            "intent_summary": "Calculate total revenue",
+            "instruction": {
+                "operation": "SUM",
+                "target_column": "Revenue",
+                "filters": [],
+            },
+        }
+        res_qwen_flash = client.post("/api/v1/ai/query", json=qwen_flash_payload)
+        assert res_qwen_flash.status_code == 200
+        assert res_qwen_flash.json()["model_used"] == "qwen3.5-flash"
+
 
 def test_ai_model_propagation_to_planner_and_explainer(uploaded_sales_dataset_id):
-    """Verifies that selected model propagates to Qwen client and response."""
+    """Verifies that selected model propagates to client and response."""
     mock_planner_json = {
         "type": "INSTRUCTION",
         "intent_summary": "Sum total revenue",
@@ -164,3 +202,36 @@ def test_ai_model_propagation_to_planner_and_explainer(uploaded_sales_dataset_id
         mock_plan.assert_called()
         call_kwargs = mock_plan.call_args.kwargs
         assert call_kwargs.get("model") == "deepseek-v4-flash"
+
+
+def test_ai_query_with_gemini_model_execution(uploaded_sales_dataset_id):
+    """Verifies that selecting a Gemini model routes through planning, guardrails, and deterministic Python engine."""
+    mock_gemini_plan = {
+        "type": "INSTRUCTION",
+        "intent_summary": "Calculate total revenue with Gemini 3.5 Flash",
+        "instruction": {
+            "operation": "SUM",
+            "target_column": "Revenue",
+            "filters": [],
+        },
+    }
+
+    with patch("app.engine.ai.client.gemini_client.generate_json", new_callable=AsyncMock) as mock_gemini:
+        mock_gemini.return_value = mock_gemini_plan
+        payload = {
+            "query": "What is the total revenue?",
+            "dataset_id": uploaded_sales_dataset_id,
+            "model": "gemini-3.5-flash",
+            "generate_visualization": True,
+        }
+        res = client.post("/api/v1/ai/query", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+
+        assert data["status"] == "EXECUTION_READY"
+        assert data["model_used"] == "gemini-3.5-flash"
+        # Python calculated truth
+        assert data["analytical_result"]["scalar_value"] == 790.0
+        assert data["explanation"] is not None
+        assert "E2:E6" in data["explanation"]["source_evidence"]
+

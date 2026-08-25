@@ -1,4 +1,4 @@
-"""Server-side client wrapper for DashScope / Qwen OpenAI-compatible API."""
+"""Server-side client wrappers for AI Providers: Alibaba Cloud DashScope (Qwen/DeepSeek) & Google Gemini."""
 
 import json
 import logging
@@ -19,6 +19,219 @@ class AIProviderError(Exception):
         self.message = message
         self.is_configured = is_configured
         self.status_code = status_code
+
+
+class GeminiClient:
+    """Robust client for Google Gemini API (v1beta REST generateContent)."""
+
+    def __init__(self):
+        self.timeout = 45.0
+        self.max_retries = 2
+
+    @property
+    def is_configured(self) -> bool:
+        """Returns True if GEMINI_API_KEY is present and not a dummy placeholder."""
+        key = settings.GEMINI_API_KEY.strip()
+        return bool(key) and key != "your_gemini_api_key_here"
+
+    def get_sanitized_key_prefix(self) -> str:
+        """Returns safe masked key prefix (e.g. 'AQ.Ab8****' or 'AIza****') for diagnostics without leaking secret."""
+        key = settings.GEMINI_API_KEY.strip()
+        if not key:
+            return "(not configured)"
+        if len(key) >= 6:
+            return f"{key[:6]}****"
+        return f"{key[:3]}****"
+
+    def get_endpoint(self, model: str) -> str:
+        """Resolves the Gemini generateContent REST URL according to official API format."""
+        base_url = settings.GEMINI_BASE_URL.strip().rstrip("/")
+        model_name = model.strip()
+        return f"{base_url}/models/{model_name}:generateContent"
+
+    def _get_headers(self) -> Dict[str, str]:
+        if not self.is_configured:
+            raise AIProviderError(
+                "AI Query Planning is unavailable: GEMINI_API_KEY is not configured in backend .env.",
+                is_configured=False,
+            )
+        return {
+            "Content-Type": "application/json",
+            "X-goog-api-key": settings.GEMINI_API_KEY.strip(),
+        }
+
+    def _clean_json_output(self, raw_text: str) -> str:
+        """Extracts JSON payload from potential markdown code fences."""
+        text = raw_text.strip()
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+        return text
+
+    def _classify_http_error(self, status_code: int, response_text: str, model: str) -> str:
+        """Produces precise, actionable diagnostic messages for Gemini HTTP responses."""
+        if status_code == 400:
+            return f"Invalid request to Gemini API (HTTP 400): {response_text[:200]}"
+        if status_code in (401, 403):
+            return (
+                f"Authentication failed (HTTP {status_code}): Invalid or unauthorized GEMINI_API_KEY. "
+                "Please verify your Gemini API key."
+            )
+        if status_code == 404:
+            return (
+                f"Model or endpoint not found (HTTP 404): The requested Gemini model '{model}' was not found. "
+                "Please check model availability."
+            )
+        if status_code == 429:
+            return "Rate limit or quota exceeded (HTTP 429). Please check your Google Gemini API quota / billing."
+        if status_code >= 500:
+            return f"Google Gemini AI service encountered an internal error (HTTP {status_code})."
+
+        detail = response_text[:200]
+        return f"Gemini API returned HTTP {status_code}: {detail}"
+
+    async def generate_json(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.0,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Calls Google Gemini generateContent API requesting structured JSON output.
+        Translates response into structured dictionary while strictly enforcing server-side timeout/retries.
+        """
+        if not self.is_configured:
+            raise AIProviderError(
+                "AI Query Planning is unavailable: GEMINI_API_KEY is not configured in backend .env.",
+                is_configured=False,
+            )
+
+        target_model = (model or settings.GEMINI_DEFAULT_MODEL or "gemini-3.5-flash").strip()
+        endpoint = self.get_endpoint(target_model)
+
+        payload: Dict[str, Any] = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": user_prompt}],
+                }
+            ],
+            "systemInstruction": {
+                "parts": [{"text": system_prompt}],
+            },
+            "generationConfig": {
+                "temperature": temperature,
+                "responseMimeType": "application/json",
+            },
+        }
+
+        last_error = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        endpoint,
+                        headers=self._get_headers(),
+                        json=payload,
+                    )
+
+                if response.status_code in (429, 503) and attempt < self.max_retries:
+                    import asyncio
+                    logger.warning(f"Gemini API returned HTTP {response.status_code} on attempt {attempt + 1}, retrying after backoff...")
+                    await asyncio.sleep(1.5 * (attempt + 1))
+                    continue
+
+                if response.status_code != 200:
+                    err_msg = self._classify_http_error(response.status_code, response.text, target_model)
+                    raise AIProviderError(err_msg, is_configured=True, status_code=response.status_code)
+
+                res_data = response.json()
+                candidates = res_data.get("candidates", [])
+                if not candidates:
+                    raise AIProviderError("Gemini API returned empty candidates list.")
+
+                content_parts = candidates[0].get("content", {}).get("parts", [])
+                if not content_parts or "text" not in content_parts[0]:
+                    raise AIProviderError("Gemini API returned empty candidate parts text.")
+
+                raw_text = content_parts[0].get("text", "")
+                cleaned_content = self._clean_json_output(raw_text)
+                try:
+                    return json.loads(cleaned_content)
+                except json.JSONDecodeError as jde:
+                    logger.error(f"Failed to parse Gemini output as JSON: {cleaned_content}")
+                    raise AIProviderError(f"Gemini API returned malformed JSON: {str(jde)}")
+
+            except (httpx.TimeoutException, httpx.NetworkError) as net_err:
+                last_error = net_err
+                logger.warning(f"Gemini network error on attempt {attempt + 1}: {str(net_err)}")
+                if attempt == self.max_retries:
+                    raise AIProviderError("Gemini API request timed out or network connection failed.")
+            except AIProviderError:
+                raise
+            except Exception as e:
+                logger.error(f"Unexpected Gemini client error: {str(e)}")
+                raise AIProviderError(f"Unexpected error communicating with Gemini API: {str(e)}")
+
+        raise AIProviderError(f"Gemini API request failed: {str(last_error)}")
+
+    async def test_connectivity(self, model: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Executes a minimal, safe connectivity probe against the configured Gemini endpoint.
+        Returns detailed diagnostics WITHOUT exposing any API keys or secrets.
+        """
+        target_model = (model or settings.GEMINI_DEFAULT_MODEL or "gemini-3.5-flash").strip()
+        endpoint = self.get_endpoint(target_model)
+
+        info: Dict[str, Any] = {
+            "configured": self.is_configured,
+            "provider": "Google Gemini",
+            "key_prefix": self.get_sanitized_key_prefix(),
+            "endpoint": endpoint,
+            "model": target_model,
+            "connectivity": "UNTESTED",
+            "status_code": None,
+            "latency_ms": None,
+            "message": None,
+        }
+
+        if not self.is_configured:
+            info["connectivity"] = "UNCONFIGURED"
+            info["message"] = "GEMINI_API_KEY is not set in backend .env."
+            return info
+
+        import time
+        t0 = time.perf_counter()
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    endpoint,
+                    headers=self._get_headers(),
+                    json={
+                        "contents": [
+                            {"parts": [{"text": "Return exactly the word OK."}]}
+                        ],
+                    },
+                )
+            latency = round((time.perf_counter() - t0) * 1000, 1)
+            info["latency_ms"] = latency
+            info["status_code"] = resp.status_code
+
+            if resp.status_code == 200:
+                info["connectivity"] = "HEALTHY"
+                info["message"] = f"Successfully connected to Gemini ({target_model}) ({latency}ms)."
+            else:
+                info["connectivity"] = "ERROR"
+                info["message"] = self._classify_http_error(resp.status_code, resp.text, target_model)
+
+        except Exception as ex:
+            latency = round((time.perf_counter() - t0) * 1000, 1)
+            info["latency_ms"] = latency
+            info["connectivity"] = "NETWORK_ERROR"
+            info["message"] = f"Network/Connection error: {str(ex)}"
+
+        return info
 
 
 class QwenClient:
@@ -114,16 +327,26 @@ class QwenClient:
         model: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Calls Qwen / LLM chat completions API requesting structured JSON output.
-        Enforces server-side execution with timeout, retry guardrails, and model selection.
+        Calls LLM chat completions API requesting structured JSON output.
+        Automatically routes to Gemini if model is a Gemini model, preserving backward compatibility.
         """
+        target_model = (model or settings.QWEN_MODEL or "qwen3.5-plus").strip()
+
+        # Route to Gemini if requested model is Gemini
+        if target_model.startswith("gemini-"):
+            return await gemini_client.generate_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=temperature,
+                model=target_model,
+            )
+
         if not self.is_configured:
             raise AIProviderError(
                 "AI Query Planning is unavailable: DASHSCOPE_API_KEY is not configured in backend .env.",
                 is_configured=False,
             )
 
-        target_model = (model or settings.QWEN_MODEL or "qwen3.5-plus").strip()
         endpoint = self.get_normalized_endpoint()
         payload = {
             "model": target_model,
@@ -198,6 +421,7 @@ class QwenClient:
 
         info: Dict[str, Any] = {
             "configured": self.is_configured,
+            "provider": "DashScope / Qwen",
             "key_prefix": self.get_sanitized_key_prefix(),
             "base_url_host": parsed.netloc,
             "base_url_path": parsed.path,
@@ -253,5 +477,54 @@ class QwenClient:
         return info
 
 
-# Global singleton client
+class AIProviderRouter:
+    """Unified provider router dispatching requests to Qwen or Gemini clients."""
+
+    def __init__(self, qwen: QwenClient, gemini: GeminiClient):
+        self.qwen = qwen
+        self.gemini = gemini
+
+    def is_configured(self, model: Optional[str] = None) -> bool:
+        """Checks if the provider for the specified model (or at least one provider) is configured."""
+        if model and model.strip().lower().startswith("gemini-"):
+            return self.gemini.is_configured
+        return self.qwen.is_configured
+
+    async def generate_json(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.0,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Routes generate_json to the appropriate provider client."""
+        target_model = (model or "").strip().lower()
+        if target_model.startswith("gemini-"):
+            return await self.gemini.generate_json(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=temperature,
+                model=target_model,
+            )
+        return await self.qwen.generate_json(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=temperature,
+            model=model,
+        )
+
+    async def get_diagnostics(self) -> Dict[str, Any]:
+        """Collects connectivity diagnostics across all configured AI providers."""
+        qwen_diag = await self.qwen.test_connectivity()
+        gemini_diag = await self.gemini.test_connectivity()
+        return {
+            "qwen": qwen_diag,
+            "gemini": gemini_diag,
+            "active_default": "qwen" if self.qwen.is_configured else ("gemini" if self.gemini.is_configured else "none"),
+        }
+
+
+# Global singleton clients
+gemini_client = GeminiClient()
 qwen_client = QwenClient()
+ai_client = AIProviderRouter(qwen=qwen_client, gemini=gemini_client)

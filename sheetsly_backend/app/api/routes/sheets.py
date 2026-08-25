@@ -1,6 +1,6 @@
 """Sheet-level inspection, table discovery, and data grid viewer endpoints."""
 
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Query
 from app.engine.pipeline import ingestion_pipeline
 from app.models.schemas import (
@@ -43,14 +43,17 @@ async def get_sheet_data_grid(
     sheet_name: str,
     page: int = Query(1, ge=1, description="1-indexed page number"),
     page_size: int = Query(50, ge=1, le=500, description="Number of rows per page"),
+    q: Optional[str] = Query(None, description="Optional case-insensitive search keyword across all cells"),
 ) -> SheetDataGridResponse:
     """
     Retrieves a paginated 2D cell slice of actual spreadsheet data for the frontend viewer.
     Preserves row numbers, column headers, cell coordinates, data types, and raw/parsed values.
+    Supports deterministic keyword search across all cells with proper pagination over matching rows.
     """
     return ingestion_pipeline.get_sheet_data_page(
         dataset_id=dataset_id,
         sheet_name=sheet_name,
         page=page,
         page_size=page_size,
+        search_query=q,
     )

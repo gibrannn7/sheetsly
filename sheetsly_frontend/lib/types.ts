@@ -348,6 +348,8 @@ export interface TimingBreakdown {
 export interface AIModelOption {
   id: string;
   label: string;
+  provider?: string;
+  provider_label?: string;
   badge?: string;
   is_default?: boolean;
 }

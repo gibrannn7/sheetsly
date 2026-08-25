@@ -26,11 +26,16 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 50
     TEMP_FILE_DIRECTORY: str = "./storage/temp"
 
-    # AI Configuration (Phase 8 Qwen / DashScope)
+    # AI Configuration (Qwen / DashScope)
     DASHSCOPE_API_KEY: str = ""
     QWEN_MODEL: str = "qwen3.5-plus"
     QWEN_BASE_URL: str = "https://ws-6avfe6m7o2twqw9n.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     QWEN_ENABLE_THINKING: bool = True
+
+    # AI Configuration (Google Gemini)
+    GEMINI_API_KEY: str = ""
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
+    GEMINI_DEFAULT_MODEL: str = "gemini-3.5-flash"
 
     # Database (Reserved for future, disabled in MVP)
     DATABASE_ENABLED: bool = False

@@ -12,6 +12,8 @@ from app.engine.ai import (
     QueryPlanOnlyResponse,
     SuggestedQueriesResponse,
     ai_orchestrator,
+    ai_client,
+    gemini_client,
     qwen_client,
 )
 
@@ -22,19 +24,27 @@ router = APIRouter(tags=["AI Natural Language Query Planner"])
 async def get_ai_status():
     """Returns AI configuration readiness status and available models without exposing secrets."""
     return {
-        "configured": qwen_client.is_configured,
+        "configured": qwen_client.is_configured or gemini_client.is_configured,
         "model": settings.QWEN_MODEL or DEFAULT_AI_MODEL,
         "default_model": DEFAULT_AI_MODEL,
         "available_models": SUPPORTED_AI_MODELS,
         "enable_thinking": settings.QWEN_ENABLE_THINKING,
-        "provider": "DashScope / Qwen (OpenAI-compatible)",
+        "provider": "Multi-Provider (Qwen / DeepSeek / Gemini)",
+        "providers": {
+            "qwen": {"configured": qwen_client.is_configured, "label": "DashScope / Qwen"},
+            "gemini": {"configured": gemini_client.is_configured, "label": "Google Gemini"},
+        },
     }
 
 
 @router.get("/diagnostics")
-async def get_ai_diagnostics():
-    """Returns safe provider connectivity diagnostics (for development only)."""
-    return await qwen_client.test_connectivity()
+async def get_ai_diagnostics(provider: Optional[str] = Query(None, description="Optional provider: 'qwen' or 'gemini'")):
+    """Returns safe provider connectivity diagnostics without exposing secrets (for development only)."""
+    if provider == "gemini":
+        return await gemini_client.test_connectivity()
+    if provider == "qwen":
+        return await qwen_client.test_connectivity()
+    return await ai_client.get_diagnostics()
 
 
 @router.post("/query", response_model=NaturalLanguageQueryResponse)

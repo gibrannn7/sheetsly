@@ -88,12 +88,16 @@ export const api = {
     datasetId: string,
     sheetName: string,
     page: number = 1,
-    pageSize: number = 50
+    pageSize: number = 50,
+    search?: string
   ): Promise<SheetDataGridResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       page_size: pageSize.toString(),
     });
+    if (search && search.trim()) {
+      params.append('q', search.trim());
+    }
     const res = await fetch(
       `${API_BASE}/datasets/${encodeURIComponent(datasetId)}/sheets/${encodeURIComponent(sheetName)}/data?${params}`
     );

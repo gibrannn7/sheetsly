@@ -1,6 +1,6 @@
 """Phase 8 AI Natural Language Query Planning & Guardrail module."""
 
-from .client import AIProviderError, QwenClient, qwen_client
+from .client import AIProviderError, GeminiClient, QwenClient, AIProviderRouter, ai_client, gemini_client, qwen_client
 from .explainer import EvidenceExplainer, evidence_explainer
 from .guardrail import AIGuardrail, ai_guardrail
 from .models import (
@@ -14,6 +14,7 @@ from .models import (
     NaturalLanguageQueryResponse,
     QueryPlanOnlyResponse,
     SuggestedQueriesResponse,
+    get_provider_for_model,
 )
 from .orchestrator import AIOrchestrator, ai_orchestrator
 from .planner import QwenQueryPlanner, query_planner
@@ -23,9 +24,14 @@ __all__ = [
     "ALLOWED_AI_MODELS",
     "DEFAULT_AI_MODEL",
     "SUPPORTED_AI_MODELS",
+    "get_provider_for_model",
     "AIProviderError",
+    "GeminiClient",
+    "gemini_client",
     "QwenClient",
     "qwen_client",
+    "AIProviderRouter",
+    "ai_client",
     "EvidenceExplainer",
     "evidence_explainer",
     "AIGuardrail",

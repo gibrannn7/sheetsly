@@ -313,12 +313,14 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
             {/* D. Provider Error */}
             {lastResponse.status === 'PROVIDER_ERROR' && (
               <div className="p-4 bg-slate-50 border border-slate-300 rounded-md text-xs text-slate-800 space-y-1.5">
-                <div className="font-bold">{dictionary.ai.providerUnavailable}</div>
-                <p className="text-slate-600">
-                  {t('ai.providerOfflineDesc', { error: lastResponse.error_message || '' })}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  {dictionary.ai.providerFallbackHelp}
+                <div className="font-bold text-slate-900">{dictionary.ai.providerUnavailable}</div>
+                <p className="text-slate-600 leading-relaxed">
+                  {lastResponse.error_message &&
+                  (lastResponse.error_message.includes('not configured') ||
+                    lastResponse.error_message.includes('not set') ||
+                    lastResponse.error_message.includes('unconfigured'))
+                    ? dictionary.ai.providerUnconfiguredDesc
+                    : dictionary.ai.providerOfflineDesc}
                 </p>
               </div>
             )}
