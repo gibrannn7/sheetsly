@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
 import { CellData, SheetDataGridResponse } from '../../lib/types';
 
 interface ActualDataViewerProps {
@@ -10,6 +11,7 @@ interface ActualDataViewerProps {
 }
 
 export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, sheetName }) => {
+  const { dictionary, t } = useTranslation();
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [gridData, setGridData] = useState<SheetDataGridResponse | null>(null);
@@ -54,7 +56,7 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
         <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              Spreadsheet Cell Grid ({sheetName})
+              {dictionary.grid.title} ({sheetName})
             </h3>
           </div>
           {gridData && (
@@ -66,8 +68,8 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
 
         {isLoading ? (
           <div className="p-12 text-center text-slate-500 text-xs">
-            <p className="font-semibold text-slate-700">Loading spreadsheet grid...</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Retrieving 2D cell coordinates and values</p>
+            <p className="font-semibold text-slate-700">{dictionary.common.loading}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{dictionary.grid.desc}</p>
           </div>
         ) : !gridData || gridData.rows.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs">No data rows found in this sheet.</div>
@@ -135,7 +137,7 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
         {gridData && gridData.total_rows > pageSize && (
           <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
             <span className="text-slate-500 font-mono text-[11px]">
-              Page {page} of {totalPages}
+              {t('grid.pageOf', { page, totalPages })}
             </span>
             <div className="flex items-center space-x-1.5">
               <button
@@ -144,7 +146,7 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="px-2.5 py-1 bg-white border border-slate-300 rounded text-slate-700 disabled:opacity-40 hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed text-xs font-medium"
               >
-                Previous
+                {dictionary.grid.prev}
               </button>
               <button
                 type="button"
@@ -152,7 +154,7 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-2.5 py-1 bg-white border border-slate-300 rounded text-slate-700 disabled:opacity-40 hover:bg-slate-50 cursor-pointer disabled:cursor-not-allowed text-xs font-medium"
               >
-                Next
+                {dictionary.grid.next}
               </button>
             </div>
           </div>
@@ -167,7 +169,7 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
               <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded">
                 {selectedCell.coordinate.cell_ref}
               </span>
-              <span className="font-semibold text-slate-800">Cell Inspection & Coordinate Trace</span>
+              <span className="font-semibold text-slate-800">{dictionary.grid.cellInspection}</span>
             </div>
             <button
               type="button"
@@ -180,27 +182,27 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-slate-700 pt-1">
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase font-bold">Original Value:</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">{dictionary.grid.originalValue}</span>
               <span className="font-mono font-semibold text-slate-900">
                 {selectedCell.original_value !== null ? String(selectedCell.original_value) : '(null)'}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase font-bold">Parsed Value:</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">{dictionary.grid.parsedValue}</span>
               <span className="font-mono font-semibold text-slate-900">
                 {selectedCell.parsed_value !== null ? String(selectedCell.parsed_value) : '(null)'}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase font-bold">Data Type:</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">{dictionary.grid.dataType}</span>
               <span className="font-mono px-1.5 py-0.2 bg-white rounded border border-slate-200 font-semibold text-slate-800">
                 {selectedCell.data_type}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase font-bold">Formula:</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">{dictionary.grid.formula}</span>
               <span className="font-mono text-amber-800">
-                {selectedCell.formula || 'None'}
+                {selectedCell.formula || dictionary.common.none}
               </span>
             </div>
           </div>

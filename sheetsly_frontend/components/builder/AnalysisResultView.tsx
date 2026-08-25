@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
 import {
   AnalyticalResult,
   ChartRecommendation,
@@ -19,6 +20,7 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
   datasetId,
   result,
 }) => {
+  const { dictionary, t } = useTranslation();
   const [recommendation, setRecommendation] = useState<ChartRecommendation | null>(null);
   const [vizResponse, setVizResponse] = useState<VisualizationResponse | null>(null);
   const [selectedChartType, setSelectedChartType] = useState<ChartType | null>(null);
@@ -80,11 +82,11 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
             <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[11px] font-mono font-bold">
               {result.operation}
             </span>
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Verified Result</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.resultView.verifiedResult}</h3>
           </div>
 
           <div className="text-[11px] text-slate-500 font-mono">
-            Execution: <span className="font-bold text-slate-700">{result.lineage.execution_time_ms} ms</span>
+            {t('resultView.executionDuration', { duration: result.lineage.execution_time_ms })}
           </div>
         </div>
 
@@ -98,8 +100,10 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
               {result.scalar_formatted || String(result.scalar_value)}
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              Calculated across {result.lineage.rows_included} verified rows in range{' '}
-              <span className="font-mono font-semibold text-slate-700">{result.lineage.source_range}</span>
+              {t('resultView.rowsInScope', {
+                included: result.lineage.rows_included,
+                range: result.lineage.source_range,
+              })}
             </p>
           </div>
         )}
@@ -163,10 +167,10 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
         >
           <div className="flex items-center space-x-2">
             <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Calculation Lineage & Provenance
+              {dictionary.resultView.lineageTrace}
             </span>
             <span className="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 text-[10px] font-mono font-bold">
-              {result.lineage.rows_included} rows included
+              {result.lineage.rows_included} {dictionary.common.rows}
             </span>
           </div>
 
@@ -180,28 +184,32 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
             {/* Provenance Key-Value Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-md border border-slate-200">
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Worksheet & Table</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.resultView.tableHeader}</span>
                 <span className="font-medium text-slate-800 font-mono text-[11px]">
                   {result.lineage.sheet_name} / {result.lineage.table_id}
                 </span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Source Range</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.resultView.sourceRange}</span>
                 <span className="font-mono font-medium text-slate-800 text-[11px]">{result.lineage.source_range}</span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Row Inclusion</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.resultView.rowInclusion}</span>
                 <span className="font-medium text-slate-800 font-mono text-[11px]">
-                  {result.lineage.rows_included} of {result.lineage.total_table_rows} ({result.lineage.rows_excluded} excluded)
+                  {t('resultView.rowsExcluded', {
+                    included: result.lineage.rows_included,
+                    total: result.lineage.total_table_rows,
+                    excluded: result.lineage.rows_excluded,
+                  })}
                 </span>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Filters Applied</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.resultView.filtersApplied}</span>
                 <span className="font-medium text-slate-800 font-mono text-[11px]">
-                  {result.lineage.filters_applied.length > 0 ? result.lineage.filters_applied.join(', ') : 'None'}
+                  {result.lineage.filters_applied.length > 0 ? result.lineage.filters_applied.join(', ') : dictionary.common.none}
                 </span>
               </div>
             </div>
@@ -209,7 +217,7 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
             {/* Step-by-Step Calculation Trace */}
             <div>
               <span className="text-[11px] font-bold text-slate-700 uppercase block mb-1">
-                Deterministic Execution Trace
+                {dictionary.resultView.lineageTrace}
               </span>
               <ol className="space-y-1 bg-slate-50 p-3 rounded-md border border-slate-200 font-mono text-[11px] text-slate-700">
                 {result.lineage.calculation_steps.map((step, idx) => (
@@ -229,7 +237,7 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
         <div className="bg-white rounded-lg border border-slate-200 shadow-2xs p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
             <div>
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Visualize Result</h4>
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.visualization.title}</h4>
               <p className="text-[11px] text-slate-500">{recommendation.reason}</p>
             </div>
 
@@ -255,7 +263,7 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
 
           {vizError && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800">
-              <span className="font-bold">Rejection:</span> {vizError}
+              <span className="font-bold">{dictionary.visualization.rejection}</span> {vizError}
             </div>
           )}
 
@@ -270,7 +278,7 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
                   rel="noreferrer"
                   className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md shadow-2xs"
                 >
-                  Download PNG
+                  {dictionary.visualization.downloadPng}
                 </a>
               </div>
 
@@ -285,7 +293,7 @@ export const AnalysisResultView: React.FC<AnalysisResultViewProps> = ({
           ) : (
             !vizLoading && (
               <div className="p-4 text-center bg-slate-50 rounded-md border border-dashed border-slate-300">
-                <p className="text-xs text-slate-500 mb-2">Select a chart type above to render the visualization.</p>
+                <p className="text-xs text-slate-500 mb-2">{dictionary.visualization.noChartDesc}</p>
                 {selectedChartType && (
                   <button
                     type="button"

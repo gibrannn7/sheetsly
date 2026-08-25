@@ -45,6 +45,7 @@ class EvidenceExplainer:
         self,
         result: AnalyticalResult,
         user_query: str,
+        model: Optional[str] = None,
     ) -> EvidenceExplanation:
         """
         Explains verified result using Qwen with strict evidence grounding,
@@ -83,6 +84,7 @@ class EvidenceExplainer:
                 system_prompt=EXPLAINER_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.0,
+                model=model,
             )
 
             # Ensure source evidence strictly cites calculation lineage

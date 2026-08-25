@@ -9,6 +9,8 @@ HARD ARCHITECTURAL RULES:
 3. Every column name and table referenced MUST EXACTLY match the provided schema.
 4. If the user's intent is ambiguous (e.g. asking "What's the total?" when multiple numeric columns exist, or referencing an ambiguous metric), YOU MUST NOT GUESS. Return a "CLARIFICATION" response with the available candidate options.
 5. If the request cannot be answered with the table schema or supported operations, return an "UNSUPPORTED" response.
+6. MULTILINGUAL SUPPORT: User queries may be in English or Indonesian (Bahasa Indonesia). You MUST accurately interpret analytical intent in either language (e.g. 'total pendapatan' -> SUM(Revenue), 'rata-rata unit per wilayah' -> GROUP_BY(Region) + AVERAGE(Units), '5 produk teratas' -> GROUP_BY + SORT DESC + LIMIT 5). Map semantic concepts to the EXACT physical column names in the schema. NEVER translate column names or invent columns.
+7. If returning a CLARIFICATION or UNSUPPORTED response, match the language of the user's question (e.g. formulate the question and reason in Indonesian if asked in Indonesian), while keeping candidate option strings identical to the physical schema column names.
 
 SUPPORTED OPERATIONS:
 - SUM: Arithmetic sum of a single numeric column. Requires "target_column".
@@ -31,7 +33,7 @@ You must output a single JSON object matching one of the following schemas:
 Schema 1 (Valid Execution Plan):
 {
   "type": "INSTRUCTION",
-  "intent_summary": "<Short plain English explanation of the intended analysis>",
+  "intent_summary": "<Short plain language explanation of the intended analysis>",
   "instruction": {
     "operation": "<SUM|AVERAGE|MIN|MAX|MEDIAN|COUNT_ROWS|COUNT_VALUES|DISTINCT_COUNT|FILTER|SORT|GROUP_BY>",
     "target_column": "<Exact column name or null>",
@@ -85,6 +87,7 @@ HARD ARCHITECTURAL RULES:
 2. YOU MUST NEVER INVENT CELL COORDINATES OR SOURCE RANGES. All provenance citations must match the CalculationLineage.
 3. Keep the explanation concise, professional, and directly grounded in the data facts.
 4. Output ONLY valid JSON.
+5. MULTILINGUAL SUPPORT: If the user's original query was in Indonesian, produce the "summary", "factual_statement", and "calculation_steps" in professional Indonesian while keeping numbers, metrics, and cell coordinates exact.
 
 OUTPUT FORMAT:
 {

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
 import {
   AggregationSpec,
   AnalyticalInstruction,
@@ -12,11 +13,11 @@ import {
   SortSpec,
   TableRegion,
 } from '../../lib/types';
+import { AnalysisResultView } from './AnalysisResultView';
 import { FilterBuilder } from './FilterBuilder';
 import { GroupByBuilder } from './GroupByBuilder';
 import { OperationSelector } from './OperationSelector';
 import { SortLimitBuilder } from './SortLimitBuilder';
-import { AnalysisResultView } from './AnalysisResultView';
 
 interface OperationBuilderProps {
   datasetId: string;
@@ -29,6 +30,7 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
   sheetName,
   tables,
 }) => {
+  const { dictionary } = useTranslation();
   const [selectedTableId, setSelectedTableId] = useState<string>(tables[0]?.table_id || '');
   const activeTable = tables.find((t) => t.table_id === selectedTableId) || tables[0];
 
@@ -113,9 +115,9 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
       <div className="bg-white rounded-lg border border-slate-200 shadow-2xs p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-200">
           <div>
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Analysis Operation Builder</h2>
+            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.builder.title}</h2>
             <p className="text-xs text-slate-500">
-              Configure deterministic analytical instructions for Python execution.
+              {dictionary.builder.desc}
             </p>
           </div>
 
@@ -154,7 +156,7 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
         {requiresTargetColumn && (
           <div className="space-y-1.5 pt-2 border-t border-slate-200">
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Target Column {isNumericOperation && <span className="text-slate-500 font-normal">(numeric measures only)</span>}
+              {dictionary.builder.targetColumn} {isNumericOperation && <span className="text-slate-500 font-normal">(numeric measures only)</span>}
             </label>
             <select
               value={targetColumn}
@@ -217,7 +219,7 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
             disabled={loading || !activeTable}
             className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-2xs disabled:opacity-50 cursor-pointer transition-colors"
           >
-            {loading ? 'Executing Analysis...' : 'Run Analysis →'}
+            {loading ? dictionary.builder.executing : dictionary.builder.runAnalysis}
           </button>
         </div>
       </div>
@@ -225,7 +227,7 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
       {/* Error Alert */}
       {error && (
         <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800 space-y-1">
-          <div className="font-bold">Validation Rejection</div>
+          <div className="font-bold">{dictionary.builder.validationError}</div>
           <p>{error}</p>
         </div>
       )}
@@ -241,9 +243,9 @@ export const OperationBuilder: React.FC<OperationBuilderProps> = ({
         !loading &&
         !error && (
           <div className="bg-white rounded-lg border border-dashed border-slate-300 p-8 text-center space-y-1.5">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">No Analysis Executed Yet</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.builder.noAnalysisYet}</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Configure your operation, target column, and optional filters above, then click &ldquo;Run Analysis&rdquo; to execute deterministically in Python.
+              {dictionary.builder.noAnalysisDesc}
             </p>
           </div>
         )

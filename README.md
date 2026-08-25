@@ -37,6 +37,8 @@ The platform is engineered around an uncompromised foundational rule: **Python r
 | **Phase 6** | Deterministic Visualization Engine | **COMPLETED** | Headless Matplotlib/Seaborn rendering (`BAR`, `LINE`, `PIE`, `AREA`, `SCATTER`, `HISTOGRAM`), conservative shape recommendation, and session-scoped PNG artifact generation. |
 | **Phase 7** | Interactive Operation Builder UI | **COMPLETED** | Point-and-click Next.js analytical workspace, type-adaptive filter builder, multi-aggregation group-by builder, scalar/table result views, and execution audit trail. |
 | **Phase 8** | Qwen Natural Language Query Planner & Guardrails | **COMPLETED** | Natural-language query translation to `AnalyticalInstruction`, schema ambiguity disambiguation, hard pre-execution guardrails, latency breakdown grid, and evidence-grounded explanation. |
+| **Phase 8.1** | AI Model Selector, Consistent Help Modals & Quality UX | **COMPLETED** | Interactive 7-model allowlist selector (Qwen 3.5/3.6/3.7 Plus & Flash, DeepSeek V4 Flash), dedicated "How does this work?" pipeline modal, and deterministic Data Quality assessment explanation modal. |
+| **Localization** | Multi-Language Localization (EN & ID) | **COMPLETED** | Canonical English base with complete Indonesian UI localization tailored for UMKM, language onboarding, navbar switcher, and bilingual AI queries. |
 
 > **Architecture Note**: In accordance with [`BLUEPRINT.md`](./BLUEPRINT.md), the core system focuses on establishing authoritative single-worksheet multi-table ground truth with cell-level lineage and AI planning before introducing cross-sheet joins (Phases 3 & 4 in future releases).
 
@@ -48,18 +50,19 @@ Sheetsly implements a single, authoritative execution pipeline shared equally by
 
 ```
 User Natural Language Query                          Point-and-Click Operation Builder
-           │                                                         │
-           ▼                                                         │
-[Qwen Query Planner] (Qwen 3.5 Plus)                                 │
-           │                                                         │
-           ▼                                                         │
-[Structured Query Plan]                                              │
-           │                                                         │
-           ▼                                                         │
-[AI Guardrail]                                                       │
-(Detects Ambiguity / Incompatible Types)                             │
-           │                                                         │
-           ├────────────────────────────┬────────────────────────────┘
+(English or Indonesian)                                      │
+           │                                                 │
+           ▼                                                 │
+[Qwen Query Planner] (Qwen 3.5 Plus)                         │
+           │                                                 │
+           ▼                                                 │
+[Structured Query Plan]                                      │
+           │                                                 │
+           ▼                                                 │
+[AI Guardrail]                                               │
+(Detects Ambiguity / Incompatible Types)                     │
+           │                                                 │
+           ├────────────────────────────┬────────────────────┘
            ▼                            ▼
 [Ambiguity Detected]           AnalyticalInstruction
            │                            │
@@ -92,109 +95,89 @@ User Natural Language Query                          Point-and-Click Operation B
 3. **Hard AI Guardrails**: Every AI-planned instruction must pass the Phase 5 `InstructionValidator` (type validation, valid columns, valid operators) before execution. If validation fails, execution is blocked and the error is displayed.
 4. **Evidence Grounding & Source Lineage**: Explanations cite only verified `AnalyticalResult` values and `CalculationLineage` coordinates (e.g. `Sheet1!E2:E9801`, $N$ included rows).
 5. **Deterministic Fallback**: If the AI provider is offline or unconfigured, the system continues running seamlessly in Deterministic Fallback Mode with 100% functionality via the Operation Builder.
+6. **Language Independence of Underlying Truth**: English remains canonical. Translations apply exclusively to presentation and user guidance. Dataset values, column names, cell references, and mathematical calculations are never translated.
 
 ---
 
 ## 3. Implemented Modules & Capabilities
 
 ### A. Spreadsheet Ingestion & Inspection (Phase 1)
-- **Supported File Formats**: `.xlsx`, `.xls`, `.xlsm`, `.xltx`, and `.csv` (up to 50MB).
-- **Cell Coordinate Preservation**: Retains exact 2D cell addresses (e.g., `A1`, `B4`), raw cell values, evaluated values, and formula strings (`fx`).
-- **Truthful Progressive Loading**: Features a restrained horizontal indeterminate progress bar (`role="progressbar"`, `aria-busy="true"`) and interaction locking during large dataset uploads (~9.8k rows / ~2 MB).
-- **Session File Management**: Safely isolates uploaded workbooks in temporary session directories (`storage/temp/{dataset_id}/`).
+- **Cell Preservation**: Reads both raw cell values, evaluated values, and formula strings (`fx`) using OpenPyXL with coordinate retention (`CellCoordinate`).
+- **File Validation**: Supports `.xlsx`, `.xls`, `.xlsm`, `.xltx`, and `.csv` up to 50 MB.
+- **Truthful Ingestion UX**: Responsive horizontal indeterminate progress bar reflecting actual background parsing and profiling operations.
 
-### B. Sheet Profiling & Table Detection (Phase 2)
-- **Table Region Detection**: Automatically detects multiple candidate tables within a single worksheet, header rows, data ranges, and total/footer rows.
-- **Orientation Heuristics**: Deterministically classifies table layouts as `VERTICAL`, `HORIZONTAL`, `AMBIGUOUS`, or `IRREGULAR` with confidence scores and structural signals.
-- **Semantic Type Profiling**: Classifies columns into:
-  - `MEASURE`: Numeric columns eligible for arithmetic (`SUM`, `AVERAGE`, `MEDIAN`).
-  - `CATEGORY`: Categorical dimensions eligible for grouping and axes.
-  - `IDENTIFIER`: Unique keys/IDs protected against arithmetic aggregation.
-  - `TEMPORAL`: Dates and timestamps used for time series and trend analysis.
-- **Data Quality & Hygiene Engine**: Computes a 0–100 hygiene score identifying missing values, mixed data types, duplicate rows, and broken formulas with exact affected cell coordinates.
+### B. Sheet Understanding & Table Profiling (Phase 2)
+- **Table Detection**: Boundary detection identifying multi-table layouts within a single worksheet.
+- **Orientation Analysis**: Determines `VERTICAL`, `HORIZONTAL`, `AMBIGUOUS`, or `IRREGULAR` layout with confidence scoring and structural signals.
+- **Column Semantic Typing**: Profiles columns into `numeric_measure`, `categorical`, `temporal`, `identifier`, `boolean`, and `text`.
+- **Data Quality & Hygiene Scoring**: Automated 0–100 quality scoring checking for missing values, mixed data types, and duplicate rows.
 
 ### C. Deterministic Analytical Engine (Phase 5)
-- **Scalar Aggregations**:
-  - `SUM`: Arithmetic total of numeric measures (auto-parses currency symbols `$`, `Rp`, and percentages).
-  - `AVERAGE`: Arithmetic mean of numeric values.
-  - `COUNT_ROWS`: Total record count in selection.
-  - `COUNT_VALUES`: Non-empty value count in target column.
-  - `DISTINCT_COUNT`: Unique non-empty value count.
-  - `MIN` / `MAX`: Smallest / largest numeric or date values.
-  - `MEDIAN`: 50th percentile value.
-- **Slicing & Sorting**:
-  - `FILTER`: Slices records using 13 operators (`equals`, `not_equals`, `contains`, `not_contains`, `starts_with`, `ends_with`, `greater_than`, `less_than`, `greater_or_equal`, `less_or_equal`, `between`, `in_list`, `is_empty`, `is_not_empty`) with `AND` / `OR` boolean combinations.
-  - `SORT`: Orders records ascending or descending with optional row limits.
-- **Multi-Dimensional Grouping**:
-  - `GROUP_BY`: Groups by one or more dimension columns and computes multiple aggregate metrics with custom column aliases.
-- **Conditional Aggregations**:
-  - `SUMIF`, `SUMIFS`, `COUNTIF`, `COUNTIFS`: Composable conditional operations.
+- **Typed Instruction Model**: Strongly-typed `AnalyticalInstruction` validating operation, target column, filters, multi-grouping, and sorting before calculation.
+- **Supported Operations**: `SUM`, `AVERAGE`, `MIN`, `MAX`, `MEDIAN`, `COUNT_ROWS`, `COUNT_VALUES`, `DISTINCT_COUNT`, `FILTER`, `SORT`, `GROUP_BY`, `SUMIFS`, `COUNTIFS`.
+- **Pre-execution Guardrails**: Immediate rejection of invalid operations (e.g. calculating arithmetic mean on text strings).
+- **Calculation Lineage**: Every result includes exact source worksheet and cell range addresses (e.g. `Sheet1!E2:E9801`), included/excluded row counts, filter conditions, and deterministic execution steps.
 
 ### D. Deterministic Visualization Engine (Phase 6)
-- **Supported Chart Types**: `BAR`, `LINE`, `PIE` (Donut), `AREA`, `SCATTER`, `HISTOGRAM`.
-- **Conservative Compatibility Validation**: Rejects invalid chart configurations (e.g., rejecting Pie charts with $>10$ categories or negative numbers, rejecting Scatter plots on categorical columns).
-- **Automated Recommendation**: Evaluates `AnalyticalResult` shape and recommends preferred chart types with human-readable rationale.
-- **Headless Artifact Generation**: Renders clean static PNG graphics via Matplotlib/Seaborn (`Agg` backend) stored in session storage.
+- **Supported Chart Types**: `BAR`, `LINE`, `PIE`, `AREA`, `SCATTER`, `HISTOGRAM`.
+- **Conservative Compatibility**: Rule-based shape validation (e.g. pie charts rejected if negative values exist or categories $> 10$; scatter plots require two numeric columns).
+- **Headless Static Rendering**: High-resolution Matplotlib/Seaborn image generation stored in session storage and served via `/api/v1/datasets/{id}/charts/{chart_id}/image`.
+- **Integrated Lineage Footers**: Rendered charts include an audit footer linking the graphic to its source worksheet, cell range, and record count.
 
 ### E. Interactive Operation Builder UI (Phase 7)
-- **Point-and-Click Configuration**: 3-category operation grid (`Summarize & Calculate`, `Group & Aggregate`, `Slice & Order`).
-- **Type-Adaptive Controls**: Dropdowns filter columns based on detected semantic types (e.g. numeric-only for arithmetic).
-- **Execution Audit Trail**: Collapsible lineage panel answering *"How was this calculated?"* with source cell coordinates, row inclusion counts, and execution duration in milliseconds.
+- **Point-and-Click Interface**: Build complex analytical queries without writing formulas or SQL.
+- **Type-Adaptive Filters**: 13 supported filter operators (`equals`, `contains`, `greater_than`, `between`, `in_list`, etc.) with `AND`/`OR` combination logic.
+- **Multi-Aggregation Grouping**: Group by multiple dimensions simultaneously and calculate independent aggregate metrics.
+- **Sort & Limit Controls**: Rank and limit top $N$ output rows.
 
 ### F. Qwen Natural Language Query Planner & Guardrails (Phase 8)
-- **Plain-Language Querying**: Type questions such as *"What is the total revenue in the West region?"* or *"Compare units sold across products"*.
-- **Plan Inspection Card**: Shows the AI-planned operation, target column, filters, and grouping dimensions for user verification before and after execution.
-- **Structured Disambiguation**: Interactive clarification prompt when ambiguous terms or multiple numeric measures are queried.
-- **Schema-Derived Suggestions**: Proactively suggests 3–5 logical analytical questions tailored to the active worksheet schema.
-- **Truthful Multi-Stage Execution**:
-  - *Stage 1*: `"Planning analytical query with Qwen..."`
-  - *Stage 2*: `"Executing deterministic analysis in Python..."`
-- **Execution Stage Latency Grid**: Reports precise wall-clock latency for:
-  `Schema Resolution` | `Qwen Planning` | `Guardrail Validation` | `Python Calculation` | `Visualization` | `Evidence Explainer`
-- **Evidence-Based Grounding**: Explanations cite exact source ranges (e.g. `Sales!E2:E6`), row counts, and calculation steps.
+- **Intent Translation**: Qwen 3.5 Plus translates natural-language questions in English or Indonesian into validated `AnalyticalInstruction` JSON.
+- **Proactive Disambiguation**: Returns structured `CLARIFICATION` prompts when queries are ambiguous, enabling users to click candidate column options.
+- **AI Guardrail Validation**: Pre-execution check verifying that all planned columns and operations exist in the physical schema.
+- **Evidence-Based Explainer**: Grounded summaries citing verified numbers, source cell ranges, row counts, and calculation steps.
+- **Execution Stage Latency Grid**: Monospaced latency badges detailing milliseconds for Schema Resolution, Qwen Planning, Guardrails, Python Calculation, Visualization, and Explainer.
+- **In-App Guide (`How to Use`)**: 11-section comprehensive workflow modal accessible from navigation.
 
-### G. In-App Product Guidance & "How to Use" Modal
-- **Discoverable In-App Guide**: Accessible via the `How to Use & Architecture` button in the landing page and workspace header without losing dataset state.
-- **11-Section Comprehensive Curriculum**:
-  1. *Getting Started*
-  2. *Recommended Workflow*
-  3. *Upload & Ingestion Lifecycle*
-  4. *Tables & Semantic Types*
-  5. *Analysis Builder*
-  6. *Deterministic Visualizations*
-  7. *AI Architecture & Truth*
-  8. *Asking Good AI Questions*
-  9. *Understanding AI Results*
-  10. *Data Provenance & Evidence*
-  11. *Troubleshooting & Fallback Modes*
+### G. Multi-Language Localization (English Base + Indonesian UI)
+- **First-Class Indonesian UMKM Support**: Full presentation-layer Indonesian translation tailored for Indonesian business operators and micro/small/medium enterprises.
+- **Language Switcher**: Instant `EN | ID` segmented toggle in navigation.
+- **First-Visit Onboarding Modal**: Lightweight, dismissible language selector with `localStorage` persistence.
+- **Bilingual AI Query Planning**: Qwen understands questions in both Indonesian (e.g. *"Berapa total pendapatan?"*, *"Tampilkan rata-rata unit per wilayah"*) and English, mapping terms accurately to physical column names without hallucination.
+
+### H. AI Model Selector, Help Modals & Quality UX (Phase 8.1)
+- **Interactive Model Selector**: Compact UI dropdown in the AI Query Planner supporting 7 allowlisted models:
+  1. `qwen3.5-plus` &mdash; Qwen 3.5 Plus (`Based` / default)
+  2. `qwen3.6-plus` &mdash; Qwen 3.6 Plus
+  3. `qwen3.7-plus` &mdash; Qwen 3.7 Plus
+  4. `qwen3.5-flash` &mdash; Qwen 3.5 Flash
+  5. `qwen3.6-flash` &mdash; Qwen 3.6 Flash
+  6. `qwen3.7-flash` &mdash; Qwen 3.7 Flash
+  7. `deepseek-v4-flash` &mdash; DeepSeek V4 Flash
+- **Authoritative Backend Allowlist**: Strict Pydantic model validation on `NaturalLanguageQueryRequest` rejecting arbitrary or unapproved model names with HTTP 422 before execution.
+- **Consistent Educational Modals**:
+  - `How does this work?` modal detailing the 6-step analytical pipeline and the core principle *"Qwen interprets intent. Python calculates truth."*
+  - `How this is assessed` modal inside the Data Quality panel explaining the exact deterministic evaluation criteria (broken formulas, missing cells, mixed types, duplicate identifiers, duplicate rows) and scoring deduction rules (-15 / -5 / -2 pts).
 
 ---
 
-## 4. End-to-End User Workflow
+## 4. End-to-End Execution Pipeline
 
 ```
-1. Upload Spreadsheet (.xlsx, .xls, .csv)
+1. User Ingestion
+   ├── File Upload (.xlsx / .csv)
+   ├── 2D Cell Coordinate Parsing
+   ├── Table & Orientation Detection
+   └── Column Semantic Profiling & Hygiene Scoring
    │
    ▼
-2. Deterministic Ingestion & Profiling
-   - Structural parsing & cell retention
-   - Table boundary & orientation detection
-   - Data hygiene score (0–100)
+2. Analysis Path Selection
+   ├── Option A: Point-and-Click Operation Builder
+   └── Option B: Qwen Natural Language Query Planner (EN / ID)
    │
    ▼
-3. Choose Analysis Interaction Mode:
-   ├── Mode A: Operation Builder (Point-and-click without Excel formulas)
-   │    │
-   │    ▼
-   │   Construct AnalyticalInstruction
-   │
-   └── Mode B: AI Query Planner (Natural language with Qwen)
-        │
-        ▼
-       Compile AnalyticalInstruction
-        │
-        ▼
-       AI Guardrail Validation (Schema / Type / Operator check)
+3. Pre-Execution Guardrails (InstructionValidator)
+   ├── Column Existence & Type Compatibility Check
+   └── Proactive Ambiguity Detection (Clarification Required)
    │
    ▼
 4. Authoritative Deterministic Execution (Python / Pandas)
@@ -251,21 +234,25 @@ sheetsly/
     ├── tsconfig.json                    # TypeScript compiler configuration
     ├── next.config.ts                   # Next.js configuration
     ├── app/
-    │   ├── layout.tsx                   # Root layout with Google Geist fonts
+    │   ├── layout.tsx                   # Root layout with LanguageProvider & Geist fonts
     │   ├── globals.css                  # Tailwind v4 theme tokens, animations, & tabular numbers
     │   └── page.tsx                     # Workspace coordinator & tab router
     ├── components/
     │   ├── upload/                      # SpreadsheetUploader with progressive loading
     │   ├── workspace/                   # SheetList, DetectedTablesViewer, ActualDataViewer,
     │   │                                # DataQualityPanel, VisualizationViewer, WorkbookHeader,
-    │   │                                # HowToUseModal
+    │   │                                # HowToUseModal, LanguageSwitcher, LanguageOnboardingModal
     │   ├── builder/                     # OperationBuilder, OperationSelector, FilterBuilder,
     │   │                                # GroupByBuilder, SortLimitBuilder, AnalysisResultView
     │   └── ai/                          # AIQueryWorkspace, PlanInterpretationCard,
     │                                    # ClarificationPrompt, EvidenceExplanationCard
     └── lib/
         ├── types.ts                     # TypeScript domain contracts & timing models
-        └── api.ts                       # Typed REST API client
+        ├── api.ts                       # Typed REST API client
+        └── i18n/                        # Multilingual localization system (en / id)
+            ├── types.ts                 # Translation dictionary schema
+            ├── context.tsx              # LanguageContext & useTranslation hook
+            └── translations/            # English (en.ts) & Indonesian (id.ts) dictionaries
 ```
 
 ---

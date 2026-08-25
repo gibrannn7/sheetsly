@@ -1,148 +1,141 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
 import { WorkbookOverview } from '../../lib/types';
 
 interface SpreadsheetUploaderProps {
-  onUploadSuccess: (overview: WorkbookOverview) => void;
-}
-
-interface ActiveFileInfo {
-  name: string;
-  sizeFormatted: string;
+  onUploadSuccess: (data: WorkbookOverview) => void;
 }
 
 export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUploadSuccess }) => {
+  const { dictionary } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [activeFile, setActiveFile] = useState<ActiveFileInfo | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  const handleFile = async (file: File) => {
-    const validExtensions = ['.xlsx', '.xls', '.csv', '.xlsm', '.xltx'];
-    const fileNameLower = file.name.toLowerCase();
-    const hasValidExt = validExtensions.some((ext) => fileNameLower.endsWith(ext));
-
-    if (!hasValidExt) {
-      setErrorMessage(`Unsupported file format. Please upload an Excel (.xlsx, .xls, .xlsm) or CSV file.`);
-      return;
-    }
-
-    setErrorMessage(null);
-    setActiveFile({
-      name: file.name,
-      sizeFormatted: formatFileSize(file.size),
-    });
-    setIsUploading(true);
-
-    try {
-      const overview = await api.uploadSpreadsheet(file);
-      onUploadSuccess(overview);
-    } catch (err: any) {
-      if (err instanceof ApiError) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage(err?.message || 'Failed to process spreadsheet file. Ensure the backend server is running.');
-      }
-    } finally {
-      setIsUploading(false);
-      setActiveFile(null);
-    }
-  };
-
-  const onDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    if (!isUploading) {
-      setIsDragging(true);
-    }
+    if (!isUploading) setIsDragging(true);
   };
 
-  const onDragLeave = () => {
+  const handleDragLeave = () => {
     setIsDragging(false);
   };
 
-  const onDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     if (isUploading) return;
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFile(e.dataTransfer.files[0]);
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isUploading) return;
+    if (e.target.files && e.target.files.length > 0) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const processFile = async (file: File) => {
+    // Client-side extension validation
+    const validExtensions = ['.xlsx', '.xls', '.xlsm', '.xltx', '.csv'];
+    const fileName = file.name.toLowerCase();
+    const isValid = validExtensions.some((ext) => fileName.endsWith(ext));
+
+    if (!isValid) {
+      setErrorMessage(
+        'Invalid file type. Supported formats are .xlsx, .xls, .xlsm, .xltx, and .csv'
+      );
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setErrorMessage('File size exceeds the 50MB maximum limit.');
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsUploading(true);
+
+    try {
+      const data = await api.uploadSpreadsheet(file);
+      onUploadSuccess(data);
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('Failed to process spreadsheet. Please check the file structure.');
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto p-4">
+    <div className="w-full max-w-xl mx-auto">
       <div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         onClick={() => !isUploading && fileInputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+        aria-busy={isUploading}
+        tabIndex={isUploading ? -1 : 0}
+        role="button"
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !isUploading) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
           isUploading
-            ? 'border-slate-400 bg-slate-50 cursor-not-allowed'
+            ? 'border-slate-300 bg-slate-50/80 cursor-wait'
             : isDragging
-            ? 'border-slate-700 bg-slate-100/70 cursor-pointer'
-            : 'border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50/50 cursor-pointer'
+            ? 'border-slate-800 bg-slate-100/80 cursor-copy'
+            : 'border-slate-300 hover:border-slate-500 bg-white cursor-pointer shadow-2xs hover:shadow-xs'
         }`}
       >
         <input
-          ref={fileInputRef}
           type="file"
-          accept=".xlsx,.xls,.csv,.xlsm,.xltx"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept=".xlsx,.xls,.xlsm,.xltx,.csv"
           disabled={isUploading}
           className="hidden"
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) {
-              handleFile(e.target.files[0]);
-            }
-          }}
+          id="spreadsheet-upload-input"
+          aria-label="Upload spreadsheet file"
         />
 
         <div className="flex flex-col items-center justify-center space-y-3">
           {isUploading ? (
-            /* Active Ingestion Processing View */
-            <div className="w-full max-w-md space-y-3.5 py-1">
-              <div className="flex items-center justify-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  Dataset Ingestion Active
+            /* Active Progressive Loading View */
+            <div className="w-full max-w-xs space-y-3 py-2">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 block">
+                  {dictionary.upload.ingestionActive}
                 </span>
+                <p className="text-xs font-semibold text-slate-800">
+                  {dictionary.upload.processing}
+                </p>
               </div>
 
-              <div className="p-3.5 bg-white border border-slate-200 rounded-md text-left space-y-2.5 shadow-2xs">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-900 truncate max-w-[280px]">
-                    {activeFile?.name || 'Spreadsheet file'}
-                  </span>
-                  <span className="font-mono text-[11px] text-slate-500 tabular-nums">
-                    {activeFile?.sizeFormatted}
-                  </span>
-                </div>
-
-                <div className="text-[11px] text-slate-700 font-medium">
-                  Processing spreadsheet...
-                </div>
-
-                {/* Truthful Indeterminate Horizontal Progress Bar */}
-                <div
-                  role="progressbar"
-                  aria-label="Dataset ingestion in progress"
-                  aria-busy="true"
-                  className="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden relative"
-                >
-                  <div className="h-full bg-slate-900 rounded-full indeterminate-progress-bar" />
-                </div>
+              {/* Truthful Continuous Progress Indicator */}
+              <div
+                role="progressbar"
+                aria-label="Dataset ingestion in progress"
+                aria-busy="true"
+                className="w-full h-1.5 bg-slate-100 border border-slate-200 rounded-full overflow-hidden"
+              >
+                <div className="h-full bg-slate-900 rounded-full indeterminate-progress-bar" />
               </div>
 
               <p className="text-[11px] text-slate-500 max-w-sm mx-auto leading-relaxed">
-                Parsing worksheet structure, detecting tables, profiling column types, and analyzing data hygiene scores.
+                {dictionary.upload.ingestionDesc}
               </p>
             </div>
           ) : (
@@ -167,19 +160,19 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
 
               <div>
                 <p className="text-xs font-semibold text-slate-800">
-                  Select or drop spreadsheet file, or <span className="text-slate-900 underline font-bold">browse</span>
+                  {dictionary.upload.selectOrDrop} <span className="text-slate-900 underline font-bold">{dictionary.upload.browse}</span>
                 </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Supports Excel (.xlsx, .xls, .xlsm) and CSV files up to 50MB
+                  {dictionary.upload.supports}
                 </p>
               </div>
 
               <div className="flex items-center space-x-3 text-[11px] text-slate-500 pt-1">
-                <span>Deterministic Calculation</span>
+                <span>{dictionary.upload.featureDeterministic}</span>
                 <span className="text-slate-300">|</span>
-                <span>Cell Coordinate Traceability</span>
+                <span>{dictionary.upload.featureLineage}</span>
                 <span className="text-slate-300">|</span>
-                <span>Data Quality Profiling</span>
+                <span>{dictionary.upload.featureQuality}</span>
               </div>
             </>
           )}
@@ -191,7 +184,7 @@ export const SpreadsheetUploader: React.FC<SpreadsheetUploaderProps> = ({ onUplo
         <div className="mt-3 p-3.5 rounded-md bg-rose-50 border border-rose-200 text-rose-900 text-xs space-y-1">
           <div className="font-bold flex items-center space-x-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-600" />
-            <span>File Ingestion Error</span>
+            <span>{dictionary.upload.errorTitle}</span>
           </div>
           <p className="text-[11px] text-rose-700">{errorMessage}</p>
         </div>

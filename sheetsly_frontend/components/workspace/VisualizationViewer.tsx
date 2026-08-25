@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { api, ApiError } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
 import {
   AnalyticalInstruction,
   ChartType,
@@ -15,20 +16,12 @@ interface VisualizationViewerProps {
   tables: TableRegion[];
 }
 
-const SUPPORTED_CHARTS: { type: ChartType; label: string; desc: string }[] = [
-  { type: 'BAR', label: 'Bar Chart', desc: 'Categorical comparisons' },
-  { type: 'LINE', label: 'Line Chart', desc: 'Trends & time series' },
-  { type: 'PIE', label: 'Donut / Pie', desc: 'Parts of a whole (<=10 categories)' },
-  { type: 'AREA', label: 'Area Chart', desc: 'Cumulative volume over time' },
-  { type: 'SCATTER', label: 'Scatter Plot', desc: 'Correlation between 2 numeric metrics' },
-  { type: 'HISTOGRAM', label: 'Histogram', desc: 'Numeric value distribution' },
-];
-
 export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
   datasetId,
   sheetName,
   tables,
 }) => {
+  const { dictionary } = useTranslation();
   const [selectedTableId, setSelectedTableId] = useState<string>(tables[0]?.table_id || '');
   const activeTable = tables.find((t) => t.table_id === selectedTableId) || tables[0];
 
@@ -46,6 +39,15 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [vizResponse, setVizResponse] = useState<VisualizationResponse | null>(null);
+
+  const SUPPORTED_CHARTS: { type: ChartType; label: string; desc: string }[] = [
+    { type: 'BAR', label: dictionary.visualization.charts.bar, desc: dictionary.visualization.charts.barDesc },
+    { type: 'LINE', label: dictionary.visualization.charts.line, desc: dictionary.visualization.charts.lineDesc },
+    { type: 'PIE', label: dictionary.visualization.charts.pie, desc: dictionary.visualization.charts.pieDesc },
+    { type: 'AREA', label: dictionary.visualization.charts.area, desc: dictionary.visualization.charts.areaDesc },
+    { type: 'SCATTER', label: dictionary.visualization.charts.scatter, desc: dictionary.visualization.charts.scatterDesc },
+    { type: 'HISTOGRAM', label: dictionary.visualization.charts.histogram, desc: dictionary.visualization.charts.histogramDesc },
+  ];
 
   // Initialize selected columns when table changes
   useEffect(() => {
@@ -129,9 +131,9 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
       <div className="bg-white rounded-lg border border-slate-200 shadow-2xs p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-200">
           <div>
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">Deterministic Chart Generator</h3>
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.visualization.title}</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Generates static Matplotlib/Seaborn visualizations from verified analytical results with complete source lineage.
+              {dictionary.visualization.desc}
             </p>
           </div>
 
@@ -156,7 +158,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
               disabled={loading || !activeTable}
               className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-2xs disabled:opacity-50 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-slate-900"
             >
-              {loading ? 'Rendering...' : 'Generate Chart'}
+              {loading ? dictionary.visualization.rendering : dictionary.visualization.generateChart}
             </button>
           </div>
         </div>
@@ -165,7 +167,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide mb-1">
-              Dimension (X-Axis / Category)
+              {dictionary.visualization.dimension}
             </label>
             <select
               value={selectedDimCol}
@@ -182,7 +184,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide mb-1">
-              Metric (Y-Axis / Measure)
+              {dictionary.visualization.metric}
             </label>
             <select
               value={selectedMetricCol}
@@ -198,7 +200,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide mb-1">Chart Type</label>
+            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide mb-1">{dictionary.visualization.chartType}</label>
             <div className="grid grid-cols-3 gap-1.5">
               {SUPPORTED_CHARTS.map((c) => (
                 <button
@@ -227,7 +229,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
       {/* Error Banner */}
       {error && (
         <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-900 flex items-start space-x-2">
-          <span className="font-bold text-rose-700">Rejection:</span>
+          <span className="font-bold text-rose-700">{dictionary.visualization.rejection}</span>
           <span>{error}</span>
         </div>
       )}
@@ -251,7 +253,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
               rel="noreferrer"
               className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md shadow-2xs transition-colors"
             >
-              Download PNG
+              {dictionary.visualization.downloadPng}
             </a>
           </div>
 
@@ -266,25 +268,25 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
           {/* Lineage & Provenance Footer */}
           <div className="p-3.5 bg-slate-50 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold">Sheet & Table</span>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.visualization.sheetAndTable}</span>
               <span className="font-medium text-slate-800 font-mono text-[11px]">
                 {vizResponse.chart_metadata.sheet_name} / {vizResponse.chart_metadata.table_id}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold">Source Range</span>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.visualization.sourceRange}</span>
               <span className="font-mono font-medium text-slate-800 text-[11px]">
                 {vizResponse.chart_metadata.source_range}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold">Rows In Scope</span>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.visualization.rowsInScope}</span>
               <span className="font-medium text-slate-800 font-mono text-[11px]">
-                {vizResponse.chart_metadata.rows_included} records
+                {vizResponse.chart_metadata.rows_included} {dictionary.common.records}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold">Generated At</span>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">{dictionary.visualization.generatedAt}</span>
               <span className="font-medium text-slate-800 font-mono text-[11px]">
                 {new Date(vizResponse.chart_metadata.generated_at).toLocaleTimeString()}
               </span>
@@ -295,9 +297,9 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
         !loading &&
         !error && (
           <div className="bg-white rounded-lg border border-dashed border-slate-300 p-10 text-center space-y-2">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">No Chart Rendered Yet</h4>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">{dictionary.visualization.noChartYet}</h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Select your dimension, measure, and chart type above, then click &ldquo;Generate Chart&rdquo; to render a static visualization.
+              {dictionary.visualization.noChartDesc}
             </p>
             <div className="pt-2">
               <button
@@ -305,7 +307,7 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
                 onClick={() => handleGenerateChart('BAR')}
                 className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-2xs cursor-pointer transition-colors"
               >
-                Generate Quick Bar Chart
+                {dictionary.visualization.quickBar}
               </button>
             </div>
           </div>

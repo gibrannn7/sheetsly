@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { WorkbookOverview } from '../../lib/types';
 import { HowToUseModal } from './HowToUseModal';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface WorkbookHeaderProps {
   overview: WorkbookOverview;
@@ -10,6 +12,7 @@ interface WorkbookHeaderProps {
 }
 
 export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onReset }) => {
+  const { dictionary } = useTranslation();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const formatBytes = (bytes: number) => {
@@ -35,8 +38,8 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onRese
               S
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 leading-tight">Sheetsly</h1>
-              <p className="text-[10px] text-slate-500 font-medium">Spreadsheet Intelligence Workspace</p>
+              <h1 className="text-sm font-bold text-slate-900 leading-tight">{dictionary.common.appName}</h1>
+              <p className="text-[10px] text-slate-500 font-medium">{dictionary.common.tagline}</p>
             </div>
           </div>
 
@@ -55,7 +58,7 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onRese
             <span className="text-slate-400 font-mono text-[11px]">({formatBytes(overview.file_size_bytes)})</span>
 
             <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]">
-              {overview.sheet_count} Sheet{overview.sheet_count > 1 ? 's' : ''}
+              {overview.sheet_count} {overview.sheet_count > 1 ? dictionary.common.sheets : dictionary.common.sheet}
             </span>
 
             <div
@@ -63,22 +66,24 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onRese
                 overview.overall_quality_score
               )}`}
             >
-              <span>Hygiene: {overview.overall_quality_score}/100</span>
+              <span>{dictionary.common.hygiene}: {overview.overall_quality_score}/100</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2.5">
+          <LanguageSwitcher />
+
           <button
             type="button"
             onClick={() => setIsHelpOpen(true)}
-            aria-label="Open How to Use Guide"
+            aria-label={dictionary.nav.howToUse}
             className="inline-flex items-center space-x-1.5 px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-md transition-colors shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-900"
           >
             <span className="w-3.5 h-3.5 rounded-full bg-slate-800 text-white font-mono text-[10px] flex items-center justify-center font-bold">
               ?
             </span>
-            <span>How to Use</span>
+            <span>{dictionary.nav.howToUse}</span>
           </button>
 
           <button
@@ -89,7 +94,7 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onRese
             <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            <span>Open Another File</span>
+            <span>{dictionary.common.openAnotherFile}</span>
           </button>
         </div>
       </header>

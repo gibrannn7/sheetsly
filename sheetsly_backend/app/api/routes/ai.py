@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.config import settings
 from app.engine.ai import (
+    DEFAULT_AI_MODEL,
+    SUPPORTED_AI_MODELS,
     NaturalLanguageQueryRequest,
     NaturalLanguageQueryResponse,
     QueryPlanOnlyResponse,
@@ -18,10 +20,12 @@ router = APIRouter(tags=["AI Natural Language Query Planner"])
 
 @router.get("/status")
 async def get_ai_status():
-    """Returns AI configuration readiness status without exposing secrets."""
+    """Returns AI configuration readiness status and available models without exposing secrets."""
     return {
         "configured": qwen_client.is_configured,
-        "model": settings.QWEN_MODEL,
+        "model": settings.QWEN_MODEL or DEFAULT_AI_MODEL,
+        "default_model": DEFAULT_AI_MODEL,
+        "available_models": SUPPORTED_AI_MODELS,
         "enable_thinking": settings.QWEN_ENABLE_THINKING,
         "provider": "DashScope / Qwen (OpenAI-compatible)",
     }

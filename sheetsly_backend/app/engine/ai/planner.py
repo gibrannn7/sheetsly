@@ -47,6 +47,7 @@ class QwenQueryPlanner:
         sheet_name: str,
         table_region: TableRegion,
         clarification_selection: Optional[Dict[str, str]] = None,
+        model: Optional[str] = None,
     ) -> Tuple[AIQueryStatus, str, Optional[AnalyticalInstruction], Optional[ClarificationRequest], Optional[str]]:
         """
         Translates a natural language query into an AnalyticalInstruction or ClarificationRequest.
@@ -73,6 +74,7 @@ class QwenQueryPlanner:
                 system_prompt=PLANNER_SYSTEM_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.0,
+                model=model,
             )
 
             res_type = llm_response.get("type", "").upper()

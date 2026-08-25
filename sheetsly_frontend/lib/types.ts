@@ -316,11 +316,19 @@ export interface TimingBreakdown {
   total_duration_ms: number;
 }
 
+export interface AIModelOption {
+  id: string;
+  label: string;
+  badge?: string;
+  is_default?: boolean;
+}
+
 export interface NaturalLanguageQueryRequest {
   query: string;
   dataset_id: string;
   sheet_name?: string | null;
   table_id?: string | null;
+  model?: string | null;
   generate_visualization?: boolean;
   clarification_selection?: Record<string, string> | null;
   preplanned_instruction?: AnalyticalInstruction | null;
@@ -330,6 +338,7 @@ export interface QueryPlanOnlyResponse {
   status: AIQueryStatus;
   user_query: string;
   intent_summary: string;
+  model_used?: string | null;
   planned_instruction?: AnalyticalInstruction | null;
   clarification?: ClarificationRequest | null;
   error_message?: string | null;
@@ -340,6 +349,7 @@ export interface NaturalLanguageQueryResponse {
   status: AIQueryStatus;
   user_query: string;
   intent_summary: string;
+  model_used?: string | null;
   planned_instruction?: AnalyticalInstruction | null;
   clarification?: ClarificationRequest | null;
   analytical_result?: AnalyticalResult | null;
@@ -359,6 +369,8 @@ export interface SuggestedQueriesResponse {
 export interface AIStatusResponse {
   configured: boolean;
   model: string;
+  default_model?: string;
+  available_models?: AIModelOption[];
   enable_thinking: boolean;
   provider: string;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { ColumnMetadata, SortSpec } from '../../lib/types';
 
 interface SortLimitBuilderProps {
@@ -18,11 +19,15 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
   onChangeSort,
   onChangeLimit,
 }) => {
+  const { dictionary, t } = useTranslation();
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-md text-xs">
       {/* Sort Section */}
       <div className="space-y-1">
-        <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">Sort Results (Optional)</label>
+        <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+          {dictionary.builder.sortResults}
+        </label>
         <div className="flex items-center gap-1.5">
           <select
             value={sort?.column || ''}
@@ -39,7 +44,7 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
             }}
             className="flex-1 bg-white border border-slate-300 rounded-md px-2.5 py-1 text-xs text-slate-800"
           >
-            <option value="">Natural dataset order</option>
+            <option value="">{dictionary.builder.naturalOrder}</option>
             {columns.map((c) => (
               <option key={c.name} value={c.name}>
                 {c.name} ({c.data_type})
@@ -53,7 +58,7 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
               onClick={() => onChangeSort({ ...sort, ascending: !sort.ascending })}
               className="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-300 rounded-md text-xs font-semibold text-slate-700 cursor-pointer"
             >
-              {sort.ascending ? 'ASC ↑' : 'DESC ↓'}
+              {sort.ascending ? dictionary.builder.asc : dictionary.builder.descending}
             </button>
           )}
         </div>
@@ -61,7 +66,9 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
 
       {/* Limit Section */}
       <div className="space-y-1">
-        <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">Limit Output Rows (Optional)</label>
+        <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+          {dictionary.builder.limitRows}
+        </label>
         <div className="flex items-center gap-1.5">
           <select
             value={limit?.toString() || ''}
@@ -71,12 +78,12 @@ export const SortLimitBuilder: React.FC<SortLimitBuilderProps> = ({
             }}
             className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1 text-xs text-slate-800"
           >
-            <option value="">All matching records</option>
-            <option value="5">Limit to top 5</option>
-            <option value="10">Limit to top 10</option>
-            <option value="25">Limit to top 25</option>
-            <option value="50">Limit to top 50</option>
-            <option value="100">Limit to top 100</option>
+            <option value="">{dictionary.builder.allRecords}</option>
+            <option value="5">{t('builder.limitTo', { count: 5 })}</option>
+            <option value="10">{t('builder.limitTo', { count: 10 })}</option>
+            <option value="25">{t('builder.limitTo', { count: 25 })}</option>
+            <option value="50">{t('builder.limitTo', { count: 50 })}</option>
+            <option value="100">{t('builder.limitTo', { count: 100 })}</option>
           </select>
         </div>
       </div>

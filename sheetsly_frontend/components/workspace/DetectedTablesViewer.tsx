@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { DataType, OrientationType, SemanticType, TableRegion } from '../../lib/types';
 
 interface DetectedTablesViewerProps {
@@ -9,6 +10,8 @@ interface DetectedTablesViewerProps {
 }
 
 export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tables, sheetName }) => {
+  const { dictionary } = useTranslation();
+
   const getOrientationBadge = (orientation: OrientationType, confidence: number) => {
     const confPct = Math.round(confidence * 100);
     switch (orientation) {
@@ -68,7 +71,7 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
   if (tables.length === 0) {
     return (
       <div className="p-8 text-center bg-white rounded-lg border border-slate-200">
-        <p className="text-xs text-slate-500">No structured tabular data regions detected in {sheetName}.</p>
+        <p className="text-xs text-slate-500">{dictionary.tables.noTables}</p>
       </div>
     );
   }
@@ -80,7 +83,7 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
           {/* Table Header Card */}
           <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center space-x-3">
-              <div className="w-7 h-7 rounded bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded bg-slate-900 text-white flex items-center justify-center font-bold text-xs font-mono">
                 T{idx + 1}
               </div>
               <div>
@@ -90,11 +93,11 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
                 </h3>
                 <div className="flex items-center space-x-2 text-[11px] text-slate-500 mt-0.5">
                   <span>
-                    <strong>{table.row_count}</strong> data rows
+                    <strong>{table.row_count}</strong> {dictionary.common.rows}
                   </span>
                   <span>•</span>
                   <span>
-                    <strong>{table.column_count}</strong> columns
+                    <strong>{table.column_count}</strong> {dictionary.common.columns}
                   </span>
                   {table.header_range && (
                     <>
@@ -127,13 +130,13 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
               <thead className="bg-slate-100 text-slate-600 border-b border-slate-200 uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="px-3.5 py-2 font-bold w-12 text-center">#</th>
-                  <th className="px-3.5 py-2 font-bold">Detected Column Name</th>
+                  <th className="px-3.5 py-2 font-bold">{dictionary.tables.columnName}</th>
                   <th className="px-3.5 py-2 font-bold">Source Ref</th>
-                  <th className="px-3.5 py-2 font-bold">Data Type</th>
-                  <th className="px-3.5 py-2 font-bold">Semantic Role</th>
-                  <th className="px-3.5 py-2 font-bold text-right">Nulls</th>
-                  <th className="px-3.5 py-2 font-bold text-right">Uniques</th>
-                  <th className="px-3.5 py-2 font-bold">Sample Values</th>
+                  <th className="px-3.5 py-2 font-bold">{dictionary.tables.dataType}</th>
+                  <th className="px-3.5 py-2 font-bold">{dictionary.tables.semanticType}</th>
+                  <th className="px-3.5 py-2 font-bold text-right">{dictionary.tables.nulls}</th>
+                  <th className="px-3.5 py-2 font-bold text-right">{dictionary.tables.uniques}</th>
+                  <th className="px-3.5 py-2 font-bold">{dictionary.tables.samples}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">

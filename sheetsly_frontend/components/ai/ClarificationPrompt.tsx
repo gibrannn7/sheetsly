@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { ClarificationRequest } from '../../lib/types';
 
 interface ClarificationPromptProps {
@@ -14,14 +15,16 @@ export const ClarificationPrompt: React.FC<ClarificationPromptProps> = ({
   onSelectOption,
   isLoading,
 }) => {
+  const { dictionary } = useTranslation();
+
   return (
     <div className="bg-amber-50/70 border border-amber-300 rounded-lg p-4 space-y-3 text-xs shadow-2xs">
       <div className="flex items-center space-x-2 border-b border-amber-200 pb-2">
         <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-bold text-[10px] uppercase tracking-wider">
-          Clarification Required
+          {dictionary.ai.clarification.title}
         </span>
         <span className="font-semibold text-amber-950">
-          The query requires disambiguation before execution
+          {dictionary.ai.clarification.badge}
         </span>
       </div>
 
@@ -34,7 +37,7 @@ export const ClarificationPrompt: React.FC<ClarificationPromptProps> = ({
       {clarification.options.length > 0 && (
         <div className="space-y-1.5 pt-1">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-            Select one of the following schema options:
+            {dictionary.ai.clarification.prompt}
           </span>
           <div className="flex flex-wrap gap-2">
             {clarification.options.map((opt) => (

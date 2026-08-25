@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { ColumnMetadata, FilterCondition, FilterOperator } from '../../lib/types';
 
 interface FilterBuilderProps {
@@ -35,6 +36,8 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
   onChangeFilters,
   onChangeCombination,
 }) => {
+  const { dictionary } = useTranslation();
+
   const getCompatibleOperators = (colName: string) => {
     const col = columns.find((c) => c.name === colName);
     const colType = col?.data_type || 'string';
@@ -66,12 +69,12 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-          Filters ({filters.length})
+          {dictionary.builder.filters} ({filters.length})
         </label>
 
         {filters.length > 1 && (
           <div className="flex items-center space-x-1.5 text-xs">
-            <span className="text-slate-500 font-medium">Match:</span>
+            <span className="text-slate-500 font-medium">{dictionary.builder.match}</span>
             <button
               type="button"
               onClick={() => onChangeCombination('AND')}
@@ -81,7 +84,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                   : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
               }`}
             >
-              ALL (AND)
+              {dictionary.builder.matchAll}
             </button>
             <button
               type="button"
@@ -92,7 +95,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
                   : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
               }`}
             >
-              ANY (OR)
+              {dictionary.builder.matchAny}
             </button>
           </div>
         )}
@@ -100,13 +103,13 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
 
       {filters.length === 0 ? (
         <div className="p-3 bg-slate-50 border border-dashed border-slate-300 rounded-md text-center">
-          <p className="text-xs text-slate-500 mb-2">No filter conditions applied. The entire table will be analyzed.</p>
+          <p className="text-xs text-slate-500 mb-2">{dictionary.builder.noFilters}</p>
           <button
             type="button"
             onClick={handleAddFilter}
             className="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md shadow-2xs cursor-pointer transition-colors"
           >
-            + Add Filter Condition
+            {dictionary.builder.addFilter}
           </button>
         </div>
       ) : (
@@ -208,7 +211,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
             onClick={handleAddFilter}
             className="text-xs text-slate-700 hover:text-slate-900 font-semibold py-1 flex items-center gap-1 cursor-pointer"
           >
-            + Add Another Filter
+            {dictionary.builder.addAnotherFilter}
           </button>
         </div>
       )}

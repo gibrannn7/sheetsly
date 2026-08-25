@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { OperationType } from '../../lib/types';
 
 interface OperationOption {
@@ -11,25 +12,6 @@ interface OperationOption {
   requiresNumeric?: boolean;
 }
 
-export const OPERATION_OPTIONS: OperationOption[] = [
-  // Summarize / Scalar
-  { value: 'SUM', label: 'Total (SUM)', category: 'summarize', description: 'Calculates the arithmetic sum of numeric values', requiresNumeric: true },
-  { value: 'AVERAGE', label: 'Average (AVG)', category: 'summarize', description: 'Calculates the arithmetic mean of numeric values', requiresNumeric: true },
-  { value: 'COUNT_ROWS', label: 'Count Rows', category: 'summarize', description: 'Counts the total number of records in the selection' },
-  { value: 'COUNT_VALUES', label: 'Count Values', category: 'summarize', description: 'Counts non-empty values in a specific column' },
-  { value: 'DISTINCT_COUNT', label: 'Unique Values', category: 'summarize', description: 'Counts distinct non-empty values in a column' },
-  { value: 'MIN', label: 'Minimum', category: 'summarize', description: 'Finds the smallest numeric or date value' },
-  { value: 'MAX', label: 'Maximum', category: 'summarize', description: 'Finds the largest numeric or date value' },
-  { value: 'MEDIAN', label: 'Median', category: 'summarize', description: 'Calculates the 50th percentile value', requiresNumeric: true },
-
-  // Group & Pivot
-  { value: 'GROUP_BY', label: 'Group By', category: 'group', description: 'Groups records by dimension(s) and computes aggregate metrics' },
-
-  // Slice & Sort
-  { value: 'FILTER', label: 'Filter Rows', category: 'slice', description: 'Filters table records matching specific criteria' },
-  { value: 'SORT', label: 'Sort Rows', category: 'slice', description: 'Orders table records ascending or descending' },
-];
-
 interface OperationSelectorProps {
   selectedOperation: OperationType;
   onSelectOperation: (op: OperationType) => void;
@@ -39,74 +21,165 @@ export const OperationSelector: React.FC<OperationSelectorProps> = ({
   selectedOperation,
   onSelectOperation,
 }) => {
-  const currentOp = OPERATION_OPTIONS.find((o) => o.value === selectedOperation) || OPERATION_OPTIONS[0];
+  const { dictionary } = useTranslation();
+
+  const operationOptions: OperationOption[] = [
+    // Summarize / Scalar
+    {
+      value: 'SUM',
+      label: dictionary.builder.operations.sumLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.sumDesc,
+      requiresNumeric: true,
+    },
+    {
+      value: 'AVERAGE',
+      label: dictionary.builder.operations.avgLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.avgDesc,
+      requiresNumeric: true,
+    },
+    {
+      value: 'COUNT_ROWS',
+      label: dictionary.builder.operations.countRowsLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.countRowsDesc,
+    },
+    {
+      value: 'COUNT_VALUES',
+      label: dictionary.builder.operations.countValuesLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.countValuesDesc,
+    },
+    {
+      value: 'DISTINCT_COUNT',
+      label: dictionary.builder.operations.distinctCountLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.distinctCountDesc,
+    },
+    {
+      value: 'MIN',
+      label: dictionary.builder.operations.minLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.minDesc,
+    },
+    {
+      value: 'MAX',
+      label: dictionary.builder.operations.maxLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.maxDesc,
+    },
+    {
+      value: 'MEDIAN',
+      label: dictionary.builder.operations.medianLabel,
+      category: 'summarize',
+      description: dictionary.builder.operations.medianDesc,
+      requiresNumeric: true,
+    },
+
+    // Group & Pivot
+    {
+      value: 'GROUP_BY',
+      label: dictionary.builder.operations.groupByLabel,
+      category: 'group',
+      description: dictionary.builder.operations.groupByDesc,
+    },
+
+    // Slice & Sort
+    {
+      value: 'FILTER',
+      label: dictionary.builder.operations.filterLabel,
+      category: 'slice',
+      description: dictionary.builder.operations.filterDesc,
+    },
+    {
+      value: 'SORT',
+      label: dictionary.builder.operations.sortLabel,
+      category: 'slice',
+      description: dictionary.builder.operations.sortDesc,
+    },
+  ];
+
+  const currentOp = operationOptions.find((o) => o.value === selectedOperation) || operationOptions[0];
 
   return (
     <div className="space-y-2.5">
       <label className="block text-xs font-bold text-slate-800 uppercase tracking-wide">
-        Operation
+        {dictionary.builder.operation}
       </label>
 
       {/* Categorized Operation Grid */}
       <div className="space-y-2.5">
         <div>
-          <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Summarize & Calculate</div>
+          <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+            {dictionary.builder.summarizeCategory}
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            {OPERATION_OPTIONS.filter((o) => o.category === 'summarize').map((op) => (
-              <button
-                key={op.value}
-                type="button"
-                onClick={() => onSelectOperation(op.value)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
-                  selectedOperation === op.value
-                    ? 'bg-slate-900 border-slate-900 text-white font-semibold'
-                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                {op.label}
-              </button>
-            ))}
+            {operationOptions
+              .filter((o) => o.category === 'summarize')
+              .map((op) => (
+                <button
+                  key={op.value}
+                  type="button"
+                  onClick={() => onSelectOperation(op.value)}
+                  className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
+                    selectedOperation === op.value
+                      ? 'bg-slate-900 border-slate-900 text-white font-semibold'
+                      : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {op.label}
+                </button>
+              ))}
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
-            <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Group & Aggregate</div>
+            <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+              {dictionary.builder.groupCategory}
+            </div>
             <div className="grid grid-cols-1 gap-1.5">
-              {OPERATION_OPTIONS.filter((o) => o.category === 'group').map((op) => (
-                <button
-                  key={op.value}
-                  type="button"
-                  onClick={() => onSelectOperation(op.value)}
-                  className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
-                    selectedOperation === op.value
-                      ? 'bg-slate-900 border-slate-900 text-white font-semibold'
-                      : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {op.label}
-                </button>
-              ))}
+              {operationOptions
+                .filter((o) => o.category === 'group')
+                .map((op) => (
+                  <button
+                    key={op.value}
+                    type="button"
+                    onClick={() => onSelectOperation(op.value)}
+                    className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
+                      selectedOperation === op.value
+                        ? 'bg-slate-900 border-slate-900 text-white font-semibold'
+                        : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {op.label}
+                  </button>
+                ))}
             </div>
           </div>
 
           <div>
-            <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Slice & Order</div>
+            <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+              {dictionary.builder.sliceCategory}
+            </div>
             <div className="grid grid-cols-2 gap-1.5">
-              {OPERATION_OPTIONS.filter((o) => o.category === 'slice').map((op) => (
-                <button
-                  key={op.value}
-                  type="button"
-                  onClick={() => onSelectOperation(op.value)}
-                  className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
-                    selectedOperation === op.value
-                      ? 'bg-slate-900 border-slate-900 text-white font-semibold'
-                      : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {op.label}
-                </button>
-              ))}
+              {operationOptions
+                .filter((o) => o.category === 'slice')
+                .map((op) => (
+                  <button
+                    key={op.value}
+                    type="button"
+                    onClick={() => onSelectOperation(op.value)}
+                    className={`px-2.5 py-1.5 text-xs font-medium rounded-md border text-left transition-colors cursor-pointer ${
+                      selectedOperation === op.value
+                        ? 'bg-slate-900 border-slate-900 text-white font-semibold'
+                        : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {op.label}
+                  </button>
+                ))}
             </div>
           </div>
         </div>

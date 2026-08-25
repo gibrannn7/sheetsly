@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '../../lib/i18n';
 
 interface HowToUseModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface HowToUseModalProps {
 
 type GuideSection =
   | 'getting-started'
+  | 'workflow'
   | 'ingestion'
   | 'dataset-profiling'
   | 'analysis-builder'
@@ -17,30 +19,10 @@ type GuideSection =
   | 'ai-questions'
   | 'ai-results'
   | 'provenance'
-  | 'troubleshooting'
-  | 'workflow';
-
-interface SectionItem {
-  id: GuideSection;
-  title: string;
-  category: string;
-}
-
-const SECTIONS: SectionItem[] = [
-  { id: 'getting-started', title: '1. Getting Started', category: 'Overview' },
-  { id: 'workflow', title: '2. Recommended Workflow', category: 'Overview' },
-  { id: 'ingestion', title: '3. Upload & Ingestion', category: 'Data Understanding' },
-  { id: 'dataset-profiling', title: '4. Tables & Schema Types', category: 'Data Understanding' },
-  { id: 'analysis-builder', title: '5. Analysis Builder', category: 'Deterministic Analysis' },
-  { id: 'visualization', title: '6. Visualizations', category: 'Deterministic Analysis' },
-  { id: 'ai-architecture', title: '7. AI Architecture & Truth', category: 'AI Intelligence' },
-  { id: 'ai-questions', title: '8. Asking Good AI Questions', category: 'AI Intelligence' },
-  { id: 'ai-results', title: '9. Understanding AI Results', category: 'AI Intelligence' },
-  { id: 'provenance', title: '10. Data Provenance & Evidence', category: 'Auditing' },
-  { id: 'troubleshooting', title: '11. Troubleshooting & Fallback', category: 'Auditing' },
-];
+  | 'troubleshooting';
 
 export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose }) => {
+  const { dictionary } = useTranslation();
   const [activeSection, setActiveSection] = useState<GuideSection>('getting-started');
 
   // Handle ESC key to close
@@ -55,6 +37,22 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const secDict = dictionary.howToUse.sections;
+
+  const sectionsList: { id: GuideSection; title: string }[] = [
+    { id: 'getting-started', title: secDict.gettingStarted.navTitle },
+    { id: 'workflow', title: secDict.workflow.navTitle },
+    { id: 'ingestion', title: secDict.ingestion.navTitle },
+    { id: 'dataset-profiling', title: secDict.datasetProfiling.navTitle },
+    { id: 'analysis-builder', title: secDict.analysisBuilder.navTitle },
+    { id: 'visualization', title: secDict.visualization.navTitle },
+    { id: 'ai-architecture', title: secDict.aiArchitecture.navTitle },
+    { id: 'ai-questions', title: secDict.aiQuestions.navTitle },
+    { id: 'ai-results', title: secDict.aiResults.navTitle },
+    { id: 'provenance', title: secDict.provenance.navTitle },
+    { id: 'troubleshooting', title: secDict.troubleshooting.navTitle },
+  ];
 
   return (
     <div
@@ -72,10 +70,10 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             </div>
             <div>
               <h2 id="how-to-use-title" className="text-sm font-bold text-slate-900">
-                How to Use Sheetsly
+                {dictionary.howToUse.title}
               </h2>
               <p className="text-xs text-slate-500">
-                Comprehensive guide to deterministic spreadsheet intelligence and AI query planning.
+                {dictionary.howToUse.subtitle}
               </p>
             </div>
           </div>
@@ -95,9 +93,9 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
           {/* Navigation Sidebar */}
           <nav aria-label="Guide sections" className="w-64 border-r border-slate-200 bg-slate-50/70 p-3 overflow-y-auto space-y-1">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1">
-              Table of Contents
+              {dictionary.howToUse.tocTitle}
             </div>
-            {SECTIONS.map((sec) => (
+            {sectionsList.map((sec) => (
               <button
                 key={sec.id}
                 type="button"
@@ -119,28 +117,28 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'getting-started' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">1. Getting Started with Sheetsly</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.gettingStarted.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    Sheetsly is an interactive spreadsheet intelligence platform designed to eliminate analytical guesswork. It turns raw spreadsheets into structured, verifiable insights with exact cell-level provenance.
+                    {secDict.gettingStarted.body1}
                   </p>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
-                  <h4 className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">Key Architectural Foundation</h4>
-                  <p className="leading-relaxed">
-                    <strong>&ldquo;Qwen interprets intent. Python calculates truth.&rdquo;</strong>
+                  <h4 className="font-bold text-slate-900 uppercase tracking-wide text-[11px]">{secDict.gettingStarted.archTitle}</h4>
+                  <p className="leading-relaxed font-bold text-slate-900">
+                    {secDict.gettingStarted.archRule}
                   </p>
                   <p className="text-slate-600 leading-relaxed">
-                    Unlike ordinary AI chatbots that estimate or hallucinate calculations, Sheetsly routes every analytical question through a validated deterministic Python engine. The AI translates your questions into structured instructions, while Python performs the mathematical calculation directly against your spreadsheet cells.
+                    {secDict.gettingStarted.archDesc}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="font-bold text-slate-900 text-xs">Supported File Formats</h4>
+                  <h4 className="font-bold text-slate-900 text-xs">{secDict.gettingStarted.formatsTitle}</h4>
                   <ul className="list-disc list-inside space-y-1 text-slate-600 pl-1">
-                    <li><strong>Excel Workbooks:</strong> <code className="font-mono bg-slate-100 px-1 rounded">.xlsx</code>, <code className="font-mono bg-slate-100 px-1 rounded">.xls</code>, <code className="font-mono bg-slate-100 px-1 rounded">.xlsm</code>, <code className="font-mono bg-slate-100 px-1 rounded">.xltx</code></li>
-                    <li><strong>Delimited Files:</strong> <code className="font-mono bg-slate-100 px-1 rounded">.csv</code> (comma-separated values)</li>
-                    <li><strong>File Size Ceiling:</strong> Up to 50 MB per workbook.</li>
+                    <li>{secDict.gettingStarted.excelFormats}</li>
+                    <li>{secDict.gettingStarted.csvFormats}</li>
+                    <li>{secDict.gettingStarted.fileSizeLimit}</li>
                   </ul>
                 </div>
               </div>
@@ -150,36 +148,36 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'workflow' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">2. Recommended Analytical Workflow</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.workflow.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    Follow this end-to-end workflow to analyze any spreadsheet with complete confidence:
+                    {secDict.workflow.intro}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2.5">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">Step 1</span>
-                    <strong className="text-slate-900">Upload & Ingest:</strong> Drop your file. The system inspects structure, parses cells, detects tables, profiles types, and assesses data hygiene.
+                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">{secDict.workflow.step1Title}</span>
+                    <span className="text-slate-700">{secDict.workflow.step1Desc}</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">Step 2</span>
-                    <strong className="text-slate-900">Inspect Structure:</strong> Review detected tables, column types (measures vs dimensions), and data quality score.
+                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">{secDict.workflow.step2Title}</span>
+                    <span className="text-slate-700">{secDict.workflow.step2Desc}</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">Step 3</span>
-                    <strong className="text-slate-900">Choose Analysis Path:</strong>
+                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">{secDict.workflow.step3Title}</span>
+                    <strong className="text-slate-900">{secDict.workflow.step3Desc}</strong>
                     <ul className="list-disc list-inside mt-1 text-slate-600 space-y-0.5 pl-2">
-                      <li><strong>AI Query Planner:</strong> Ask natural-language questions in plain English or Indonesian.</li>
-                      <li><strong>Analysis Builder:</strong> Use the point-and-click UI to build custom aggregations, multi-grouping, and filters without formulas.</li>
+                      <li>{secDict.workflow.step3Ai}</li>
+                      <li>{secDict.workflow.step3Builder}</li>
                     </ul>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">Step 4</span>
-                    <strong className="text-slate-900">Verify Plan & Lineage:</strong> Inspect the planned instruction, row count, and source cell coordinates (e.g. <code className="font-mono">Sheet1!E2:E9801</code>).
+                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">{secDict.workflow.step4Title}</span>
+                    <span className="text-slate-700">{secDict.workflow.step4Desc}</span>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">Step 5</span>
-                    <strong className="text-slate-900">Visualize & Export:</strong> Generate conservative charts (Bar, Line, Pie, Area, Scatter, Histogram) and download high-resolution PNGs.
+                    <span className="font-mono font-bold text-slate-900 text-xs mr-2">{secDict.workflow.step5Title}</span>
+                    <span className="text-slate-700">{secDict.workflow.step5Desc}</span>
                   </div>
                 </div>
               </div>
@@ -189,43 +187,43 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'ingestion' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">3. Upload & Ingestion Lifecycle</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.ingestion.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    When you drop a file, Sheetsly executes an atomic ingestion pipeline on the backend:
+                    {secDict.ingestion.intro}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-start space-x-2">
-                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{secDict.ingestion.step1Title}</span>
                     <div>
-                      <strong className="text-slate-900">Secure Temporary Storage:</strong> Saves the file to a session-scoped directory in <code className="font-mono">storage/temp/</code>.
+                      <span className="text-slate-700">{secDict.ingestion.step1Desc}</span>
                     </div>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{secDict.ingestion.step2Title}</span>
                     <div>
-                      <strong className="text-slate-900">2D Cell Coordinate Parser:</strong> Preserves raw values, evaluated values, and formula strings (<code className="font-mono text-amber-700">fx</code>) with coordinate retention.
+                      <span className="text-slate-700">{secDict.ingestion.step2Desc}</span>
                     </div>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{secDict.ingestion.step3Title}</span>
                     <div>
-                      <strong className="text-slate-900">Table & Orientation Detection:</strong> Detects multiple tables per sheet and determines layout (<code className="font-mono">VERTICAL</code>, <code className="font-mono">HORIZONTAL</code>, <code className="font-mono">AMBIGUOUS</code>).
+                      <span className="text-slate-700">{secDict.ingestion.step3Desc}</span>
                     </div>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+                    <span className="w-5 h-5 rounded bg-slate-200 text-slate-800 font-mono font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">{secDict.ingestion.step4Title}</span>
                     <div>
-                      <strong className="text-slate-900">Data Quality & Hygiene Scoring:</strong> Analyzes missing values, mixed data types, and duplicate rows, producing a 0–100 hygiene score.
+                      <span className="text-slate-700">{secDict.ingestion.step4Desc}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                  <span className="font-bold text-slate-800 block mb-0.5">What &ldquo;Dataset Ready&rdquo; Means:</span>
+                  <span className="font-bold text-slate-800 block mb-0.5">{secDict.ingestion.readyTitle}</span>
                   <p className="text-slate-600 leading-relaxed">
-                    Once ingestion completes, the workspace unlocks all tabs: AI Query Planner, Analysis Builder, Detected Tables, Cell Grid, Visualizations, and Quality Report.
+                    {secDict.ingestion.readyDesc}
                   </p>
                 </div>
               </div>
@@ -235,39 +233,39 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'dataset-profiling' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">4. Tables & Semantic Column Types</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.datasetProfiling.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    Sheetsly profiles every column to prevent invalid calculations (e.g. attempting to sum a phone number or customer name):
+                    {secDict.datasetProfiling.intro}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1">
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                      MEASURE (Numeric)
+                      {secDict.datasetProfiling.measureTitle}
                     </span>
-                    <p className="text-slate-700">Columns containing quantifiable numbers (e.g. <code className="font-mono">Revenue</code>, <code className="font-mono">Units</code>, <code className="font-mono">Salary</code>). Eligible for <code className="font-mono">SUM</code>, <code className="font-mono">AVERAGE</code>, <code className="font-mono">MEDIAN</code>.</p>
+                    <p className="text-slate-700">{secDict.datasetProfiling.measureDesc}</p>
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1">
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-800 border border-slate-300">
-                      CATEGORY (Dimension)
+                      {secDict.datasetProfiling.categoryTitle}
                     </span>
-                    <p className="text-slate-700">Columns representing qualitative groups (e.g. <code className="font-mono">Region</code>, <code className="font-mono">Department</code>, <code className="font-mono">Product</code>). Eligible for grouping and category axes.</p>
+                    <p className="text-slate-700">{secDict.datasetProfiling.categoryDesc}</p>
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1">
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                      IDENTIFIER
+                      {secDict.datasetProfiling.identifierTitle}
                     </span>
-                    <p className="text-slate-700">Unique keys or IDs (e.g. <code className="font-mono">EmployeeID</code>, <code className="font-mono">OrderNumber</code>). Protected against accidental arithmetic aggregation.</p>
+                    <p className="text-slate-700">{secDict.datasetProfiling.identifierDesc}</p>
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1">
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
-                      TEMPORAL
+                      {secDict.datasetProfiling.temporalTitle}
                     </span>
-                    <p className="text-slate-700">Dates, timestamps, and fiscal periods (e.g. <code className="font-mono">OrderDate</code>, <code className="font-mono">Year</code>). Used for time series trend analysis and Area/Line charts.</p>
+                    <p className="text-slate-700">{secDict.datasetProfiling.temporalDesc}</p>
                   </div>
                 </div>
               </div>
@@ -277,15 +275,15 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'analysis-builder' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">5. Operation Builder (Point-and-Click Analysis)</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.analysisBuilder.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    The Operation Builder allows users to perform multi-stage data operations without writing Excel formulas or SQL queries.
+                    {secDict.analysisBuilder.intro}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <strong className="text-slate-900 block mb-1">Supported Operation Types:</strong>
+                    <strong className="text-slate-900 block mb-1">{secDict.analysisBuilder.operationsTitle}</strong>
                     <ul className="grid grid-cols-2 gap-1 text-slate-600 font-mono text-[11px]">
                       <li>• SUM (Total)</li>
                       <li>• AVERAGE (Mean)</li>
@@ -301,9 +299,9 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <strong className="text-slate-900 block mb-1">Filter Operators:</strong>
+                    <strong className="text-slate-900 block mb-1">{secDict.analysisBuilder.filterOpsTitle}</strong>
                     <p className="text-slate-600 leading-relaxed">
-                      13 operators supported: <code className="font-mono">equals</code>, <code className="font-mono">not_equals</code>, <code className="font-mono">contains</code>, <code className="font-mono">starts_with</code>, <code className="font-mono">ends_with</code>, <code className="font-mono">greater_than</code>, <code className="font-mono">less_than</code>, <code className="font-mono">between</code>, <code className="font-mono">in_list</code>, <code className="font-mono">is_empty</code>, etc. with <code className="font-mono">AND</code> / <code className="font-mono">OR</code> logic.
+                      {secDict.analysisBuilder.filterOpsDesc}
                     </p>
                   </div>
                 </div>
@@ -314,24 +312,24 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'visualization' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">6. Deterministic Visualization Engine</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.visualization.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    Sheetsly generates static publication-ready charts using Matplotlib/Seaborn with conservative shape validation.
+                    {secDict.visualization.intro}
                   </p>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-                  <h4 className="font-bold text-slate-900 text-xs">Conservative Compatibility Rules</h4>
+                  <h4 className="font-bold text-slate-900 text-xs">{secDict.visualization.rulesTitle}</h4>
                   <ul className="list-disc list-inside space-y-1 text-slate-600">
-                    <li><strong>Pie / Donut Charts:</strong> Recommended only for single-series part-to-whole data with &le;10 positive categories. Rejected if negative values exist.</li>
-                    <li><strong>Line / Area Charts:</strong> Recommended when the X-axis is a temporal or ordered sequence.</li>
-                    <li><strong>Scatter Plots:</strong> Requires two numeric columns for correlation analysis.</li>
-                    <li><strong>Histograms:</strong> Requires a single continuous numeric metric for distribution binning.</li>
+                    <li>{secDict.visualization.pieRule}</li>
+                    <li>{secDict.visualization.lineRule}</li>
+                    <li>{secDict.visualization.scatterRule}</li>
+                    <li>{secDict.visualization.histogramRule}</li>
                   </ul>
                 </div>
 
                 <p className="text-slate-600">
-                  Every chart includes an integrated lineage footer linking the visualization directly to its source range (e.g. <code className="font-mono">Sheet1!A1:E6</code>) and row count.
+                  {secDict.visualization.footerNote}
                 </p>
               </div>
             )}
@@ -340,29 +338,29 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'ai-architecture' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">7. AI Architecture: Why Qwen Does Not Calculate</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.aiArchitecture.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    The core differentiator of Sheetsly is its zero-hallucination execution pipeline:
+                    {secDict.aiArchitecture.intro}
                   </p>
                 </div>
 
                 <div className="p-4 bg-slate-900 text-white rounded-lg font-mono text-[11px] space-y-2">
-                  <div className="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Execution Pipeline</div>
-                  <div>User Natural Language Question</div>
-                  <div className="text-slate-400">↓ (Qwen 3.5 Plus Intent Translation)</div>
-                  <div className="text-emerald-400">Structured AnalyticalInstruction (JSON)</div>
-                  <div className="text-slate-400">↓ (AI Guardrail Schema & Type Checks)</div>
-                  <div className="text-amber-400">Instruction Validation Gate</div>
-                  <div className="text-slate-400">↓ (Authoritative Execution)</div>
-                  <div className="text-blue-300">Python / Pandas Deterministic Calculation</div>
-                  <div className="text-slate-400">↓ (Evidence Grounding)</div>
-                  <div className="text-white">Verified Result + Cell Lineage (e.g. Sheet1!E2:E9801)</div>
+                  <div className="text-slate-400 uppercase text-[10px] font-bold tracking-wider">{secDict.aiArchitecture.pipelineTitle}</div>
+                  <div>{secDict.aiArchitecture.userStep}</div>
+                  <div className="text-slate-400">{secDict.aiArchitecture.qwenStep}</div>
+                  <div className="text-emerald-400">{secDict.aiArchitecture.jsonStep}</div>
+                  <div className="text-slate-400">{secDict.aiArchitecture.guardrailStep}</div>
+                  <div className="text-amber-400">{secDict.aiArchitecture.gateStep}</div>
+                  <div className="text-slate-400">{secDict.aiArchitecture.pythonStep}</div>
+                  <div className="text-blue-300">{secDict.aiArchitecture.calcStep}</div>
+                  <div className="text-slate-400">{secDict.aiArchitecture.groundingStep}</div>
+                  <div className="text-white">{secDict.aiArchitecture.resultStep}</div>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-1">
-                  <strong className="text-slate-900">Why this matters:</strong>
+                  <strong className="text-slate-900">{secDict.aiArchitecture.whyMattersTitle}</strong>
                   <p className="text-slate-600 leading-relaxed">
-                    LLMs frequently produce subtle arithmetic errors when summing large numbers or applying complex filters. By confining Qwen strictly to intent parsing, your numbers are 100% mathematically proven and auditable.
+                    {secDict.aiArchitecture.whyMattersDesc}
                   </p>
                 </div>
               </div>
@@ -372,30 +370,30 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'ai-questions' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">8. Asking Good AI Questions</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.aiQuestions.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    You can ask questions in natural language. Sheetsly automatically resolves column names, operations, and filters.
+                    {secDict.aiQuestions.intro}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-md">
-                    <span className="font-bold text-emerald-900 block mb-1 text-[11px] uppercase">Supported / Clear Questions (Recommended):</span>
+                    <span className="font-bold text-emerald-900 block mb-1 text-[11px] uppercase">{secDict.aiQuestions.supportedTitle}</span>
                     <ul className="space-y-1 font-mono text-[11px] text-emerald-950">
-                      <li>&bull; &ldquo;What is the total revenue?&rdquo; &rarr; SUM(Revenue)</li>
-                      <li>&bull; &ldquo;Show average units sold by region&rdquo; &rarr; GROUP_BY(Region) + AVG(Units)</li>
+                      <li>&bull; &ldquo;What is the total revenue?&rdquo; / &ldquo;Berapa total revenue?&rdquo; &rarr; SUM(Revenue)</li>
+                      <li>&bull; &ldquo;Show average units sold by region&rdquo; / &ldquo;Tampilkan rata-rata unit per wilayah&rdquo; &rarr; GROUP_BY(Region) + AVG(Units)</li>
                       <li>&bull; &ldquo;What is total revenue in the North region?&rdquo; &rarr; SUM(Revenue) with FILTER(Region == &apos;North&apos;)</li>
                       <li>&bull; &ldquo;Find the top 5 products by revenue&rdquo; &rarr; GROUP_BY(Product) + SORT(DESC) + LIMIT(5)</li>
                     </ul>
                   </div>
 
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-                    <span className="font-bold text-amber-900 block mb-1 text-[11px] uppercase">Ambiguous Questions (Triggers Disambiguation):</span>
+                    <span className="font-bold text-amber-900 block mb-1 text-[11px] uppercase">{secDict.aiQuestions.ambiguousTitle}</span>
                     <p className="text-amber-950 mb-1">
-                      &ldquo;What is the total?&rdquo; (When table has both <code className="font-mono">Units</code> and <code className="font-mono">Revenue</code>).
+                      {secDict.aiQuestions.ambiguousExample}
                     </p>
                     <p className="text-slate-600">
-                      Instead of guessing, Sheetsly presents an interactive button prompt asking you to pick the target column.
+                      {secDict.aiQuestions.ambiguousDesc}
                     </p>
                   </div>
                 </div>
@@ -406,28 +404,28 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'ai-results' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">9. Understanding AI Output Cards</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.aiResults.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    Every AI query response is divided into 4 transparent cards:
+                    {secDict.aiResults.intro}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-bold text-slate-900 block">1. Planned Analytical Instruction:</span>
-                    <p className="text-slate-600">Shows the operation, target column, filters, and grouping dimensions planned by Qwen.</p>
+                    <span className="font-bold text-slate-900 block">{secDict.aiResults.card1Title}</span>
+                    <p className="text-slate-600">{secDict.aiResults.card1Desc}</p>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-bold text-slate-900 block">2. Evidence-Based Analysis:</span>
-                    <p className="text-slate-600">Plain English factual summary citing exact source cell coordinates and row counts.</p>
+                    <span className="font-bold text-slate-900 block">{secDict.aiResults.card2Title}</span>
+                    <p className="text-slate-600">{secDict.aiResults.card2Desc}</p>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-bold text-slate-900 block">3. Execution Stage Latency Breakdown:</span>
-                    <p className="text-slate-600">Monospaced latency badges showing exact milliseconds for Schema, Qwen Planning, Guardrails, Python Calculation, and Visualization.</p>
+                    <span className="font-bold text-slate-900 block">{secDict.aiResults.card3Title}</span>
+                    <p className="text-slate-600">{secDict.aiResults.card3Desc}</p>
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <span className="font-bold text-slate-900 block">4. Verified Result & Lineage Trace:</span>
-                    <p className="text-slate-600">The authoritative numerical answer calculated by Python with complete row inclusion metrics.</p>
+                    <span className="font-bold text-slate-900 block">{secDict.aiResults.card4Title}</span>
+                    <p className="text-slate-600">{secDict.aiResults.card4Desc}</p>
                   </div>
                 </div>
               </div>
@@ -437,22 +435,22 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'provenance' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">10. Data Provenance & Source Cell Traceability</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.provenance.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    Every result produced by Sheetsly contains a strict audit trail:
+                    {secDict.provenance.intro}
                   </p>
                 </div>
 
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2 font-mono text-[11px]">
-                  <div className="text-slate-500 font-bold uppercase text-[10px]">Sample Provenance Metadata</div>
-                  <div>Source Range: <span className="font-bold text-slate-900">Sheet1!E2:E9801</span></div>
-                  <div>Row Inclusion: <span className="font-bold text-slate-900">9,800 of 9,800 records (0 excluded)</span></div>
-                  <div>Filters Applied: <span className="font-bold text-slate-900">None</span></div>
-                  <div>Execution Duration: <span className="font-bold text-slate-900">5.82 ms</span></div>
+                  <div className="text-slate-500 font-bold uppercase text-[10px]">{secDict.provenance.sampleTitle}</div>
+                  <div>{secDict.provenance.sampleRange}</div>
+                  <div>{secDict.provenance.sampleRows}</div>
+                  <div>{secDict.provenance.sampleFilters}</div>
+                  <div>{secDict.provenance.sampleDuration}</div>
                 </div>
 
                 <p className="text-slate-600 leading-relaxed">
-                  This guarantees that any stakeholder or compliance auditor can verify the exact cells in the original spreadsheet that contributed to the final metric.
+                  {secDict.provenance.guaranteeDesc}
                 </p>
               </div>
             )}
@@ -461,31 +459,31 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             {activeSection === 'troubleshooting' && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">11. Troubleshooting & Fallback Modes</h3>
+                  <h3 className="text-sm font-bold text-slate-900">{secDict.troubleshooting.heading}</h3>
                   <p className="text-slate-600 mt-1 leading-relaxed">
-                    How to resolve common operational scenarios:
+                    {secDict.troubleshooting.intro}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <strong className="text-slate-900 block mb-0.5">AI Provider Offline / Unconfigured:</strong>
+                    <strong className="text-slate-900 block mb-0.5">{secDict.troubleshooting.offlineTitle}</strong>
                     <p className="text-slate-600">
-                      If <code className="font-mono bg-white px-1 border rounded">DASHSCOPE_API_KEY</code> is not configured or network connectivity fails, Sheetsly activates <strong>Deterministic Fallback Mode</strong>. You can continue using the point-and-click <strong>Analysis Builder</strong> and <strong>Visualizations</strong> with 100% full analytical functionality.
+                      {secDict.troubleshooting.offlineDesc}
                     </p>
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <strong className="text-slate-900 block mb-0.5">AI Guardrail Blocked Execution:</strong>
+                    <strong className="text-slate-900 block mb-0.5">{secDict.troubleshooting.blockedTitle}</strong>
                     <p className="text-slate-600">
-                      If a query attempts an invalid operation (e.g. summing text columns or referencing non-existent columns), the guardrail blocks execution before calculation and explains the schema conflict.
+                      {secDict.troubleshooting.blockedDesc}
                     </p>
                   </div>
 
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-                    <strong className="text-slate-900 block mb-0.5">Large Dataset Ingestion (~2 MB+):</strong>
+                    <strong className="text-slate-900 block mb-0.5">{secDict.troubleshooting.largeTitle}</strong>
                     <p className="text-slate-600">
-                      For files with &gt;9,000 rows, ingestion may take 5–15 seconds. An active horizontal progress bar indicates background processing.
+                      {secDict.troubleshooting.largeDesc}
                     </p>
                   </div>
                 </div>
@@ -497,7 +495,7 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
         {/* Modal Footer */}
         <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <div className="text-[11px] text-slate-500 font-mono">
-            Sheetsly v1.0 &bull; Deterministic Spreadsheet Intelligence
+            {dictionary.howToUse.footerText}
           </div>
 
           <button
@@ -505,7 +503,7 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
             onClick={onClose}
             className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold shadow-2xs cursor-pointer transition-colors"
           >
-            Got it, return to workspace
+            {dictionary.howToUse.returnButton}
           </button>
         </div>
       </div>

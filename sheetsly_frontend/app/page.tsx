@@ -11,9 +11,13 @@ import { VisualizationViewer } from '../components/workspace/VisualizationViewer
 import { OperationBuilder } from '../components/builder/OperationBuilder';
 import { AIQueryWorkspace } from '../components/ai/AIQueryWorkspace';
 import { HowToUseModal } from '../components/workspace/HowToUseModal';
+import { LanguageSwitcher } from '../components/workspace/LanguageSwitcher';
+import { LanguageOnboardingModal } from '../components/workspace/LanguageOnboardingModal';
+import { useTranslation } from '../lib/i18n';
 import { WorkbookOverview } from '../lib/types';
 
 export default function Home() {
+  const { dictionary } = useTranslation();
   const [overview, setOverview] = useState<WorkbookOverview | null>(null);
   const [activeSheetName, setActiveSheetName] = useState<string>('');
   const [activeViewMode, setActiveViewMode] = useState<'ai' | 'builder' | 'tables' | 'data' | 'visualize' | 'quality'>('ai');
@@ -45,32 +49,36 @@ export default function Home() {
                 S
               </div>
               <div>
-                <span className="text-sm font-bold text-slate-900 leading-none block">Sheetsly</span>
-                <span className="text-[10px] text-slate-500 font-medium">Spreadsheet Intelligence Workspace</span>
+                <span className="text-sm font-bold text-slate-900 leading-none block">{dictionary.common.appName}</span>
+                <span className="text-[10px] text-slate-500 font-medium">{dictionary.common.tagline}</span>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsHelpOpen(true)}
-              className="inline-flex items-center space-x-1.5 px-3 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md transition-colors shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-900"
-            >
-              <span className="w-3.5 h-3.5 rounded-full bg-slate-800 text-white font-mono text-[10px] flex items-center justify-center font-bold">
-                ?
-              </span>
-              <span>How to Use & Architecture</span>
-            </button>
+            <div className="flex items-center space-x-2.5">
+              <LanguageSwitcher />
+
+              <button
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                className="inline-flex items-center space-x-1.5 px-3 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md transition-colors shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-slate-900"
+              >
+                <span className="w-3.5 h-3.5 rounded-full bg-slate-800 text-white font-mono text-[10px] flex items-center justify-center font-bold">
+                  ?
+                </span>
+                <span>{dictionary.nav.howToUse}</span>
+              </button>
+            </div>
           </div>
 
           <div className="text-center max-w-2xl my-auto py-6">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-slate-200 text-slate-800 text-xs font-semibold mb-4 border border-slate-300">
-              <span>Deterministic Spreadsheet Intelligence Platform</span>
+              <span>{dictionary.upload.heroBadge}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Turn your spreadsheet into verified insight.
+              {dictionary.upload.heroTitle}
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 mt-2.5 max-w-xl mx-auto leading-relaxed">
-              Upload any spreadsheet to explore detected tables, build calculations without formulas, or ask plain-language questions with Qwen. Every result is computed deterministically in Python with cell-level lineage.
+              {dictionary.upload.heroDesc}
             </p>
 
             <div className="mt-6">
@@ -81,34 +89,34 @@ export default function Home() {
           {/* Architectural Pillars */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5 w-full mt-4 text-xs text-slate-600">
             <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-2xs">
-              <div className="font-bold text-slate-900 mb-1">AI Query Planner</div>
+              <div className="font-bold text-slate-900 mb-1">{dictionary.upload.pillars.aiTitle}</div>
               <p className="text-slate-500 text-[11px] leading-relaxed">
-                Qwen translates natural-language intent into structured instructions with proactive ambiguity detection.
+                {dictionary.upload.pillars.aiDesc}
               </p>
             </div>
             <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-2xs">
-              <div className="font-bold text-slate-900 mb-1">Deterministic Engine</div>
+              <div className="font-bold text-slate-900 mb-1">{dictionary.upload.pillars.engineTitle}</div>
               <p className="text-slate-500 text-[11px] leading-relaxed">
-                Python calculates numerical truth. No hallucinations, guessing, or estimated arithmetic.
+                {dictionary.upload.pillars.engineDesc}
               </p>
             </div>
             <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-2xs">
-              <div className="font-bold text-slate-900 mb-1">Cell-Level Lineage</div>
+              <div className="font-bold text-slate-900 mb-1">{dictionary.upload.pillars.lineageTitle}</div>
               <p className="text-slate-500 text-[11px] leading-relaxed">
-                Complete audit trail with exact source coordinate ranges (e.g. <code className="font-mono text-slate-700">Sheet1!E2:E128</code>).
+                {dictionary.upload.pillars.lineageDesc}
               </p>
             </div>
             <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-2xs">
-              <div className="font-bold text-slate-900 mb-1">Operation Builder</div>
+              <div className="font-bold text-slate-900 mb-1">{dictionary.upload.pillars.builderTitle}</div>
               <p className="text-slate-500 text-[11px] leading-relaxed">
-                Point-and-click analytical interface for aggregations, multi-grouping, sorting, and filters.
+                {dictionary.upload.pillars.builderDesc}
               </p>
             </div>
           </div>
 
           {/* Landing Footer */}
           <div className="pt-6 text-center text-[11px] text-slate-400 font-mono">
-            Sheetsly v1.0 &bull; Developed with Python FastAPI &amp; Next.js 16
+            {dictionary.upload.footerText}
           </div>
         </div>
       ) : (
@@ -134,7 +142,7 @@ export default function Home() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                AI Query Planner
+                {dictionary.nav.aiQuery}
               </button>
 
               <button
@@ -146,7 +154,7 @@ export default function Home() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                Analysis Builder
+                {dictionary.nav.analysisBuilder}
               </button>
 
               <button
@@ -158,7 +166,7 @@ export default function Home() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                Detected Tables & Schema ({currentSheet?.tables.length ?? 0})
+                {dictionary.nav.detectedTables} ({currentSheet?.tables.length ?? 0})
               </button>
 
               <button
@@ -170,7 +178,7 @@ export default function Home() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                Actual Spreadsheet Grid ({currentSheet?.total_rows ?? 0} rows)
+                {dictionary.nav.spreadsheetGrid} ({currentSheet?.total_rows ?? 0} {dictionary.common.rows})
               </button>
 
               <button
@@ -182,7 +190,7 @@ export default function Home() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                Visualizations
+                {dictionary.nav.visualizations}
               </button>
 
               <button
@@ -194,7 +202,7 @@ export default function Home() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <span>Data Quality</span>
+                <span>{dictionary.nav.dataQuality}</span>
                 {currentSheet && (
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
@@ -213,7 +221,7 @@ export default function Home() {
 
             {currentSheet && (
               <div className="text-xs text-slate-500 font-mono">
-                Used Range: <span className="font-bold text-slate-700">{currentSheet.used_range}</span>
+                {dictionary.common.usedRange}: <span className="font-bold text-slate-700">{currentSheet.used_range}</span>
               </div>
             )}
           </div>
@@ -268,7 +276,7 @@ export default function Home() {
                 )}
               </>
             ) : (
-              <div className="p-8 text-center text-slate-500 text-xs">Please select a worksheet.</div>
+              <div className="p-8 text-center text-slate-500 text-xs">{dictionary.nav.selectWorksheet}</div>
             )}
           </main>
         </div>
@@ -276,6 +284,9 @@ export default function Home() {
 
       {/* Global How to Use Modal */}
       <HowToUseModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+
+      {/* First-Visit Language Onboarding Modal */}
+      <LanguageOnboardingModal />
     </div>
   );
 }

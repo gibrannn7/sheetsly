@@ -111,10 +111,11 @@ class QwenClient:
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.0,
+        model: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Calls Qwen chat completions API requesting structured JSON output.
-        Enforces server-side execution with timeout and retry guardrails.
+        Calls Qwen / LLM chat completions API requesting structured JSON output.
+        Enforces server-side execution with timeout, retry guardrails, and model selection.
         """
         if not self.is_configured:
             raise AIProviderError(
@@ -122,9 +123,10 @@ class QwenClient:
                 is_configured=False,
             )
 
+        target_model = (model or settings.QWEN_MODEL or "qwen3.5-plus").strip()
         endpoint = self.get_normalized_endpoint()
         payload = {
-            "model": settings.QWEN_MODEL,
+            "model": target_model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -133,8 +135,8 @@ class QwenClient:
             "response_format": {"type": "json_object"},
         }
 
-        # Enable Qwen thinking mode if configured
-        if "qwen" in settings.QWEN_MODEL.lower():
+        # Enable thinking mode if configured and model is Qwen
+        if "qwen" in target_model.lower():
             payload["extra_body"] = {"enable_thinking": bool(settings.QWEN_ENABLE_THINKING)}
 
         last_error = None

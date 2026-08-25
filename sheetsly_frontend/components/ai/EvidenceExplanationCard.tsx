@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { EvidenceExplanation } from '../../lib/types';
 
 interface EvidenceExplanationCardProps {
@@ -10,12 +11,14 @@ interface EvidenceExplanationCardProps {
 export const EvidenceExplanationCard: React.FC<EvidenceExplanationCardProps> = ({
   explanation,
 }) => {
+  const { dictionary } = useTranslation();
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg shadow-2xs overflow-hidden text-xs">
       <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="font-bold text-slate-800 uppercase tracking-wide text-[11px]">
-            Evidence-Based Analysis & Grounding
+            {dictionary.ai.evidenceCard.title}
           </span>
         </div>
         <span className="text-slate-500 font-mono text-[11px]">
@@ -38,7 +41,7 @@ export const EvidenceExplanationCard: React.FC<EvidenceExplanationCardProps> = (
         {explanation.calculation_steps.length > 0 && (
           <div>
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-              Verified Calculation Steps:
+              {dictionary.ai.evidenceCard.verifiedSteps}:
             </span>
             <ol className="space-y-1 bg-slate-50 p-3 rounded-md border border-slate-200 font-mono text-[11px] text-slate-700">
               {explanation.calculation_steps.map((step, idx) => (

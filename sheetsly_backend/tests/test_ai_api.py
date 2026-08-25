@@ -103,3 +103,62 @@ def test_ai_suggested_queries_endpoint(uploaded_sales_dataset_id):
     data = res.json()
     assert data["dataset_id"] == uploaded_sales_dataset_id
     assert len(data["suggested_queries"]) >= 1
+
+
+def test_ai_status_endpoint_returns_available_models():
+    """Verifies that /status returns full list of 7 allowlisted models."""
+    res = client.get("/api/v1/ai/status")
+    assert res.status_code == 200
+    data = res.json()
+    assert "available_models" in data
+    assert len(data["available_models"]) == 7
+    model_ids = [m["id"] for m in data["available_models"]]
+    assert "qwen3.5-plus" in model_ids
+    assert "qwen3.6-plus" in model_ids
+    assert "qwen3.7-plus" in model_ids
+    assert "qwen3.5-flash" in model_ids
+    assert "qwen3.6-flash" in model_ids
+    assert "qwen3.7-flash" in model_ids
+    assert "deepseek-v4-flash" in model_ids
+
+
+def test_ai_model_allowlist_validation(uploaded_sales_dataset_id):
+    """Verifies that unapproved model names are rejected before execution."""
+    invalid_payload = {
+        "query": "Total revenue",
+        "dataset_id": uploaded_sales_dataset_id,
+        "model": "unsupported-rogue-model-xyz",
+    }
+    res = client.post("/api/v1/ai/query", json=invalid_payload)
+    assert res.status_code == 422
+
+
+def test_ai_model_propagation_to_planner_and_explainer(uploaded_sales_dataset_id):
+    """Verifies that selected model propagates to Qwen client and response."""
+    mock_planner_json = {
+        "type": "INSTRUCTION",
+        "intent_summary": "Sum total revenue",
+        "instruction": {
+            "operation": "SUM",
+            "target_column": "Revenue",
+            "filters": [],
+        },
+    }
+
+    with patch("app.engine.ai.planner.qwen_client.generate_json", new_callable=AsyncMock) as mock_plan:
+        mock_plan.return_value = mock_planner_json
+        payload = {
+            "query": "Total revenue with DeepSeek",
+            "dataset_id": uploaded_sales_dataset_id,
+            "model": "deepseek-v4-flash",
+        }
+        res = client.post("/api/v1/ai/query", json=payload)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["status"] == "EXECUTION_READY"
+        assert data["model_used"] == "deepseek-v4-flash"
+        
+        # Verify model was passed to generate_json call
+        mock_plan.assert_called()
+        call_kwargs = mock_plan.call_args.kwargs
+        assert call_kwargs.get("model") == "deepseek-v4-flash"

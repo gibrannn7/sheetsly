@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { AggregationSpec, ColumnMetadata } from '../../lib/types';
 
 interface GroupByBuilderProps {
@@ -11,17 +12,6 @@ interface GroupByBuilderProps {
   onChangeAggregations: (aggs: AggregationSpec[]) => void;
 }
 
-const AGGREGATION_OPS: { value: AggregationSpec['operation']; label: string; requiresNumeric?: boolean }[] = [
-  { value: 'SUM', label: 'SUM (Total)', requiresNumeric: true },
-  { value: 'AVERAGE', label: 'AVERAGE (Mean)', requiresNumeric: true },
-  { value: 'COUNT_ROWS', label: 'COUNT (Rows in Group)' },
-  { value: 'COUNT_VALUES', label: 'COUNT (Non-null Values)' },
-  { value: 'DISTINCT_COUNT', label: 'DISTINCT (Unique Values)' },
-  { value: 'MIN', label: 'MIN (Minimum)' },
-  { value: 'MAX', label: 'MAX (Maximum)' },
-  { value: 'MEDIAN', label: 'MEDIAN (Median)', requiresNumeric: true },
-];
-
 export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
   columns,
   groupByColumns,
@@ -29,6 +19,19 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
   onChangeGroupByColumns,
   onChangeAggregations,
 }) => {
+  const { dictionary } = useTranslation();
+
+  const AGGREGATION_OPS: { value: AggregationSpec['operation']; label: string; requiresNumeric?: boolean }[] = [
+    { value: 'SUM', label: 'SUM (Total)', requiresNumeric: true },
+    { value: 'AVERAGE', label: 'AVERAGE (Mean)', requiresNumeric: true },
+    { value: 'COUNT_ROWS', label: 'COUNT (Rows in Group)' },
+    { value: 'COUNT_VALUES', label: 'COUNT (Non-null Values)' },
+    { value: 'DISTINCT_COUNT', label: 'DISTINCT (Unique Values)' },
+    { value: 'MIN', label: 'MIN (Minimum)' },
+    { value: 'MAX', label: 'MAX (Maximum)' },
+    { value: 'MEDIAN', label: 'MEDIAN (Median)', requiresNumeric: true },
+  ];
+
   const numericColumns = columns.filter((c) =>
     ['integer', 'float', 'currency', 'percentage'].includes(c.data_type)
   );
@@ -78,7 +81,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-            Group by Dimension(s)
+            {dictionary.builder.groupByDimensions}
           </label>
           <button
             type="button"
@@ -86,7 +89,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
             disabled={groupByColumns.length >= columns.length}
             className="text-xs text-slate-700 hover:text-slate-950 font-semibold cursor-pointer disabled:opacity-40"
           >
-            + Add Dimension
+            {dictionary.builder.addDimension}
           </button>
         </div>
 
@@ -125,21 +128,21 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
       <div className="space-y-2 pt-3 border-t border-slate-200">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-            Aggregated Metrics ({aggregations.length})
+            {dictionary.builder.aggregatedMetrics} ({aggregations.length})
           </label>
           <button
             type="button"
             onClick={handleAddAggregation}
             className="text-xs text-slate-700 hover:text-slate-950 font-semibold cursor-pointer"
           >
-            + Add Metric
+            {dictionary.builder.addMetric}
           </button>
         </div>
 
         <div className="space-y-2">
           {aggregations.map((agg, idx) => (
             <div key={idx} className="flex flex-wrap items-center gap-2 p-2 bg-white border border-slate-200 rounded-md text-xs">
-              <span className="text-[11px] font-semibold text-slate-500">Calculate</span>
+              <span className="text-[11px] font-semibold text-slate-500">{dictionary.builder.calculate}</span>
 
               {/* Aggregation Function */}
               <select
@@ -160,7 +163,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                 ))}
               </select>
 
-              <span className="text-[11px] font-semibold text-slate-500">of</span>
+              <span className="text-[11px] font-semibold text-slate-500">{dictionary.builder.of}</span>
 
               {/* Target Column */}
               <select
@@ -181,7 +184,7 @@ export const GroupByBuilder: React.FC<GroupByBuilderProps> = ({
                 ))}
               </select>
 
-              <span className="text-[11px] font-semibold text-slate-500">as</span>
+              <span className="text-[11px] font-semibold text-slate-500">{dictionary.builder.as}</span>
 
               {/* Custom Alias */}
               <input

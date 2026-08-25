@@ -5,6 +5,7 @@ import logging
 import time
 from typing import List, Optional
 
+from app.core.config import settings
 from app.engine.ai.client import qwen_client
 from app.engine.ai.explainer import evidence_explainer
 from app.engine.ai.guardrail import ai_guardrail
@@ -89,6 +90,7 @@ class AIOrchestrator:
                 ),
             )
 
+        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-plus"
         t_plan_start = time.perf_counter()
         status, intent_summary, instruction, clarification, error_msg = await query_planner.plan_query(
             query=request.query,
@@ -96,6 +98,7 @@ class AIOrchestrator:
             sheet_name=sheet_name,
             table_region=table_region,
             clarification_selection=request.clarification_selection,
+            model=target_model,
         )
         t_plan_ms = (time.perf_counter() - t_plan_start) * 1000
 
@@ -108,6 +111,7 @@ class AIOrchestrator:
                     status=AIQueryStatus.VALIDATION_FAILED,
                     user_query=request.query,
                     intent_summary=intent_summary,
+                    model_used=target_model,
                     planned_instruction=instruction,
                     error_message=f"Instruction validation rejected: {validation_err}",
                     timing=TimingBreakdown(
@@ -122,6 +126,7 @@ class AIOrchestrator:
             status=status,
             user_query=request.query,
             intent_summary=intent_summary,
+            model_used=target_model,
             planned_instruction=instruction,
             clarification=clarification,
             error_message=error_msg,
@@ -167,6 +172,7 @@ class AIOrchestrator:
                 ),
             )
 
+        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-plus"
         # Stage 2: Query Planning (or use preplanned instruction)
         if request.preplanned_instruction:
             instruction = request.preplanned_instruction
@@ -183,6 +189,7 @@ class AIOrchestrator:
                 sheet_name=sheet_name,
                 table_region=table_region,
                 clarification_selection=request.clarification_selection,
+                model=target_model,
             )
             t_plan_ms = (time.perf_counter() - t_plan_start) * 1000
 
@@ -191,6 +198,7 @@ class AIOrchestrator:
                 status=status,
                 user_query=request.query,
                 intent_summary=intent_summary,
+                model_used=target_model,
                 clarification=clarification,
                 error_message=error_msg,
                 timing=TimingBreakdown(
@@ -210,6 +218,7 @@ class AIOrchestrator:
                 status=AIQueryStatus.VALIDATION_FAILED,
                 user_query=request.query,
                 intent_summary=intent_summary,
+                model_used=target_model,
                 planned_instruction=instruction,
                 error_message=f"AI Guardrail blocked execution: {validation_err}",
                 timing=TimingBreakdown(
@@ -232,6 +241,7 @@ class AIOrchestrator:
                 status=AIQueryStatus.EXECUTION_ERROR,
                 user_query=request.query,
                 intent_summary=intent_summary,
+                model_used=target_model,
                 planned_instruction=instruction,
                 error_message=f"Calculation engine execution failure: {str(exec_err)}",
                 timing=TimingBreakdown(
@@ -260,7 +270,7 @@ class AIOrchestrator:
 
         # Stage 6: Evidence-based grounded explanation
         t_explain_start = time.perf_counter()
-        explanation = await evidence_explainer.explain_result(analytical_result, request.query)
+        explanation = await evidence_explainer.explain_result(analytical_result, request.query, model=target_model)
         t_explain_ms = (time.perf_counter() - t_explain_start) * 1000
 
         # Stage 7: Derive contextual follow-up query suggestions
@@ -282,6 +292,7 @@ class AIOrchestrator:
             status=AIQueryStatus.EXECUTION_READY,
             user_query=request.query,
             intent_summary=intent_summary,
+            model_used=target_model,
             planned_instruction=instruction,
             analytical_result=analytical_result,
             visualization=viz_response,

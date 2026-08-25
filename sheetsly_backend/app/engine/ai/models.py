@@ -2,11 +2,24 @@
 
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.engine.analytics.instruction_model import AnalyticalInstruction
 from app.engine.analytics.result_model import AnalyticalResult
 from app.engine.visualization.chart_model import VisualizationResponse
+
+
+SUPPORTED_AI_MODELS = [
+    {"id": "qwen3.5-plus", "label": "Qwen 3.5 Plus", "badge": "Based", "is_default": True},
+    {"id": "qwen3.6-plus", "label": "Qwen 3.6 Plus"},
+    {"id": "qwen3.7-plus", "label": "Qwen 3.7 Plus"},
+    {"id": "qwen3.5-flash", "label": "Qwen 3.5 Flash"},
+    {"id": "qwen3.6-flash", "label": "Qwen 3.6 Flash"},
+    {"id": "qwen3.7-flash", "label": "Qwen 3.7 Flash"},
+    {"id": "deepseek-v4-flash", "label": "DeepSeek V4 Flash"},
+]
+ALLOWED_AI_MODELS = {m["id"] for m in SUPPORTED_AI_MODELS}
+DEFAULT_AI_MODEL = "qwen3.5-plus"
 
 
 class AIQueryStatus(str, Enum):
@@ -53,6 +66,10 @@ class NaturalLanguageQueryRequest(BaseModel):
     dataset_id: str = Field(..., description="Target dataset UUID")
     sheet_name: Optional[str] = Field(None, description="Specific worksheet name (defaults to active/first sheet)")
     table_id: Optional[str] = Field(None, description="Specific table ID within worksheet")
+    model: Optional[str] = Field(
+        None,
+        description="Requested AI model identifier (must be an allowlisted model: qwen3.5-plus, qwen3.6-plus, etc.)",
+    )
     generate_visualization: bool = Field(True, description="Whether to automatically generate a deterministic chart")
     clarification_selection: Optional[Dict[str, str]] = Field(
         None,
@@ -63,12 +80,27 @@ class NaturalLanguageQueryRequest(BaseModel):
         description="Pre-planned instruction from plan-only endpoint, skipping LLM planning stage if already computed",
     )
 
+    @field_validator("model")
+    @classmethod
+    def validate_model_allowlist(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v_clean = v.strip().lower()
+            if v_clean not in ALLOWED_AI_MODELS:
+                raise ValueError(
+                    f"Unsupported AI model '{v}'. Allowed models: {', '.join(sorted(ALLOWED_AI_MODELS))}"
+                )
+            return v_clean
+        return v
+
 
 class QueryPlanOnlyResponse(BaseModel):
     """Inspection response returning the compiled plan without executing calculations."""
+    model_config = {"protected_namespaces": ()}
+
     status: AIQueryStatus
     user_query: str
     intent_summary: str
+    model_used: Optional[str] = None
     planned_instruction: Optional[AnalyticalInstruction] = None
     clarification: Optional[ClarificationRequest] = None
     error_message: Optional[str] = None
@@ -77,9 +109,12 @@ class QueryPlanOnlyResponse(BaseModel):
 
 class NaturalLanguageQueryResponse(BaseModel):
     """Complete end-to-end response for natural language query execution."""
+    model_config = {"protected_namespaces": ()}
+
     status: AIQueryStatus
     user_query: str
     intent_summary: str
+    model_used: Optional[str] = None
     planned_instruction: Optional[AnalyticalInstruction] = None
     clarification: Optional[ClarificationRequest] = None
     analytical_result: Optional[AnalyticalResult] = None
