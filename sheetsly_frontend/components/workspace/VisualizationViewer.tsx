@@ -6,10 +6,12 @@ import { useTranslation } from '../../lib/i18n';
 import {
   AnalyticalInstruction,
   ChartType,
+  ExplainableAnalyticsResultDTO,
   TableRegion,
 } from '../../lib/types';
 import { useWorkspace } from '../../lib/workspace/WorkspaceContext';
 import { SmartGenerateExplanationModal } from './SmartGenerateExplanationModal';
+import { SmartVisualizationPanel } from './SmartVisualizationPanel';
 
 interface VisualizationViewerProps {
   datasetId: string;
@@ -56,6 +58,22 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
   const smartCharts = visualizationState.smartCharts;
   const smartEmptyReason = visualizationState.smartEmptyReason;
   const [smartError, setSmartError] = useState<string | null>(null);
+
+  // Phase 9: Smart Granular Analytics State
+  const [granularResult, setGranularResult] = useState<ExplainableAnalyticsResultDTO | null>(null);
+  const [granularLoading, setGranularLoading] = useState<boolean>(false);
+
+  const handleGranularQuery = async (query: string) => {
+    setGranularLoading(true);
+    try {
+      const res = await api.executeGranularAnalytics(datasetId, query, sheetName);
+      setGranularResult(res);
+    } catch (err) {
+      console.error('Failed to execute granular analytics', err);
+    } finally {
+      setGranularLoading(false);
+    }
+  };
   const [expandedWhyIdx, setExpandedWhyIdx] = useState<number | null>(null);
 
   const SUPPORTED_CHARTS: { type: ChartType; label: string; desc: string }[] = [
@@ -185,6 +203,13 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
 
   return (
     <div className="space-y-5">
+      {/* Smart Visualization & Granular Analytics Engine (Phase 9) */}
+      <SmartVisualizationPanel
+        analyticsResult={granularResult}
+        onQuerySubmit={handleGranularQuery}
+        isLoading={granularLoading}
+      />
+
       {/* 1. Header Toolbar with Smart Generate and Custom Builder Controls */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs p-4 space-y-3.5 transition-colors">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">

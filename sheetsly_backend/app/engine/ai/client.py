@@ -330,7 +330,7 @@ class QwenClient:
         Calls LLM chat completions API requesting structured JSON output.
         Automatically routes to Gemini if model is a Gemini model, preserving backward compatibility.
         """
-        target_model = (model or settings.QWEN_MODEL or "qwen3.5-plus").strip()
+        target_model = (model or settings.QWEN_MODEL or "qwen3.5-397b-a17b").strip()
 
         # Route to Gemini if requested model is Gemini
         if target_model.startswith("gemini-"):

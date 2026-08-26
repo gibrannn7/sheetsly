@@ -86,7 +86,7 @@ export interface WorkspaceContextValue {
 const defaultAIState: AIQueryState = {
   query: '',
   lastResponse: null,
-  selectedModel: 'qwen3.5-plus',
+  selectedModel: 'qwen3.5-397b-a17b',
   suggestedQueries: [],
   history: [],
 };

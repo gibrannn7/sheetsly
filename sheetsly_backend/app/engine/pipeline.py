@@ -25,6 +25,7 @@ class IngestionPipeline:
         # In-memory store for active session datasets
         self._overview_cache: Dict[str, WorkbookOverview] = {}
         self._grids_cache: Dict[str, Dict[str, RawSheetGrid]] = {}
+        self._index_cache: Dict[str, Any] = {}
 
     def process_workbook(
         self,
@@ -97,6 +98,10 @@ class IngestionPipeline:
         self._overview_cache[dataset_id] = overview
         self._grids_cache[dataset_id] = grids
 
+        # Build and cache WorkbookMetadataIndex for fast cross-sheet discovery
+        from app.engine.profiler.workbook_index import WorkbookMetadataIndex
+        self._index_cache[dataset_id] = WorkbookMetadataIndex.from_overview(overview)
+
         logger.info(
             f"Dataset {dataset_id} processed successfully: {len(sheets_meta)} sheets, overall quality {overall_score}/100"
         )
@@ -108,6 +113,16 @@ class IngestionPipeline:
             raise DatasetNotFoundError(dataset_id)
         return self._overview_cache[dataset_id]
 
+    def get_workbook_index(self, dataset_id: str):
+        """Retrieves cached WorkbookMetadataIndex (or builds lazily from overview)."""
+        if dataset_id in self._index_cache:
+            return self._index_cache[dataset_id]
+        overview = self.get_overview(dataset_id)
+        from app.engine.profiler.workbook_index import WorkbookMetadataIndex
+        index = WorkbookMetadataIndex.from_overview(overview)
+        self._index_cache[dataset_id] = index
+        return index
+
     def get_sheet_grid(self, dataset_id: str, sheet_name: str) -> RawSheetGrid:
         """Retrieves raw grid for a specific sheet in a dataset."""
         if dataset_id not in self._grids_cache:
@@ -116,6 +131,12 @@ class IngestionPipeline:
         if sheet_name not in grids:
             raise SheetNotFoundError(sheet_name)
         return grids[sheet_name]
+
+    def get_all_grids(self, dataset_id: str) -> Dict[str, RawSheetGrid]:
+        """Retrieves all raw sheet grids for a dataset."""
+        if dataset_id not in self._grids_cache:
+            raise DatasetNotFoundError(dataset_id)
+        return self._grids_cache[dataset_id]
 
     def get_sheet_data_page(
         self,

@@ -231,4 +231,50 @@ export const api = {
     const res = await fetch(url);
     return handleResponse<SuggestedQueriesResponse>(res);
   },
+
+  // --------------------------------------------------------------------------
+  // Spreadsheet Agent & Grid Mutation (Phase 8)
+  // --------------------------------------------------------------------------
+
+  async executeAgentAction(request: import('./types').AgentActionRequest): Promise<import('./types').AgentExecutionResult> {
+    const res = await fetch(`${API_BASE}/agent/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    return handleResponse<import('./types').AgentExecutionResult>(res);
+  },
+
+  async undoAgentAction(datasetId: string, activeSheetName?: string): Promise<import('./types').AgentExecutionResult> {
+    const res = await fetch(`${API_BASE}/agent/undo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataset_id: datasetId, active_sheet_name: activeSheetName }),
+    });
+    return handleResponse<import('./types').AgentExecutionResult>(res);
+  },
+
+  async getAgentHistory(datasetId: string): Promise<import('./types').AgentHistoryResponse> {
+    const res = await fetch(`${API_BASE}/agent/history/${encodeURIComponent(datasetId)}`);
+    return handleResponse<import('./types').AgentHistoryResponse>(res);
+  },
+
+  // --------------------------------------------------------------------------
+  // Smart Analytics & Visualization (Phase 9)
+  // --------------------------------------------------------------------------
+
+  async executeGranularAnalytics(
+    datasetId: string,
+    query: string,
+    activeSheetName?: string
+  ): Promise<import('./types').ExplainableAnalyticsResultDTO> {
+    const res = await fetch(`${API_BASE}/datasets/${encodeURIComponent(datasetId)}/granular-analytics`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, active_sheet_name: activeSheetName }),
+    });
+    return handleResponse<import('./types').ExplainableAnalyticsResultDTO>(res);
+  },
 };
+
+

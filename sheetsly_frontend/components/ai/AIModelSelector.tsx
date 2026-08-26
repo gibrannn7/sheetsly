@@ -5,7 +5,7 @@ import { useTranslation } from '../../lib/i18n';
 import { AIModelOption } from '../../lib/types';
 
 export const FALLBACK_AI_MODELS: AIModelOption[] = [
-  { id: 'qwen3.5-plus', label: 'Qwen 3.5 Plus', provider: 'qwen', provider_label: 'Qwen', is_default: true },
+  { id: 'qwen3.5-397b-a17b', label: 'Qwen 3.5 397B', provider: 'qwen', provider_label: 'Qwen', is_default: true },
   { id: 'qwen3.5-flash', label: 'Qwen 3.5 Flash', provider: 'qwen', provider_label: 'Qwen' },
   { id: 'qwen3.6-plus', label: 'Qwen 3.6 Plus', provider: 'qwen', provider_label: 'Qwen' },
   { id: 'qwen3.7-plus', label: 'Qwen 3.7 Plus', provider: 'qwen', provider_label: 'Qwen' },

@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     # AI Configuration (Qwen / DashScope)
     DASHSCOPE_API_KEY: str = ""
-    QWEN_MODEL: str = "qwen3.5-plus"
+    QWEN_MODEL: str = "qwen3.5-397b-a17b"
     QWEN_BASE_URL: str = "https://ws-6avfe6m7o2twqw9n.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     QWEN_ENABLE_THINKING: bool = True
 

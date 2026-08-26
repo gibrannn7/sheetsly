@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter
 from app.api.routes import (
+    agent_router,
     ai_router,
     analytics_router,
     datasets_router,
@@ -18,3 +19,4 @@ api_router.include_router(sheets_router)
 api_router.include_router(analytics_router)
 api_router.include_router(visualization_router)
 api_router.include_router(ai_router, prefix="/ai")
+api_router.include_router(agent_router, prefix="/agent")

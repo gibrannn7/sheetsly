@@ -407,3 +407,181 @@ export interface AIStatusResponse {
   enable_thinking: boolean;
   provider: string;
 }
+
+// ----------------------------------------------------------------------------
+// Spreadsheet Agent & Mutation UI Models (Phase 8)
+// ----------------------------------------------------------------------------
+
+export type AgentResponseStatus =
+  | 'SUCCESS'
+  | 'CLARIFICATION'
+  | 'UNSUPPORTED'
+  | 'VALIDATION_ERROR'
+  | 'EXECUTION_ERROR'
+  | 'VERIFICATION_ERROR'
+  | 'PERSISTENCE_ERROR'
+  | 'ROLLBACK_SUCCESS'
+  | 'ROLLBACK_FAILURE';
+
+export interface SpreadsheetActionDTO {
+  action_id: string;
+  action_type: string;
+  sheet_name: string;
+  target_cell?: string | null;
+  target_range?: string | null;
+  value?: any;
+  formula?: string | null;
+  description?: string | null;
+}
+
+export interface CellSnapshotDTO {
+  coordinate: string;
+  row: number;
+  col: number;
+  original_value?: any;
+  parsed_value?: any;
+  data_type?: string;
+  formula?: string | null;
+  is_empty: boolean;
+}
+
+export interface StateDiffDTO {
+  target_ref: string;
+  before: CellSnapshotDTO;
+  after: CellSnapshotDTO;
+}
+
+export interface VerificationReportDTO {
+  is_verified: boolean;
+  total_cells_checked: number;
+  planned_modifications_count: number;
+  actual_modifications_count: number;
+  diff_matches_plan: boolean;
+  failures: string[];
+  failure_reasons: string[];
+  verified_expected_value?: any;
+  actual_evaluated_value?: any;
+}
+
+export interface MutationTransactionDTO {
+  transaction_id: string;
+  dataset_id: string;
+  sheet_name: string;
+  user_request: string;
+  resolved_intent: string;
+  status: string;
+  actions: SpreadsheetActionDTO[];
+  diff: StateDiffDTO[];
+  verification_report?: VerificationReportDTO | null;
+}
+
+export interface AgentClarificationDTO {
+  question: string;
+  reason: string;
+  target_parameter: string;
+  options: string[];
+}
+
+export interface AgentExecutionResult {
+  status: AgentResponseStatus;
+  transaction?: MutationTransactionDTO | null;
+  message: string;
+  affected_ranges: string[];
+  clarification?: AgentClarificationDTO | null;
+  error_detail?: string | null;
+  execution_time_ms: number;
+}
+
+export interface AgentActionRequest {
+  dataset_id: string;
+  user_request: string;
+  active_sheet_name?: string;
+  selected_range?: string;
+  confirmation_context?: Record<string, any>;
+  expected_version?: number;
+}
+
+export interface AgentUndoRequest {
+  dataset_id: string;
+  active_sheet_name?: string;
+}
+
+export interface TransactionAuditRecordDTO {
+  transaction_id: string;
+  dataset_id: string;
+  sheet_name: string;
+  action_types: string[];
+  affected_cells: string[];
+  status: string;
+  verified: boolean;
+  rolled_back: boolean;
+  timestamp: string;
+}
+
+export interface AgentHistoryResponse {
+  dataset_id: string;
+  current_version: number;
+  can_undo: boolean;
+  history: TransactionAuditRecordDTO[];
+}
+
+// ----------------------------------------------------------------------------
+// Smart Visualization & Granular Analytics Models (Phase 9)
+// ----------------------------------------------------------------------------
+
+export type CanonicalChartType =
+  | 'LINE'
+  | 'BAR'
+  | 'COLUMN'
+  | 'AREA'
+  | 'SCATTER'
+  | 'PIE'
+  | 'DONUT'
+  | 'TABLE'
+  | 'KPI';
+
+export interface ChartProvenanceDTO {
+  dataset_id: string;
+  source_sheets: string[];
+  source_columns: string[];
+  source_ranges: string[];
+  filters_applied: string[];
+  aggregation: string;
+  dimension?: string | null;
+  measure: string;
+  verification_status: string;
+}
+
+export interface ChartDatasetDTO {
+  name: string;
+  values: any[];
+  color?: string | null;
+}
+
+export interface ChartDataDTO {
+  chart_type: CanonicalChartType;
+  title: string;
+  labels: string[];
+  datasets: ChartDatasetDTO[];
+  provenance: ChartProvenanceDTO;
+  summary_metric?: string | null;
+  summary_value?: any;
+}
+
+export interface ExplainableAnalyticsResultDTO {
+  question: string;
+  resolved_intent: string;
+  source_sheets: string[];
+  source_columns: string[];
+  source_ranges: string[];
+  filters_applied: string[];
+  aggregation: string;
+  grouping?: string | null;
+  result_rows: Record<string, any>[];
+  calculation_method: string;
+  verification_status: string;
+  chart_data?: ChartDataDTO | null;
+  timing_ms: number;
+}
+
+

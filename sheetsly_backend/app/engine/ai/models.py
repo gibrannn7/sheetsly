@@ -11,7 +11,7 @@ from app.engine.visualization.chart_model import VisualizationResponse
 
 SUPPORTED_AI_MODELS = [
     # Qwen (Alibaba Cloud Model Studio)
-    {"id": "qwen3.5-plus", "label": "Qwen 3.5 Plus", "provider": "qwen", "provider_label": "Qwen", "is_default": True},
+    {"id": "qwen3.5-397b-a17b", "label": "Qwen 3.5 397B", "provider": "qwen", "provider_label": "Qwen", "is_default": True},
     {"id": "qwen3.5-flash", "label": "Qwen 3.5 Flash", "provider": "qwen", "provider_label": "Qwen"},
     {"id": "qwen3.6-plus", "label": "Qwen 3.6 Plus", "provider": "qwen", "provider_label": "Qwen"},
     {"id": "qwen3.7-plus", "label": "Qwen 3.7 Plus", "provider": "qwen", "provider_label": "Qwen"},
@@ -27,7 +27,7 @@ SUPPORTED_AI_MODELS = [
     {"id": "gemini-3.6-flash", "label": "Gemini 3.6 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
 ]
 ALLOWED_AI_MODELS = {m["id"] for m in SUPPORTED_AI_MODELS}
-DEFAULT_AI_MODEL = "qwen3.5-plus"
+DEFAULT_AI_MODEL = "qwen3.5-397b-a17b"
 
 
 def get_provider_for_model(model_id: Optional[str]) -> str:
@@ -89,7 +89,7 @@ class NaturalLanguageQueryRequest(BaseModel):
     table_id: Optional[str] = Field(None, description="Specific table ID within worksheet")
     model: Optional[str] = Field(
         None,
-        description="Requested AI model identifier (must be an allowlisted model: qwen3.5-plus, qwen3.6-plus, etc.)",
+        description="Requested AI model identifier (must be an allowlisted model: qwen3.5-397b-a17b, qwen3.6-plus, etc.)",
     )
     generate_visualization: bool = Field(True, description="Whether to automatically generate a deterministic chart")
     clarification_selection: Optional[Dict[str, str]] = Field(

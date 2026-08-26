@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { CellData, SheetDataGridResponse } from '../../lib/types';
 import { downloadCsv, tableToCsv } from '../../lib/export';
 import { useWorkspace } from '../../lib/workspace/WorkspaceContext';
+import { GridAIChatPanel } from '../ai/GridAIChatPanel';
 
 interface ActualDataViewerProps {
   datasetId: string;
@@ -26,6 +27,21 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [gridData, setGridData] = useState<SheetDataGridResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAgentPanel, setShowAgentPanel] = useState(false);
+
+  const fetchGrid = useCallback(() => {
+    setIsLoading(true);
+    api
+      .getSheetDataGrid(datasetId, sheetName, page, pageSize, debouncedQuery)
+      .then((data) => {
+        setGridData(data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load sheet grid', err);
+        setIsLoading(false);
+      });
+  }, [datasetId, sheetName, page, pageSize, debouncedQuery]);
 
   // Debounce search query input (150ms for responsive, snappy typing)
   useEffect(() => {
@@ -37,28 +53,8 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
 
   // Fetch paginated grid slice whenever sheet, page, pageSize, or debouncedQuery changes
   useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-
-    api
-      .getSheetDataGrid(datasetId, sheetName, page, pageSize, debouncedQuery)
-      .then((data) => {
-        if (isMounted) {
-          setGridData(data);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error('Failed to load sheet grid', err);
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [datasetId, sheetName, page, pageSize, debouncedQuery]);
+    fetchGrid();
+  }, [fetchGrid]);
 
   const totalRows = gridData?.total_rows ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
@@ -132,9 +128,10 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
   };
 
   return (
-    <div className="space-y-4">
-      {/* Grid Container */}
-      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
+    <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <div className="flex-1 w-full space-y-4 min-w-0">
+        {/* Grid Container */}
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
         {/* Header Toolbar */}
         <div className="p-3 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 transition-colors">
           {/* Left: Sheet Title + Search Input */}
@@ -191,8 +188,22 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
             )}
           </div>
 
-          {/* Right: Export + Page Size Selector + Row Range */}
+          {/* Right: AI Agent + Export + Page Size Selector + Row Range */}
           <div className="flex items-center space-x-2.5">
+            {/* AI Agent Chat Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowAgentPanel((prev) => !prev)}
+              title="Buka Spreadsheet AI Agent Chat"
+              className={`inline-flex items-center space-x-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors shadow-2xs cursor-pointer ${
+                showAgentPanel
+                  ? 'bg-emerald-600 text-white border-emerald-600 dark:bg-emerald-500 dark:text-slate-900'
+                  : 'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-700'
+              }`}
+            >
+              <span>AI Agent</span>
+            </button>
+
             {/* Export CSV Button */}
             <button
               type="button"
@@ -490,6 +501,19 @@ export const ActualDataViewer: React.FC<ActualDataViewerProps> = ({ datasetId, s
               </span>
             </div>
           </div>
+        </div>
+      )}
+      </div>
+
+      {/* Side AI Agent Chat Panel */}
+      {showAgentPanel && (
+        <div className="w-full lg:w-96 shrink-0 h-[620px] sticky top-4">
+          <GridAIChatPanel
+            datasetId={datasetId}
+            activeSheetName={sheetName}
+            onGridUpdated={fetchGrid}
+            onClose={() => setShowAgentPanel(false)}
+          />
         </div>
       )}
     </div>

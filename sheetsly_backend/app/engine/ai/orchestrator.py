@@ -232,7 +232,7 @@ class AIOrchestrator:
                 ),
             )
 
-        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-plus"
+        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-397b-a17b"
 
         # Check for multi-analysis "Semua Analisis" selection
         is_multi_all = bool(
@@ -369,7 +369,7 @@ class AIOrchestrator:
                 ),
             )
 
-        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-plus"
+        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-397b-a17b"
 
         # Check for multi-analysis "Semua Analisis" selection
         is_multi_all = bool(

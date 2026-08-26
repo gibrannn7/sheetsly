@@ -152,7 +152,7 @@ User Natural Language Query                          Point-and-Click Operation B
 ### F. Multi-Model AI Query Planner & 12-Model Matrix
 - **Supported Providers**: Alibaba Cloud Model Studio (Qwen), DeepSeek, and Google Gemini API (v1beta REST generateContent).
 - **Strict 12-Model Allowlist**:
-  - **Qwen**: `qwen3.5-plus`, `qwen3.5-flash`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
+  - **Qwen**: `qwen3.5-397b-a17b`, `qwen3.5-flash`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
   - **DeepSeek**: `deepseek-v4-flash`
   - **Google Gemini**: `gemini-2.5-flash`, `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-3.6-flash`
 - **Proactive Disambiguation**: Returns structured `CLARIFICATION` prompts when queries are ambiguous, enabling users to click candidate column options.

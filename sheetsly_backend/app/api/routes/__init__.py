@@ -1,17 +1,19 @@
-"""API routes package."""
+"""API routes package exports."""
 
-from .health import router as health_router
-from .datasets import router as datasets_router
-from .sheets import router as sheets_router
-from .analytics import router as analytics_router
-from .visualization import router as visualization_router
-from .ai import router as ai_router
+from app.api.routes.agent import router as agent_router
+from app.api.routes.ai import router as ai_router
+from app.api.routes.analytics import router as analytics_router
+from app.api.routes.datasets import router as datasets_router
+from app.api.routes.health import router as health_router
+from app.api.routes.sheets import router as sheets_router
+from app.api.routes.visualization import router as visualization_router
 
 __all__ = [
-    "health_router",
-    "datasets_router",
-    "sheets_router",
-    "analytics_router",
-    "visualization_router",
+    "agent_router",
     "ai_router",
+    "analytics_router",
+    "datasets_router",
+    "health_router",
+    "sheets_router",
+    "visualization_router",
 ]

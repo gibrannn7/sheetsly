@@ -1,4 +1,4 @@
-"""Analytical Engine package initialization."""
+"""Analytical Engine package exports."""
 
 from .instruction_model import (
     AggregationOpEnum,
@@ -18,6 +18,26 @@ from .result_model import (
     TableResultData,
 )
 from .engine import AnalyticalEngine, analytical_engine
+from .visualization_engine import (
+    CanonicalChartTypeEnum,
+    ChartData,
+    ChartDataset,
+    ChartProvenance,
+    SmartVisualizationEngine,
+    VisualizationPlan,
+    VisualizationSuitabilityResult,
+)
+from .granular_analytics import (
+    ExplainableAnalyticsResult,
+    GranularAnalyticsEngine,
+)
+from .multisheet_orchestrator import (
+    AdvancedProvenance,
+    ExplainableMultiSheetAnalyticsResult,
+    JoinPlan,
+    MultiHopJoinPath,
+    MultiSheetAnalyticsOrchestrator,
+)
 
 __all__ = [
     "OperationEnum",
@@ -35,4 +55,18 @@ __all__ = [
     "AnalyticalResult",
     "AnalyticalEngine",
     "analytical_engine",
+    "CanonicalChartTypeEnum",
+    "ChartData",
+    "ChartDataset",
+    "ChartProvenance",
+    "SmartVisualizationEngine",
+    "VisualizationPlan",
+    "VisualizationSuitabilityResult",
+    "ExplainableAnalyticsResult",
+    "GranularAnalyticsEngine",
+    "JoinPlan",
+    "MultiHopJoinPath",
+    "AdvancedProvenance",
+    "ExplainableMultiSheetAnalyticsResult",
+    "MultiSheetAnalyticsOrchestrator",
 ]
