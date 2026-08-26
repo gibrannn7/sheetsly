@@ -499,6 +499,7 @@ export interface AgentActionRequest {
   selected_range?: string;
   confirmation_context?: Record<string, any>;
   expected_version?: number;
+  model_id?: string;
 }
 
 export interface AgentUndoRequest {

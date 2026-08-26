@@ -11,7 +11,7 @@ interface DataQualityPanelProps {
 }
 
 export const DataQualityPanel: React.FC<DataQualityPanelProps> = ({ report, sheetName }) => {
-  const { dictionary } = useTranslation();
+  const { dictionary, t } = useTranslation();
   const [showExplanation, setShowExplanation] = useState(false);
 
   const getSeverityBadge = (severity: IssueSeverity) => {
@@ -19,19 +19,19 @@ export const DataQualityPanel: React.FC<DataQualityPanelProps> = ({ report, shee
       case 'CRITICAL':
         return (
           <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase bg-rose-100 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-800">
-            Critical
+            {dictionary.quality.critical}
           </span>
         );
       case 'WARNING':
         return (
           <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800">
-            Warning
+            {dictionary.quality.warning}
           </span>
         );
       case 'INFO':
         return (
           <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase bg-blue-100 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-800">
-            Info
+            {dictionary.quality.info}
           </span>
         );
     }
@@ -43,6 +43,11 @@ export const DataQualityPanel: React.FC<DataQualityPanelProps> = ({ report, shee
     return 'text-rose-800 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800';
   };
 
+  const summaryText =
+    report.issues.length === 0
+      ? t('quality.qualityScorePassed', { score: report.overall_score })
+      : t('quality.qualityScoreIssues', { score: report.overall_score, count: report.issues.length });
+
   return (
     <>
       <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden transition-colors">
@@ -53,16 +58,19 @@ export const DataQualityPanel: React.FC<DataQualityPanelProps> = ({ report, shee
               <span>{dictionary.quality.hygieneScore}</span>
               <span className="text-slate-500 dark:text-slate-400 font-normal font-mono">({sheetName})</span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{report.summary}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{summaryText}</p>
           </div>
 
           <div className="flex items-center space-x-3">
             <button
               type="button"
               onClick={() => setShowExplanation(true)}
-              className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 underline cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 rounded px-1"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
             >
-              {dictionary.quality.howAssessedButton}
+              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{dictionary.quality.howAssessedButton}</span>
             </button>
 
             <div
@@ -106,7 +114,7 @@ export const DataQualityPanel: React.FC<DataQualityPanelProps> = ({ report, shee
                       </span>
                       {issue.column_name && (
                         <span className="text-slate-500 dark:text-slate-400">
-                          in <strong className="text-slate-800 dark:text-slate-200">{issue.column_name}</strong>
+                          {t('quality.inColumn', { col: issue.column_name })}
                         </span>
                       )}
                     </div>

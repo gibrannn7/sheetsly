@@ -87,6 +87,36 @@ export interface TranslationDictionary {
     uniques: string;
     samples: string;
     noTables: string;
+    structuralSignals: string;
+    sourceRef: string;
+    headerLabel: string;
+    targetTable: string;
+    signals: {
+      colHomogeneous: string;
+      rowHomogeneous: string;
+      topRowHeader: string;
+      firstColHeader: string;
+      topRowPeriod: string;
+      repeatingCategorical: string;
+      leftColRepeating: string;
+      dimensionsVertical: string;
+      dimensionsHorizontal: string;
+    };
+    roles: {
+      measure: string;
+      category: string;
+      identifier: string;
+      temporal: string;
+      text: string;
+      boolean: string;
+      unknown: string;
+    };
+    orientations: {
+      vertical: string;
+      horizontal: string;
+      ambiguous: string;
+      irregular: string;
+    };
   };
   grid: {
     title: string;
@@ -119,6 +149,12 @@ export interface TranslationDictionary {
     sampleLocations: string;
     sheetScore: string;
     howAssessedButton: string;
+    critical: string;
+    warning: string;
+    info: string;
+    qualityScorePassed: string;
+    qualityScoreIssues: string;
+    inColumn: string;
   };
   builder: {
     title: string;
@@ -159,6 +195,7 @@ export interface TranslationDictionary {
     validationError: string;
     noAnalysisYet: string;
     noAnalysisDesc: string;
+    howItWorksBtn: string;
     operations: {
       sumLabel: string;
       sumDesc: string;
@@ -183,6 +220,119 @@ export interface TranslationDictionary {
       sortLabel: string;
       sortDesc: string;
     };
+  };
+  smartAnalytics: {
+    title: string;
+    evidenceBadge: string;
+    verifiedNumericTruth: string;
+    inputPlaceholder: string;
+    visualizeBtn: string;
+    analyzingBtn: string;
+    howItWorksBtn: string;
+    dataProvenance: string;
+    sourceSheets: string;
+    sourceColumns: string;
+    rangesSampled: string;
+    aggregationMethod: string;
+    quickPrompts: {
+      monthlyTrend: string;
+      categoryComparison: string;
+      top5Products: string;
+      salesProfitCorrelation: string;
+    };
+    modal: {
+      title: string;
+      subtitle: string;
+      coreTruthTitle: string;
+      coreTruthDesc: string;
+      featuresTitle: string;
+      temporalTitle: string;
+      temporalDesc: string;
+      rankingTitle: string;
+      rankingDesc: string;
+      multiSheetTitle: string;
+      multiSheetDesc: string;
+      provenanceTitle: string;
+      provenanceDesc: string;
+      clarificationTitle: string;
+      clarificationDesc: string;
+      exampleHeading: string;
+      examples: string[];
+      close: string;
+    };
+  };
+  agent: {
+    title: string;
+    undoBtn: string;
+    undoTitle: string;
+    rollingBack: string;
+    undoSuccess: string;
+    undoError: string;
+    emptyInstruction: string;
+    tryExamples: string;
+    quickPrompts: {
+      p1: string;
+      p2: string;
+      p3: string;
+    };
+    inputPlaceholder: string;
+    sendBtn: string;
+    processing: string;
+    defaultDone: string;
+    failed: string;
+    howItWorksBtn: string;
+    modal: {
+      title: string;
+      subtitle: string;
+      intro: string;
+      lifecycleTitle: string;
+      steps: {
+        step1Title: string;
+        step1Desc: string;
+        step2Title: string;
+        step2Desc: string;
+        step3Title: string;
+        step3Desc: string;
+        step4Title: string;
+        step4Desc: string;
+        step5Title: string;
+        step5Desc: string;
+        step6Title: string;
+        step6Desc: string;
+        step7Title: string;
+        step7Desc: string;
+        step8Title: string;
+        step8Desc: string;
+      };
+      safetyTitle: string;
+      safetyDesc: string;
+      modelTitle: string;
+      modelDesc: string;
+      close: string;
+    };
+  };
+  builderModal: {
+    title: string;
+    subtitle: string;
+    intro: string;
+    stepsTitle: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    step4Title: string;
+    step4Desc: string;
+    step5Title: string;
+    step5Desc: string;
+    step6Title: string;
+    step6Desc: string;
+    step7Title: string;
+    step7Desc: string;
+    emptyTitle: string;
+    emptyDesc: string;
+    close: string;
   };
   resultView: {
     verifiedResult: string;

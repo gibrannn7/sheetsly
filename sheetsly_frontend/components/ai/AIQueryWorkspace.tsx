@@ -177,9 +177,12 @@ export const AIQueryWorkspace: React.FC<AIQueryWorkspaceProps> = ({
               <button
                 type="button"
                 onClick={() => setShowHowItWorksModal(true)}
-                className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 underline cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 rounded px-1"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-md text-[11px] font-medium cursor-pointer transition-colors shadow-2xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400"
               >
-                {dictionary.ai.howDoesThisWork}
+                <span className="font-mono text-[10px] w-3.5 h-3.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold">
+                  ?
+                </span>
+                <span>{dictionary.ai.howDoesThisWork}</span>
               </button>
 
               {aiStatus?.configured ? (

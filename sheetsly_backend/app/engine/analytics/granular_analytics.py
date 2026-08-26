@@ -1,6 +1,6 @@
 """Granular Analytics Engine: Deterministic Python calculations, multi-sheet joins, and temporal grouping."""
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import statistics
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -127,6 +127,95 @@ class GranularAnalyticsEngine:
                 break
 
         agg_op = "SUM"
+    @staticmethod
+    def _parse_date(val: Any) -> Optional[datetime]:
+        """Robustly parses string, timestamp, date, or datetime objects into a datetime instance."""
+        if val is None:
+            return None
+        if isinstance(val, datetime):
+            return val
+        if isinstance(val, date):
+            return datetime(val.year, val.month, val.day)
+        s = str(val).strip()
+        if not s or s.lower() in {"none", "null", "nan", "nat"}:
+            return None
+        formats = [
+            "%Y-%m-%d", "%Y/%m/%d", "%Y.%m.%d",
+            "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y",
+            "%m/%d/%Y", "%m-%d-%Y",
+            "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S", "%m/%d/%Y %H:%M:%S",
+            "%Y-%m", "%m/%Y", "%Y"
+        ]
+        for fmt in formats:
+            try:
+                return datetime.strptime(s, fmt)
+            except ValueError:
+                continue
+        try:
+            import pandas as pd
+            ts = pd.to_datetime(s, dayfirst=True)
+            if pd.notnull(ts):
+                return ts.to_pydatetime()
+        except Exception:
+            pass
+        return None
+
+    @classmethod
+    def execute_analytics_query(
+        cls,
+        user_query: str,
+        workbook_index: WorkbookMetadataIndex,
+        grid_a: Optional[Union[RawSheetGrid, Dict[str, RawSheetGrid]]] = None,
+        secondary_grid: Optional[RawSheetGrid] = None,
+        relationship_graph: Optional[RelationshipGraph] = None,
+        active_sheet_name: Optional[str] = None,
+        grids: Optional[Dict[str, RawSheetGrid]] = None,
+    ) -> ExplainableAnalyticsResult:
+        """
+        Executes granular in-memory aggregation and visualization planning.
+        """
+        start_time = time.perf_counter()
+        q_norm = user_query.lower()
+        cur_sheet_name = active_sheet_name or workbook_index.active_sheet_name
+        sheet_a = workbook_index.sheets.get(cur_sheet_name)
+        if not sheet_a or not sheet_a.tables:
+            raise ValueError(f"Sheet '{cur_sheet_name}' has no structured table.")
+        table_a = sheet_a.tables[0]
+
+        # Normalize grid_a / grids & secondary_grid
+        target_input = grids if grids is not None else grid_a
+        all_grids: Dict[str, RawSheetGrid] = {}
+        if isinstance(target_input, dict):
+            all_grids = target_input
+            actual_grid_a = target_input.get(cur_sheet_name, list(target_input.values())[0] if target_input else None)
+        else:
+            actual_grid_a = target_input
+            all_grids = {cur_sheet_name: target_input} if target_input else {}
+
+        if actual_grid_a is None:
+            raise ValueError(f"No grid data available for active sheet '{cur_sheet_name}'.")
+
+        # Auto-build relationship graph if not provided and multi-sheet
+        if relationship_graph is None and all_grids:
+            relationship_graph = RelationshipDetector.detect_relationships(workbook_index, all_grids)
+
+        # 1. Identify Target Measure
+        measure_cols = [c for c in table_a.columns if c.semantic_type == SemanticTypeEnum.NUMERIC_MEASURE]
+        if not measure_cols:
+            measure_cols = [c for c in table_a.columns if c.data_type in {DataTypeEnum.FLOAT, DataTypeEnum.INTEGER, DataTypeEnum.CURRENCY, DataTypeEnum.PERCENTAGE}]
+        if not measure_cols:
+            raise ValueError(f"Table in '{cur_sheet_name}' has no numeric measures to analyze.")
+
+        target_measure = None
+        for c in measure_cols:
+            if c.normalized_name in q_norm:
+                target_measure = c
+                break
+        if not target_measure:
+            target_measure = measure_cols[0]
+
+        # 2. Identify Aggregation Operation
+        agg_op = "SUM"
         if any(w in q_norm for w in ["rata-rata", "average", "mean"]):
             agg_op = "AVERAGE"
         elif any(w in q_norm for w in ["jumlah transaksi", "count", "banyaknya", "frekuensi"]):
@@ -138,40 +227,75 @@ class GranularAnalyticsEngine:
         elif "median" in q_norm:
             agg_op = "MEDIAN"
 
-        # 3. Determine Grouping Dimension
-        is_temporal = any(w in q_norm for w in ["tren", "trend", "bulanan", "bulan", "tahun", "tahunan", "kuartal", "harian", "mingguan", "date", "tanggal", "month", "year"])
+        # 3. Determine Grouping Dimension & Temporal Granularity
+        is_temporal = any(w in q_norm for w in [
+            "tren", "trend", "bulanan", "bulan", "tahun", "tahunan", "kuartal", "kuartalan",
+            "harian", "mingguan", "date", "tanggal", "month", "monthly", "year", "annual", "quarter", "quarterly"
+        ])
         dim_col = None
         temporal_granularity = None
-
-        cat_cols = [c for c in table_a.columns if c.semantic_type in {SemanticTypeEnum.CATEGORICAL, SemanticTypeEnum.TEXT}]
-        is_group_requested = any(w in q_norm for w in [" per ", " by ", " berdasarkan ", " menurut ", " grouped "]) or any(c.normalized_name in q_norm for c in cat_cols)
 
         if is_temporal:
             temp_cols = [c for c in table_a.columns if c.semantic_type == SemanticTypeEnum.TEMPORAL]
             if temp_cols:
                 dim_col = temp_cols[0]
-                temporal_granularity = "MONTH" if ("bulan" in q_norm or "month" in q_norm) else ("YEAR" if "tahun" in q_norm else "MONTH")
-        elif secondary_dim_col:
-            dim_col = secondary_dim_col
-        else:
-            for c in cat_cols:
-                if c.normalized_name in q_norm:
-                    dim_col = c
-                    break
-            if not dim_col and is_group_requested and cat_cols:
-                dim_col = cat_cols[0]
+            if any(w in q_norm for w in ["tahunan", "annual", "tahun", "year"]):
+                temporal_granularity = "YEAR"
+            elif any(w in q_norm for w in ["kuartal", "kuartalan", "quarter", "quarterly", "triwulan"]):
+                temporal_granularity = "QUARTER"
+            elif any(w in q_norm for w in ["harian", "daily", "hari"]):
+                temporal_granularity = "DAY"
+            elif any(w in q_norm for w in ["mingguan", "weekly", "minggu"]):
+                temporal_granularity = "WEEK"
+            else:
+                temporal_granularity = "MONTH"
+
+        # Check cross-sheet relationship candidates
+        join_rel = None
+        secondary_dim_col = None
+        if relationship_graph:
+            for rel in relationship_graph.relationships:
+                if rel.status == RelationshipStatusEnum.VERIFIED and (rel.source_sheet == cur_sheet_name or rel.target_sheet == cur_sheet_name):
+                    sec_sheet = rel.target_sheet if rel.source_sheet == cur_sheet_name else rel.source_sheet
+                    sec_entry = workbook_index.sheets.get(sec_sheet)
+                    if sec_entry and sec_entry.tables:
+                        for col in sec_entry.tables[0].columns:
+                            if col.semantic_type in {SemanticTypeEnum.CATEGORICAL, SemanticTypeEnum.TEXT} and col.normalized_name in q_norm:
+                                join_rel = rel
+                                secondary_dim_col = col
+                                break
+                    if join_rel:
+                        break
+
+        if join_rel and secondary_grid is None and all_grids:
+            sec_sheet = join_rel.target_sheet if join_rel.source_sheet == cur_sheet_name else join_rel.source_sheet
+            secondary_grid = all_grids.get(sec_sheet)
+
+        cat_cols = [c for c in table_a.columns if c.semantic_type in {SemanticTypeEnum.CATEGORICAL, SemanticTypeEnum.TEXT}]
+        is_group_requested = any(w in q_norm for w in [" per ", " by ", " berdasarkan ", " menurut ", " grouped "]) or any(c.normalized_name in q_norm for c in cat_cols)
+
+        if not is_temporal:
+            if secondary_dim_col:
+                dim_col = secondary_dim_col
+            else:
+                for c in cat_cols:
+                    if c.normalized_name in q_norm:
+                        dim_col = c
+                        break
+                if not dim_col and is_group_requested and cat_cols:
+                    dim_col = cat_cols[0]
 
         # 4. Perform In-Memory Extraction & Aggregation
         source_ranges = [f"{cur_sheet_name}!{table_a.range_address}"]
-        if secondary_grid and join_rel:
-            source_ranges.append(f"{secondary_dim_col.normalized_name}!{join_rel.target_sheet}")
+        if secondary_grid and join_rel and secondary_dim_col:
+            source_ranges.append(f"{join_rel.target_sheet if join_rel.source_sheet == cur_sheet_name else join_rel.source_sheet}!{workbook_index.sheets[join_rel.target_sheet if join_rel.source_sheet == cur_sheet_name else join_rel.source_sheet].tables[0].range_address}")
 
         grouped_data: Dict[str, List[float]] = {}
+        grouped_sort_keys: Dict[str, Tuple[Any, ...]] = {}
 
         # Build join lookup map if cross-sheet
         join_lookup: Dict[Any, str] = {}
         if secondary_grid and join_rel and secondary_dim_col:
-            # map join key -> dimension value
             key_col_idx = 1
             dim_col_idx = 1
             sec_tbl = workbook_index.sheets[join_rel.target_sheet if join_rel.target_sheet != cur_sheet_name else join_rel.source_sheet].tables[0]
@@ -181,8 +305,10 @@ class GranularAnalyticsEngine:
                 if c.name == secondary_dim_col.name:
                     dim_col_idx = c.index + 1
             for r in range(sec_tbl.columns[0].index + 2, sec_tbl.row_count + 2):
-                k_val = secondary_grid.get_cell(r, key_col_idx).parsed_value
-                d_val = secondary_grid.get_cell(r, dim_col_idx).parsed_value
+                k_cell = secondary_grid.get_cell(r, key_col_idx)
+                d_cell = secondary_grid.get_cell(r, dim_col_idx)
+                k_val = k_cell.parsed_value if k_cell else None
+                d_val = d_cell.parsed_value if d_cell else None
                 if k_val is not None and d_val is not None:
                     join_lookup[str(k_val)] = str(d_val)
 
@@ -196,7 +322,7 @@ class GranularAnalyticsEngine:
                     join_key_idx = c.index + 1
 
         for r in range(2, table_a.row_count + 2):
-            raw_cell = grid_a.get_cell(r, val_col_idx)
+            raw_cell = actual_grid_a.get_cell(r, val_col_idx)
             cell_val = raw_cell.parsed_value if raw_cell else None
             if cell_val is None:
                 continue
@@ -214,31 +340,58 @@ class GranularAnalyticsEngine:
                 continue
 
             group_key = "Total"
+            sort_key: Tuple[Any, ...] = (0,)
+
             if secondary_dim_col and join_rel:
-                k_val = str(grid_a.get_cell(r, join_key_idx).parsed_value)
+                k_cell = actual_grid_a.get_cell(r, join_key_idx)
+                k_val = str(k_cell.parsed_value) if k_cell else ""
                 group_key = join_lookup.get(k_val, "Unknown")
             elif dim_col:
-                raw_d = grid_a.get_cell(r, dim_col_idx).parsed_value
+                raw_d_cell = actual_grid_a.get_cell(r, dim_col_idx)
+                raw_d = raw_d_cell.parsed_value if raw_d_cell else None
                 if raw_d is not None:
-                    if is_temporal and isinstance(raw_d, (datetime, str)):
-                        s_str = str(raw_d)
-                        group_key = s_str[:7] if temporal_granularity == "MONTH" else (s_str[:4] if temporal_granularity == "YEAR" else s_str[:10])
+                    if is_temporal:
+                        dt = cls._parse_date(raw_d)
+                        if dt:
+                            if temporal_granularity == "YEAR":
+                                group_key = f"{dt.year}"
+                                sort_key = (dt.year, 0, 0)
+                            elif temporal_granularity == "QUARTER":
+                                q_num = (dt.month - 1) // 3 + 1
+                                group_key = f"{dt.year} Q{q_num}"
+                                sort_key = (dt.year, q_num, 0)
+                            elif temporal_granularity == "WEEK":
+                                iso_y, iso_w, _ = dt.isocalendar()
+                                group_key = f"{iso_y}-W{iso_w:02d}"
+                                sort_key = (iso_y, iso_w, 0)
+                            elif temporal_granularity == "DAY":
+                                group_key = f"{dt.year}-{dt.month:02d}-{dt.day:02d}"
+                                sort_key = (dt.year, dt.month, dt.day)
+                            else: # MONTH
+                                group_key = f"{dt.year}-{dt.month:02d}"
+                                sort_key = (dt.year, dt.month, 0)
+                        else:
+                            group_key = str(raw_d)
                     else:
                         group_key = str(raw_d)
 
             if group_key not in grouped_data:
                 grouped_data[group_key] = []
+                grouped_sort_keys[group_key] = sort_key
             grouped_data[group_key].append(float_val)
 
         # Compute Aggregated Results
         result_rows = []
         for k, v_list in grouped_data.items():
             agg_val = cls.calculate_aggregation(v_list, agg_op)
-            result_rows.append({
+            row_dict = {
                 dim_col.name if dim_col else "Metric": k,
                 f"{agg_op}_{target_measure.name}": agg_val,
                 "Count": len(v_list),
-            })
+            }
+            if is_temporal:
+                row_dict["_sort_key"] = grouped_sort_keys.get(k, (0,))
+            result_rows.append(row_dict)
 
         # Apply Ranking / Sorting
         is_bottom = "terendah" in q_norm or "bottom" in q_norm
@@ -247,8 +400,17 @@ class GranularAnalyticsEngine:
 
         if is_bottom:
             result_rows.sort(key=lambda x: x[metric_col_name])
+        elif is_top:
+            result_rows.sort(key=lambda x: x[metric_col_name], reverse=True)
+        elif is_temporal:
+            # Chronological sort for pure temporal data
+            result_rows.sort(key=lambda x: x.get("_sort_key", (0,)))
         else:
             result_rows.sort(key=lambda x: x[metric_col_name], reverse=True)
+
+        if is_temporal:
+            for r in result_rows:
+                r.pop("_sort_key", None)
 
         # Check limit (e.g. 'top 5', 'top 10')
         limit = None
@@ -271,8 +433,12 @@ class GranularAnalyticsEngine:
         labels = [str(r[dim_col.name if dim_col else "Metric"]) for r in result_rows]
         values = [r[metric_col_name] for r in result_rows]
 
+        chart_type = suitability.recommended_chart_type
+        if is_temporal and chart_type not in ["LINE", "COLUMN"]:
+            chart_type = "LINE"
+
         chart_data = ChartData(
-            chart_type=suitability.recommended_chart_type,
+            chart_type=chart_type,
             title=f"{agg_op} of {target_measure.name}" + (f" by {dim_col.name}" if dim_col else ""),
             labels=labels,
             datasets=[ChartDataset(name=metric_col_name, values=values, color="#10b981")],
@@ -284,23 +450,25 @@ class GranularAnalyticsEngine:
                 aggregation=agg_op,
                 dimension=dim_col.name if dim_col else None,
                 measure=target_measure.name,
+                filters_applied=[],
+                verification_status="VERIFIED_NUMERIC_TRUTH",
             ),
             summary_metric=f"{agg_op} {target_measure.name}",
-            summary_value=values[0] if len(values) == 1 else round(sum(values), 2),
+            summary_value=cls.calculate_aggregation([x for v in grouped_data.values() for x in v], agg_op),
         )
-
-        calc_time = (time.perf_counter() - start_time) * 1000
 
         return ExplainableAnalyticsResult(
             question=user_query,
-            resolved_intent=f"Calculate {agg_op} of {target_measure.name}" + (f" grouped by {dim_col.name}" if dim_col else ""),
+            resolved_intent=f"Calculate {agg_op} of {target_measure.name}" + (f" grouped by {dim_col.name} ({temporal_granularity})" if (dim_col and is_temporal) else (f" grouped by {dim_col.name}" if dim_col else "")),
             source_sheets=[cur_sheet_name] + ([join_rel.target_sheet] if join_rel else []),
             source_columns=[target_measure.name] + ([dim_col.name] if dim_col else []),
             source_ranges=source_ranges,
+            filters_applied=[],
             aggregation=agg_op,
             grouping=dim_col.name if dim_col else None,
             result_rows=result_rows,
-            calculation_method=f"Python deterministic {agg_op} aggregation over {len(result_rows)} groups",
+            calculation_method=f"Python deterministic {agg_op} aggregation over {len(result_rows)} {'temporal periods' if is_temporal else 'groups'}",
+            verification_status="VERIFIED_NUMERIC_TRUTH",
             chart_data=chart_data,
-            timing_ms=calc_time,
+            timing_ms=(time.perf_counter() - start_time) * 1000,
         )

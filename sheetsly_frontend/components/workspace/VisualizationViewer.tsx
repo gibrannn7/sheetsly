@@ -349,9 +349,9 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
                   type="button"
                   onClick={() => handleGenerateCustomChart(selectedChartType)}
                   disabled={loading || !activeTable}
-                  className="text-[11px] font-semibold text-slate-900 dark:text-slate-100 underline hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-md text-[11px] font-medium transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
                 >
-                  {loading ? dictionary.visualization.rendering : dictionary.visualization.generateChart}
+                  <span>{loading ? dictionary.visualization.rendering : dictionary.visualization.generateChart}</span>
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-1.5">

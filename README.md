@@ -151,13 +151,23 @@ User Natural Language Query                          Point-and-Click Operation B
 
 ### F. Multi-Model AI Query Planner & 12-Model Matrix
 - **Supported Providers**: Alibaba Cloud Model Studio (Qwen), DeepSeek, and Google Gemini API (v1beta REST generateContent).
+- **Active Default Model**: `qwen3.5-397b-a17b` (Note: `qwen3.5-plus` is fully retired).
 - **Strict 12-Model Allowlist**:
-  - **Qwen**: `qwen3.5-397b-a17b`, `qwen3.5-flash`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
+  - **Qwen**: `qwen3.5-397b-a17b` (Default), `qwen3.5-flash`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
   - **DeepSeek**: `deepseek-v4-flash`
   - **Google Gemini**: `gemini-2.5-flash`, `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-3.6-flash`
+- **Spreadsheet AI Agent Workflow**:
+  - 10-step lifecycle: User instruction $\to$ intent interpretation $\to$ workbook context discovery $\to$ guardrails & safety $\to$ placement guard $\to$ formula preparation $\to$ independent Python verification $\to$ commit on success / atomic rollback on failure.
+  - Reversibility: Every committed transaction is recorded and can be reverted at any time using the `↩ Undo` button.
+- **Smart Analytics & Granular Temporal Calculations**:
+  - Natural-language query execution compiling into verified analytical instructions.
+  - Granular temporal calculations supporting Yearly (e.g. 2015, 2016), Quarterly (e.g. 2015 Q1), and continuous Monthly (e.g. 2015-01) date intervals with chronological sorting and Line/Column visualization recommendations.
+- **Full Workbook & Slices Export**:
+  - **XLSX Export**: Full multi-sheet workbook download preserving all worksheets, names, formulas, and evaluated data.
+  - **CSV Export**: Clean CSV download of active worksheet grids or filtered analytical results.
 - **Proactive Disambiguation**: Returns structured `CLARIFICATION` prompts when queries are ambiguous, enabling users to click candidate column options.
 - **AI Guardrail Validation**: Pre-execution check verifying that all planned columns and operations exist in the physical schema.
-- **Evidence-Based Explainer**: Grounded summaries citing verified numbers, source cell ranges, row counts, and calculation steps.
+- **Evidence-Based Explainer & Level 10 Provenance**: Grounded summaries citing verified numbers, source cell ranges, row counts, calculation steps, and verification status (`VERIFIED_NUMERIC_TRUTH`).
 - **Execution Stage Latency Grid**: Monospaced latency badges detailing milliseconds for Schema Resolution, AI Planning, Guardrails, Python Calculation, Visualization, and Explainer.
 
 ### G. Workspace State Persistence & Routing
@@ -170,6 +180,7 @@ User Natural Language Query                          Point-and-Click Operation B
 - **Language Switcher**: Instant `EN | ID` segmented toggle in navigation.
 - **First-Visit Onboarding Modal**: Lightweight, dismissible language selector with `localStorage` persistence and brand asset integration.
 - **Bilingual AI Query Planning**: AI understands questions in both Indonesian (e.g. *"Berapa total pendapatan?"*, *"Tampilkan rata-rata unit per wilayah"*) and English.
+- **Contextual In-App Guidance**: Dedicated contextual help modals for Operation Builder, Smart Analytics, and Spreadsheet AI Agent, alongside the global 11-chapter How-To guide.
 
 ---
 
@@ -194,18 +205,19 @@ sheetsly/
 │   ├── storage/
 │   │   └── temp/                        # Session storage for uploaded files and charts
 │   │       └── .gitkeep
-│   ├── tests/                           # 89 automated unit & integration tests (100% pass rate)
+│   ├── tests/                           # 312 automated unit & integration tests (100% pass rate)
 │   └── app/
 │       ├── main.py                      # FastAPI application entrypoint & lifespan
 │       ├── core/                        # Configuration, logging, domain errors
 │       ├── api/                         # REST API routes (/api/v1)
 │       │   ├── router.py                # Router aggregator
-│       │   └── routes/                  # Datasets, Sheets, Analytics, Visualization, AI
+│       │   └── routes/                  # Datasets, Sheets, Analytics, Visualization, AI, Agent
 │       ├── storage/                     # Isolated filesystem manager
 │       └── engine/
 │           ├── ingestion/               # OpenPyXL parser, orientation, quality engine
-│           ├── analytics/               # Analytical engine, filters, aggregations, lineage
+│           ├── analytics/               # Analytical engine, filters, aggregations, lineage, temporal
 │           ├── visualization/           # Chart selector, renderer, recommendation, smart generator
+│           ├── mutation/                # Spreadsheet agent planner, safe placement, verification, rollback
 │           └── ai/                      # Multi-provider client (Qwen/DeepSeek/Gemini), planner, guardrails, explainer, orchestrator
 │
 └── sheetsly_frontend/                   # Next.js 16 Frontend Workspace
@@ -224,16 +236,18 @@ sheetsly/
     ├── components/
     │   ├── upload/                      # SpreadsheetUploader with progressive loading
     │   ├── workspace/                   # SheetList, DetectedTablesViewer, ActualDataViewer,
-    │   │                                # DataQualityPanel, VisualizationViewer, WorkbookHeader,
-    │   │                                # ThemeSwitcher, HowToUseModal, LanguageSwitcher, LanguageOnboardingModal
+    │   │                                # DataQualityPanel, VisualizationViewer, SmartVisualizationPanel,
+    │   │                                # WorkbookHeader, ThemeSwitcher, HowToUseModal, LanguageSwitcher,
+    │   │                                # SmartAnalyticsHelpModal, AnalysisBuilderHelpModal
     │   ├── builder/                     # OperationBuilder, OperationSelector, FilterBuilder,
     │   │                                # GroupByBuilder, SortLimitBuilder, AnalysisResultView
-    │   └── ai/                          # AIQueryWorkspace, AIModelSelector, PlanInterpretationCard,
+    │   └── ai/                          # AIQueryWorkspace, AIModelSelector, GridAIChatPanel,
+    │                                    # SpreadsheetAgentHelpModal, PlanInterpretationCard,
     │                                    # ClarificationPrompt, EvidenceExplanationCard, HowDoesThisWorkModal
     └── lib/
         ├── types.ts                     # TypeScript domain contracts & timing models
         ├── api.ts                       # Typed REST API client
-        ├── export.ts                    # Safe tabular CSV export utility
+        ├── export.ts                    # Safe tabular CSV & full XLSX workbook export utilities
         ├── theme/                       # ThemeContext (Light / Dark / System)
         ├── workspace/                   # Centralized WorkspaceContext & session state management
         └── i18n/                        # Multilingual localization system (en / id)
@@ -301,16 +315,22 @@ Frontend workspace will be live at: `http://localhost:3000`.
 ### Running Backend Tests (Pytest)
 ```powershell
 cd sheetsly_backend
-python -m pytest -p no:pytest_ethereum
+python -m pytest -p no:pytest_ethereum -v
 ```
-*Current test suite: **89 unit & integration tests** covering ingestion, data grid search, quality scoring, scalar aggregations, multi-grouping, filters, lineage, chart rendering, deterministic smart chart generation (10 scenarios in `test_smart_visualization.py`), Gemini/Qwen/DeepSeek AI planning, guardrails, explainer, and REST API routes (**100% passing**).*
+*Current test suite: **312 unit & integration tests** covering ingestion, data grid search, quality scoring, scalar aggregations, multi-grouping, filters, lineage, chart rendering, deterministic smart chart generation, XLSX & CSV export, temporal trends, AI model selector, mutation engine, rollback verification, and REST API routes (**100% passing**).*
+
+### Running Direct Acceptance Certification
+```powershell
+python scratch/execute_all_manual_acceptance_tests.py
+```
+*Direct acceptance suite: **23 / 23 test cases passing (100%)**.*
 
 ### Running Frontend Production Build
 ```powershell
 cd sheetsly_frontend
 npm run build
 ```
-*Compiled in Next.js 16 (Turbopack + TypeScript) with **0 TypeScript and ESLint errors**.*
+*Compiled in Next.js 16 (Turbopack + TypeScript) with **0 errors and 0 warnings**.*
 
 ---
 

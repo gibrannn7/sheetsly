@@ -31,6 +31,7 @@ def get_or_create_orchestrator(dataset_id: str) -> AgentOrchestrator:
 
 class AgentActionRequest(BaseModel):
     """Payload for submitting a natural language instruction to the Spreadsheet Agent."""
+    model_config = {"protected_namespaces": ()}
 
     dataset_id: str = Field(..., description="Target dataset identifier")
     user_request: str = Field(..., description="User natural language request e.g. 'buatkan total penjualan'")
@@ -38,6 +39,7 @@ class AgentActionRequest(BaseModel):
     selected_range: Optional[str] = Field(None, description="Currently selected range e.g. 'A1:D10'")
     confirmation_context: Optional[Dict[str, Any]] = Field(None, description="User confirmation or choice from clarification")
     expected_version: Optional[int] = Field(None, description="Expected workbook version for concurrency safety")
+    model_id: Optional[str] = Field(None, description="Optional active AI model identifier override")
 
 
 class AgentUndoRequest(BaseModel):

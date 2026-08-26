@@ -10,33 +10,65 @@ interface DetectedTablesViewerProps {
 }
 
 export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tables, sheetName }) => {
-  const { dictionary } = useTranslation();
+  const { dictionary, t } = useTranslation();
+
+  const translateOrientationReason = (reason: string): string => {
+    let m = reason.match(/^Column data types are significantly more homogeneous \(([\d.]+%)\) than rows \(([\d.]+%)\)\.$/);
+    if (m) return t('tables.signals.colHomogeneous', { colPct: m[1], rowPct: m[2] });
+
+    m = reason.match(/^Row data types are significantly more homogeneous \(([\d.]+%)\) than columns \(([\d.]+%)\)\.$/);
+    if (m) return t('tables.signals.rowHomogeneous', { rowPct: m[1], colPct: m[2] });
+
+    m = reason.match(/^Top row forms a distinct string header line with high uniqueness \(([\d.]+%)\)\.$/);
+    if (m) return t('tables.signals.topRowHeader', { headerPct: m[1] });
+
+    m = reason.match(/^First column forms a distinct attribute header list with high uniqueness \(([\d.]+%)\)\.$/);
+    if (m) return t('tables.signals.firstColHeader', { headerPct: m[1] });
+
+    m = reason.match(/^Top row represents time series periods \((\d+) period headers\) with metric attributes on left column\.$/);
+    if (m) return t('tables.signals.topRowPeriod', { count: m[1] });
+
+    if (reason === 'Detected repeating categorical variables arranged in vertical column attributes.') {
+      return dictionary.tables.signals.repeatingCategorical;
+    }
+    if (reason === 'Left column displays repeating categories with time horizon columns across row axis.') {
+      return dictionary.tables.signals.leftColRepeating;
+    }
+
+    m = reason.match(/^Table dimensions \((\d+) rows x (\d+) columns\) strongly favor vertical orientation\.$/);
+    if (m) return t('tables.signals.dimensionsVertical', { rows: m[1], cols: m[2] });
+
+    m = reason.match(/^Table dimensions \((\d+) rows x (\d+) columns\) strongly favor horizontal time-series orientation\.$/);
+    if (m) return t('tables.signals.dimensionsHorizontal', { rows: m[1], cols: m[2] });
+
+    return reason;
+  };
 
   const getOrientationBadge = (orientation: OrientationType, confidence: number) => {
     const confPct = Math.round(confidence * 100);
     switch (orientation) {
       case 'VERTICAL':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-            <span>Vertical Table ({confPct}%)</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+            <span>{t('tables.orientations.vertical', { pct: confPct })}</span>
           </span>
         );
       case 'HORIZONTAL':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
-            <span>Horizontal Layout ({confPct}%)</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+            <span>{t('tables.orientations.horizontal', { pct: confPct })}</span>
           </span>
         );
       case 'AMBIGUOUS':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-            <span>Ambiguous Layout ({confPct}%)</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+            <span>{t('tables.orientations.ambiguous', { pct: confPct })}</span>
           </span>
         );
       case 'IRREGULAR':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
-            <span>Irregular Structure ({confPct}%)</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+            <span>{t('tables.orientations.irregular', { pct: confPct })}</span>
           </span>
         );
     }
@@ -52,13 +84,13 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
 
   const getSemanticBadge = (sem: SemanticType) => {
     const labels: Record<SemanticType, { text: string; style: string }> = {
-      numeric_measure: { text: 'Measure', style: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
-      categorical: { text: 'Category', style: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700' },
-      temporal: { text: 'Temporal', style: 'bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
-      identifier: { text: 'Identifier', style: 'bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border-amber-200 dark:border-amber-800 font-bold' },
-      text: { text: 'Text', style: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-      boolean: { text: 'Boolean', style: 'bg-pink-50 dark:bg-pink-950/50 text-pink-800 dark:text-pink-300 border-pink-200 dark:border-pink-800' },
-      unknown: { text: 'Unknown', style: 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700' },
+      numeric_measure: { text: dictionary.tables.roles.measure, style: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
+      categorical: { text: dictionary.tables.roles.category, style: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700' },
+      temporal: { text: dictionary.tables.roles.temporal, style: 'bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
+      identifier: { text: dictionary.tables.roles.identifier, style: 'bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border-amber-200 dark:border-amber-800 font-bold' },
+      text: { text: dictionary.tables.roles.text, style: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+      boolean: { text: dictionary.tables.roles.boolean, style: 'bg-pink-50 dark:bg-pink-950/50 text-pink-800 dark:text-pink-300 border-pink-200 dark:border-pink-800' },
+      unknown: { text: dictionary.tables.roles.unknown, style: 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700' },
     };
     const conf = labels[sem] || labels.unknown;
     return (
@@ -103,7 +135,7 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
                     <>
                       <span>•</span>
                       <span>
-                        Header: <code className="bg-slate-200/80 dark:bg-slate-800 px-1 py-0.2 rounded text-[10px] font-mono text-slate-800 dark:text-slate-200">{table.header_range}</code>
+                        {dictionary.tables.headerLabel}: <code className="bg-slate-200/80 dark:bg-slate-800 px-1 py-0.2 rounded text-[10px] font-mono text-slate-800 dark:text-slate-200">{table.header_range}</code>
                       </span>
                     </>
                   )}
@@ -119,8 +151,10 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
           {/* Orientation Evidence Reasons */}
           {table.orientation_reasons && table.orientation_reasons.length > 0 && (
             <div className="px-4 py-2 bg-slate-50/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
-              <span className="font-semibold text-slate-700 dark:text-slate-300 mr-2">Structural Signals:</span>
-              <span className="text-slate-600 dark:text-slate-400">{table.orientation_reasons.join(' ')}</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300 mr-2">{dictionary.tables.structuralSignals}</span>
+              <span className="text-slate-600 dark:text-slate-400">
+                {table.orientation_reasons.map((r) => translateOrientationReason(r)).join(' ')}
+              </span>
             </div>
           )}
 
@@ -131,7 +165,7 @@ export const DetectedTablesViewer: React.FC<DetectedTablesViewerProps> = ({ tabl
                 <tr>
                   <th className="px-3.5 py-2 font-bold w-12 text-center">#</th>
                   <th className="px-3.5 py-2 font-bold">{dictionary.tables.columnName}</th>
-                  <th className="px-3.5 py-2 font-bold">Source Ref</th>
+                  <th className="px-3.5 py-2 font-bold">{dictionary.tables.sourceRef}</th>
                   <th className="px-3.5 py-2 font-bold">{dictionary.tables.dataType}</th>
                   <th className="px-3.5 py-2 font-bold">{dictionary.tables.semanticType}</th>
                   <th className="px-3.5 py-2 font-bold text-right">{dictionary.tables.nulls}</th>

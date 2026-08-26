@@ -90,18 +90,15 @@ export const AIModelSelector: React.FC<AIModelSelectorProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={dictionary.modelSelector.selectModel}
-        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono font-medium transition-colors cursor-pointer border ${
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer border ${
           isOpen
             ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600 ring-2 ring-slate-400/20'
-            : 'bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700'
+            : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700 shadow-2xs'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400`}
       >
-        <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-          {dictionary.modelSelector.label}:
-        </span>
-        <span className="font-semibold text-slate-900 dark:text-slate-100">{currentModel.label}</span>
+        <span className="font-semibold text-slate-900 dark:text-slate-100">{currentModel.id}</span>
         {currentModel.badge && (
-          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+          <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold border border-slate-200 dark:border-slate-700">
             {currentModel.badge}
           </span>
         )}
