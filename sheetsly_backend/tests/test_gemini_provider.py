@@ -100,9 +100,9 @@ def test_provider_resolution_for_models():
     assert get_provider_for_model("gemini-3.5-flash-lite") == "gemini"
     assert get_provider_for_model("gemini-3.5-flash") == "gemini"
     assert get_provider_for_model("gemini-3.6-flash") == "gemini"
-    assert get_provider_for_model("qwen3.5-397b-a17b") == "qwen"
+    assert get_provider_for_model("qwen3.5-122b-a10b") == "qwen"
     assert get_provider_for_model("deepseek-v4-flash") == "deepseek"
-    assert get_provider_for_model(None) == "qwen"
+    assert get_provider_for_model(None) == "gemini"
 
 
 def test_gemini_models_present_in_allowlist():

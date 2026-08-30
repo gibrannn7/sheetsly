@@ -138,6 +138,16 @@ export interface TranslationDictionary {
     matchingRows: string;
     noMatchingRowsTitle: string;
     noMatchingRowsDesc: string;
+    nameBoxLabel: string;
+    nameBoxPlaceholder: string;
+    jumpToCell: string;
+    invalidCellRef: string;
+    selectedRange: string;
+    clearSelection: string;
+    formulaBarLabel: string;
+    editCell: string;
+    saveCell: string;
+    cancelEdit: string;
   };
   quality: {
     hygieneScore: string;
@@ -265,22 +275,43 @@ export interface TranslationDictionary {
     title: string;
     undoBtn: string;
     undoTitle: string;
+    redoBtn: string;
+    redoTitle: string;
     rollingBack: string;
     undoSuccess: string;
     undoError: string;
+    redoSuccess: string;
+    redoError: string;
     emptyInstruction: string;
+    emptyTitle: string;
+    emptySubtitle: string;
     tryExamples: string;
+    quickPromptsTitle: string;
     quickPrompts: {
       p1: string;
       p2: string;
       p3: string;
     };
     inputPlaceholder: string;
+    multilinePlaceholder: string;
+    selectedRangeContext: string;
+    removeSelectionContext: string;
     sendBtn: string;
     processing: string;
     defaultDone: string;
     failed: string;
     howItWorksBtn: string;
+    mutationDetails: string;
+    chartArtifact: {
+      viewFullscreen: string;
+      verifiedTruth: string;
+      destination: string;
+      aggregation: string;
+      category: string;
+      measure: string;
+      type: string;
+      close: string;
+    };
     modal: {
       title: string;
       subtitle: string;
@@ -308,6 +339,10 @@ export interface TranslationDictionary {
       safetyDesc: string;
       modelTitle: string;
       modelDesc: string;
+      explicitCoordTitle: string;
+      explicitCoordDesc: string;
+      formattingTitle: string;
+      formattingDesc: string;
       close: string;
     };
   };

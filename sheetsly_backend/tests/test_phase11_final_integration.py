@@ -371,8 +371,8 @@ def test_deterministic_repeated_execution():
 def test_model_retirement_repository_audit():
     """10. Qwen 3.5 Plus is completely retired and not present in any active runtime allowlist."""
     assert "qwen3.5-plus" not in ALLOWED_AI_MODELS
-    assert DEFAULT_AI_MODEL == "qwen3.5-397b-a17b"
-    assert settings.QWEN_MODEL == "qwen3.5-397b-a17b"
+    assert DEFAULT_AI_MODEL == "gemini-3.1-flash-lite"
+    assert settings.QWEN_MODEL == "qwen3.5-122b-a10b"
 
 
 def test_frontend_api_contract_consistency():
@@ -390,7 +390,8 @@ def test_frontend_api_contract_consistency():
 def test_no_regression_across_all_phases():
     """12. Proves system compliance with all 10 prior phases without regression."""
     assert len(SUPPORTED_AI_MODELS) == 12
-    assert get_provider_for_model("qwen3.5-397b-a17b") == "qwen"
+    assert get_provider_for_model("qwen3.5-122b-a10b") == "qwen"
+    assert get_provider_for_model("gemini-3.1-flash-lite") == "gemini"
     assert get_provider_for_model("gemini-2.5-flash") == "gemini"
 
 

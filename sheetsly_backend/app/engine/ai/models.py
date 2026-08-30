@@ -10,8 +10,14 @@ from app.engine.visualization.chart_model import VisualizationResponse
 
 
 SUPPORTED_AI_MODELS = [
+    # Google Gemini (Default Base Provider)
+    {"id": "gemini-3.1-flash-lite", "label": "Gemini 3.1 Flash Lite", "provider": "gemini", "provider_label": "Google Gemini", "is_default": True},
+    {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
+    {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite", "provider": "gemini", "provider_label": "Google Gemini"},
+    {"id": "gemini-3.5-flash", "label": "Gemini 3.5 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
+    {"id": "gemini-3.6-flash", "label": "Gemini 3.6 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
     # Qwen (Alibaba Cloud Model Studio)
-    {"id": "qwen3.5-397b-a17b", "label": "Qwen 3.5 397B", "provider": "qwen", "provider_label": "Qwen", "is_default": True},
+    {"id": "qwen3.5-122b-a10b", "label": "Qwen 3.5 122B", "provider": "qwen", "provider_label": "Qwen"},
     {"id": "qwen3.5-flash", "label": "Qwen 3.5 Flash", "provider": "qwen", "provider_label": "Qwen"},
     {"id": "qwen3.6-plus", "label": "Qwen 3.6 Plus", "provider": "qwen", "provider_label": "Qwen"},
     {"id": "qwen3.7-plus", "label": "Qwen 3.7 Plus", "provider": "qwen", "provider_label": "Qwen"},
@@ -19,21 +25,15 @@ SUPPORTED_AI_MODELS = [
     {"id": "qwen3.7-flash", "label": "Qwen 3.7 Flash", "provider": "qwen", "provider_label": "Qwen"},
     # DeepSeek
     {"id": "deepseek-v4-flash", "label": "DeepSeek V4 Flash", "provider": "deepseek", "provider_label": "DeepSeek"},
-    # Google Gemini
-    {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
-    {"id": "gemini-3.1-flash-lite", "label": "Gemini 3.1 Flash Lite", "provider": "gemini", "provider_label": "Google Gemini"},
-    {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite", "provider": "gemini", "provider_label": "Google Gemini"},
-    {"id": "gemini-3.5-flash", "label": "Gemini 3.5 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
-    {"id": "gemini-3.6-flash", "label": "Gemini 3.6 Flash", "provider": "gemini", "provider_label": "Google Gemini"},
 ]
 ALLOWED_AI_MODELS = {m["id"] for m in SUPPORTED_AI_MODELS}
-DEFAULT_AI_MODEL = "qwen3.5-397b-a17b"
+DEFAULT_AI_MODEL = "gemini-3.1-flash-lite"
 
 
 def get_provider_for_model(model_id: Optional[str]) -> str:
     """Resolves provider identifier ('gemini', 'deepseek', or 'qwen') for a given model ID."""
     if not model_id:
-        return "qwen"
+        return "gemini"
     m = model_id.strip().lower()
     if m.startswith("gemini-"):
         return "gemini"

@@ -12,6 +12,7 @@ class ChartTypeEnum(str, Enum):
     """Supported deterministic chart types in Sheetsly."""
 
     BAR = "BAR"
+    COLUMN = "COLUMN"
     LINE = "LINE"
     PIE = "PIE"
     AREA = "AREA"

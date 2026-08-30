@@ -17,6 +17,13 @@ class ActionTypeEnum(str, Enum):
     FORMAT_RANGE = "FORMAT_RANGE"
     SET_NUMBER_FORMAT = "SET_NUMBER_FORMAT"
     CLEAR_CONTENT = "CLEAR_CONTENT"
+    CREATE_CHART = "CREATE_CHART"
+    UPDATE_CHART = "UPDATE_CHART"
+    MOVE_CHART = "MOVE_CHART"
+    RESIZE_CHART = "RESIZE_CHART"
+    DELETE_CHART = "DELETE_CHART"
+    CREATE_KPI = "CREATE_KPI"
+    CREATE_WORKSHEET = "CREATE_WORKSHEET"
 
 
 SUPPORTED_ACTION_REGISTRY: Set[ActionTypeEnum] = frozenset({
@@ -28,6 +35,13 @@ SUPPORTED_ACTION_REGISTRY: Set[ActionTypeEnum] = frozenset({
     ActionTypeEnum.FORMAT_RANGE,
     ActionTypeEnum.SET_NUMBER_FORMAT,
     ActionTypeEnum.CLEAR_CONTENT,
+    ActionTypeEnum.CREATE_CHART,
+    ActionTypeEnum.UPDATE_CHART,
+    ActionTypeEnum.MOVE_CHART,
+    ActionTypeEnum.RESIZE_CHART,
+    ActionTypeEnum.DELETE_CHART,
+    ActionTypeEnum.CREATE_KPI,
+    ActionTypeEnum.CREATE_WORKSHEET,
 })
 
 
@@ -76,6 +90,43 @@ class NumberFormatSpec(BaseModel):
     decimal_places: Optional[int] = Field(None, ge=0, le=10, description="Decimal places precision")
 
 
+class ChartActionSpec(BaseModel):
+    """Specification for spreadsheet chart visualization action."""
+
+    chart_id: str = Field(..., description="Unique chart identifier")
+    sheet_name: Optional[str] = Field(None, description="Worksheet where chart is anchored")
+    chart_type: str = Field("BAR", description="Chart type e.g. PIE, BAR, COLUMN, LINE, AREA, SCATTER, HISTOGRAM")
+    title: str = Field(..., description="Descriptive chart title")
+    dimension_column: Optional[str] = Field(None, description="Category or X-axis grouping column")
+    category_column: Optional[str] = Field(None, description="Alias for category/dimension column")
+    measure_column: Optional[str] = Field(None, description="Quantitative Y-axis metric column")
+    aggregation: str = Field("SUM", description="Aggregation method: SUM, AVERAGE, COUNT, MIN, MAX")
+    source_range: Optional[str] = Field(None, description="Source table or range lineage")
+    destination_cell: str = Field("", description="Top-left anchor cell coordinate on sheet e.g. 'B12', 'N2'")
+    anchor_cell: Optional[str] = Field(None, description="Explicit alias for destination anchor cell")
+    width_cols: int = Field(8, ge=2, le=30, description="Visual width in spreadsheet columns")
+    height_rows: int = Field(15, ge=2, le=50, description="Visual height in spreadsheet rows")
+    image_url: Optional[str] = Field(None, description="Relative URL to retrieve the rendered PNG artifact")
+    image_base64: Optional[str] = Field(None, description="Optional base64-encoded PNG image")
+    summary_data: Optional[List[Dict[str, Any]]] = Field(None, description="Deterministic summarized plot data points")
+    summary_range: Optional[str] = Field(None, description="Range of materialized summary table if written")
+    calculation_reference: Optional[str] = Field(None, description="Reference to calculation helper location")
+    provenance_note: Optional[str] = Field(None, description="Explainable lineage trace note")
+
+
+class KPIActionSpec(BaseModel):
+    """Specification for single-metric KPI card visualization."""
+
+    kpi_id: str = Field(..., description="Unique KPI identifier")
+    title: str = Field(..., description="KPI card label e.g. 'Total Sales'")
+    measure_column: str = Field(..., description="Target quantitative measure column")
+    aggregation: str = Field("SUM", description="Aggregation method: SUM, AVERAGE, COUNT, MIN, MAX")
+    calculated_value: Any = Field(..., description="Authoritative deterministic scalar value")
+    formatted_value: str = Field(..., description="Formatted value string e.g. '$2,297,200.86'")
+    destination_cell: str = Field("G2", description="Top-left anchor cell coordinate on sheet e.g. 'G2'")
+    source_range: Optional[str] = Field(None, description="Source cell range lineage")
+
+
 class SpreadsheetAction(BaseModel):
     """Canonical bounded spreadsheet mutation action."""
 
@@ -90,6 +141,8 @@ class SpreadsheetAction(BaseModel):
     number_format: Optional[str] = Field(None, description="Number format code to apply")
     row_index: Optional[int] = Field(None, ge=1, description="1-indexed row number (for INSERT_ROW)")
     column_index: Optional[int] = Field(None, ge=1, description="1-indexed column number (for INSERT_COLUMN)")
+    chart_spec: Optional[ChartActionSpec] = Field(None, description="Chart visualization spec for CREATE/UPDATE_CHART")
+    kpi_spec: Optional[KPIActionSpec] = Field(None, description="KPI visualization spec for CREATE_KPI")
     expected_result: Optional[Any] = Field(None, description="Deterministic calculated expected result for verification")
     description: Optional[str] = Field(None, description="Human-readable explanation of this action")
 

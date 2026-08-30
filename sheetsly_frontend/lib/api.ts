@@ -254,6 +254,15 @@ export const api = {
     return handleResponse<import('./types').AgentExecutionResult>(res);
   },
 
+  async redoAgentAction(datasetId: string, activeSheetName?: string): Promise<import('./types').AgentExecutionResult> {
+    const res = await fetch(`${API_BASE}/agent/redo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataset_id: datasetId, active_sheet_name: activeSheetName }),
+    });
+    return handleResponse<import('./types').AgentExecutionResult>(res);
+  },
+
   async getAgentHistory(datasetId: string): Promise<import('./types').AgentHistoryResponse> {
     const res = await fetch(`${API_BASE}/agent/history/${encodeURIComponent(datasetId)}`);
     return handleResponse<import('./types').AgentHistoryResponse>(res);

@@ -102,6 +102,7 @@ class MutationTransaction(BaseModel):
     verification_report: Optional[VerificationReport] = Field(None, description="Verification report if executed")
     created_at: str = Field(..., description="ISO-8601 creation timestamp")
     committed_at: Optional[str] = Field(None, description="ISO-8601 commit timestamp")
+    version_after: Optional[int] = Field(None, description="Workbook version after commit")
     rolled_back_at: Optional[str] = Field(None, description="ISO-8601 rollback timestamp")
     rollback_reason: Optional[str] = Field(None, description="Reason for rollback if triggered")
 

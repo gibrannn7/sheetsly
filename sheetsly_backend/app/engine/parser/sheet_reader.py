@@ -25,6 +25,8 @@ class RawSheetGrid:
     max_col: int = 1
     cells: Dict[Tuple[int, int], CellData] = field(default_factory=dict)
     merged_ranges: List[str] = field(default_factory=list)
+    charts: Dict[str, Any] = field(default_factory=dict)
+    kpis: Dict[str, Any] = field(default_factory=dict)
     is_hidden: bool = False
 
     @property

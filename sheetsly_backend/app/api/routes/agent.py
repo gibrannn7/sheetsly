@@ -49,12 +49,20 @@ class AgentUndoRequest(BaseModel):
     active_sheet_name: Optional[str] = Field(None, description="Active sheet name")
 
 
+class AgentRedoRequest(BaseModel):
+    """Payload for requesting a redo of the last reverted transaction."""
+
+    dataset_id: str = Field(..., description="Target dataset identifier")
+    active_sheet_name: Optional[str] = Field(None, description="Active sheet name")
+
+
 class AgentHistoryResponse(BaseModel):
-    """Audit trail and undo availability status for a dataset."""
+    """Audit trail and undo/redo availability status for a dataset."""
 
     dataset_id: str
     current_version: int
     can_undo: bool
+    can_redo: bool = False
     history: List[TransactionAuditRecord]
 
 
@@ -83,6 +91,7 @@ async def execute_agent_action(request: AgentActionRequest) -> AgentExecutionRes
         sheet_grids=sheet_grids,
         expected_version=request.expected_version,
         active_sheet_name=active_sheet,
+        selected_range=request.selected_range,
     )
 
     return result
@@ -107,15 +116,35 @@ async def undo_agent_action(request: AgentUndoRequest) -> AgentExecutionResult:
     return orchestrator.undo_last(grid, sheet_grids)
 
 
+@router.post("/redo", response_model=AgentExecutionResult)
+async def redo_agent_action(request: AgentRedoRequest) -> AgentExecutionResult:
+    """
+    Redoes the most recent undone transaction and restores grid state.
+    """
+    from app.engine.pipeline import ingestion_pipeline
+
+    try:
+        workbook_index = ingestion_pipeline.get_workbook_index(request.dataset_id)
+        active_sheet = request.active_sheet_name or workbook_index.active_sheet_name
+        grid = ingestion_pipeline.get_sheet_grid(request.dataset_id, active_sheet)
+        sheet_grids = ingestion_pipeline._grids_cache.get(request.dataset_id, {active_sheet: grid})
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Dataset or sheet not found: {str(e)}")
+
+    orchestrator = get_or_create_orchestrator(request.dataset_id)
+    return orchestrator.redo_last(grid, workbook_index, sheet_grids)
+
+
 @router.get("/history/{dataset_id}", response_model=AgentHistoryResponse)
 async def get_agent_history(dataset_id: str) -> AgentHistoryResponse:
     """
-    Returns transaction audit history and undo availability for a dataset.
+    Returns transaction audit history and undo/redo availability for a dataset.
     """
     orchestrator = get_or_create_orchestrator(dataset_id)
     return AgentHistoryResponse(
         dataset_id=dataset_id,
         current_version=orchestrator.tx_manager.current_version,
         can_undo=len(orchestrator.tx_manager.committed_transactions) > 0,
+        can_redo=len(orchestrator.tx_manager.undone_transactions) > 0,
         history=orchestrator.tx_manager.history,
     )

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../../lib/i18n';
 
 interface HowToUseModalProps {
@@ -24,6 +25,11 @@ type GuideSection =
 export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose }) => {
   const { dictionary } = useTranslation();
   const [activeSection, setActiveSection] = useState<GuideSection>('getting-started');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle ESC key to close
   useEffect(() => {
@@ -36,7 +42,7 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const secDict = dictionary.howToUse.sections;
 
@@ -54,12 +60,12 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
     { id: 'troubleshooting', title: secDict.troubleshooting.navTitle },
   ];
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="how-to-use-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-in fade-in duration-150"
     >
       <div className="bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[88vh] rounded-xl border border-slate-300 dark:border-slate-800 shadow-xl flex flex-col overflow-hidden transition-colors">
         {/* Modal Header */}
@@ -509,4 +515,6 @@ export const HowToUseModal: React.FC<HowToUseModalProps> = ({ isOpen, onClose })
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

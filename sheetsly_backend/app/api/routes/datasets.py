@@ -110,6 +110,49 @@ async def export_dataset(
                         if num_fmt:
                             dest_cell.number_format = num_fmt
 
+                # Embed Active Worksheet Charts into XLSX
+                if getattr(grid, "charts", None):
+                    try:
+                        from openpyxl.chart import BarChart, PieChart, LineChart, AreaChart, Reference
+                        for c_id, c_spec in grid.charts.items():
+                            c_type = str(c_spec.get("chart_type", "BAR")).upper()
+                            dest_c = c_spec.get("destination_cell", "B12")
+                            title = c_spec.get("title", "Chart")
+                            summary_data = c_spec.get("summary_data", [])
+
+                            if c_type == "PIE":
+                                chart_obj = PieChart()
+                            elif c_type == "LINE":
+                                chart_obj = LineChart()
+                            elif c_type == "AREA":
+                                chart_obj = AreaChart()
+                            else:
+                                chart_obj = BarChart()
+
+                            chart_obj.title = title
+                            chart_obj.style = 10
+                            chart_obj.width = 14
+                            chart_obj.height = 7.5
+
+                            if summary_data and len(summary_data) > 0:
+                                aux_col = max(ws.max_column + 2, 26)
+                                dim_label = c_spec.get("dimension_column") or "Category"
+                                m_label = c_spec.get("measure_column") or "Value"
+                                ws.cell(row=1, column=aux_col, value=dim_label)
+                                ws.cell(row=1, column=aux_col + 1, value=m_label)
+                                for s_idx, item in enumerate(summary_data, start=2):
+                                    ws.cell(row=s_idx, column=aux_col, value=item.get("category", f"Cat_{s_idx}"))
+                                    ws.cell(row=s_idx, column=aux_col + 1, value=item.get("value", 0))
+
+                                data_ref = Reference(ws, min_col=aux_col + 1, min_row=1, max_row=1 + len(summary_data))
+                                cats_ref = Reference(ws, min_col=aux_col, min_row=2, max_row=1 + len(summary_data))
+                                chart_obj.add_data(data_ref, titles_from_data=True)
+                                chart_obj.set_categories(cats_ref)
+
+                            ws.add_chart(chart_obj, dest_c)
+                    except Exception:
+                        pass
+
         if default_ws in wb.worksheets and len(wb.worksheets) > 1:
             wb.remove(default_ws)
 

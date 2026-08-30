@@ -128,6 +128,8 @@ export interface SheetDataGridResponse {
   column_headers: string[];
   rows: CellData[][];
   merged_cells: string[];
+  charts?: Record<string, ChartActionSpecDTO>;
+  kpis?: Record<string, KPIActionSpecDTO>;
 }
 
 export interface ApiErrorDetail {
@@ -240,7 +242,7 @@ export interface AnalyticalResult {
 // Visualization Models (Phase 6)
 // ----------------------------------------------------------------------------
 
-export type ChartType = 'BAR' | 'LINE' | 'PIE' | 'AREA' | 'SCATTER' | 'HISTOGRAM';
+export type ChartType = 'BAR' | 'COLUMN' | 'LINE' | 'PIE' | 'AREA' | 'SCATTER' | 'HISTOGRAM';
 
 export interface ChartSeriesSpec {
   name: string;
@@ -423,6 +425,38 @@ export type AgentResponseStatus =
   | 'ROLLBACK_SUCCESS'
   | 'ROLLBACK_FAILURE';
 
+export interface ChartActionSpecDTO {
+  chart_id: string;
+  sheet_name?: string | null;
+  chart_type: string;
+  title: string;
+  dimension_column?: string | null;
+  category_column?: string | null;
+  measure_column?: string | null;
+  aggregation?: string;
+  destination_cell: string;
+  anchor_cell?: string | null;
+  width_cols?: number;
+  height_rows?: number;
+  image_url?: string | null;
+  image_base64?: string | null;
+  summary_data?: Array<{ category: string; value: number }>;
+  source_range?: string | null;
+  calculation_reference?: string | null;
+  provenance_note?: string | null;
+}
+
+export interface KPIActionSpecDTO {
+  kpi_id: string;
+  title: string;
+  measure_column: string;
+  aggregation: string;
+  calculated_value: any;
+  formatted_value: string;
+  destination_cell: string;
+  source_range?: string | null;
+}
+
 export interface SpreadsheetActionDTO {
   action_id: string;
   action_type: string;
@@ -432,6 +466,8 @@ export interface SpreadsheetActionDTO {
   value?: any;
   formula?: string | null;
   description?: string | null;
+  chart_spec?: ChartActionSpecDTO | null;
+  kpi_spec?: KPIActionSpecDTO | null;
 }
 
 export interface CellSnapshotDTO {
@@ -523,6 +559,7 @@ export interface AgentHistoryResponse {
   dataset_id: string;
   current_version: number;
   can_undo: boolean;
+  can_redo?: boolean;
   history: TransactionAuditRecordDTO[];
 }
 

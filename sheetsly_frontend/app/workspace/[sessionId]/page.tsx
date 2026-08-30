@@ -81,9 +81,6 @@ export default function WorkspaceSessionPage() {
     return (
       <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center p-6 space-y-4">
         <div className="p-6 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg max-w-md w-full text-center space-y-3 shadow-sm">
-          <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 flex items-center justify-center mx-auto font-bold font-mono">
-            !
-          </div>
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Session Unavailable</h2>
           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             {loadError || 'The requested analytical workspace session could not be retrieved.'}

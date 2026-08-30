@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../../lib/i18n';
 
 interface AnalysisBuilderHelpModalProps {
@@ -14,6 +15,11 @@ export const AnalysisBuilderHelpModal: React.FC<AnalysisBuilderHelpModalProps> =
 }) => {
   const { dictionary } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,7 +37,7 @@ export const AnalysisBuilderHelpModal: React.FC<AnalysisBuilderHelpModalProps> =
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const t = dictionary.builderModal;
 
@@ -45,9 +51,9 @@ export const AnalysisBuilderHelpModal: React.FC<AnalysisBuilderHelpModalProps> =
     { title: t.step7Title, desc: t.step7Desc },
   ];
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -57,7 +63,7 @@ export const AnalysisBuilderHelpModal: React.FC<AnalysisBuilderHelpModalProps> =
     >
       <div
         ref={modalRef}
-        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transition-colors"
+        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transition-colors"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -135,4 +141,6 @@ export const AnalysisBuilderHelpModal: React.FC<AnalysisBuilderHelpModalProps> =
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

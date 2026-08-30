@@ -115,8 +115,8 @@ def test_ai_status_endpoint_returns_available_models():
     assert "available_models" in data
     assert len(data["available_models"]) == 12
     model_ids = [m["id"] for m in data["available_models"]]
-    # Qwen (qwen3.5-flash and qwen3.5-397b-a17b active)
-    assert "qwen3.5-397b-a17b" in model_ids
+    # Qwen (qwen3.5-flash and qwen3.5-122b-a10b active)
+    assert "qwen3.5-122b-a10b" in model_ids
     assert "qwen3.5-flash" in model_ids
     assert "qwen3.6-plus" in model_ids
     assert "qwen3.7-plus" in model_ids

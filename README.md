@@ -14,13 +14,13 @@
 </p>
 
 <p align="center">
-  <strong>Deterministic Spreadsheet Intelligence &amp; AI Query Workspace</strong><br />
-  <em>A verifiable analytics platform combining natural-language intent planning with authoritative Python calculations and cell-level provenance.</em>
+  <strong>Deterministic Spreadsheet Intelligence, AI Query Planner &amp; State-Aware Spreadsheet Agent</strong><br />
+  <em>A verifiable analytics workspace combining natural-language intent planning with authoritative Python calculations, cell-level provenance, and safe spreadsheet mutations.</em>
 </p>
 
 </div>
 
-Sheetsly is an AI-powered analytical spreadsheet application that transforms raw spreadsheets (`.xlsx`, `.xls`, `.xlsm`, `.csv`) into structured, verifiable, and visually explainable analytical insights.
+Sheetsly is an AI-powered analytical spreadsheet platform that transforms raw spreadsheets (`.xlsx`, `.xls`, `.xlsm`, `.csv`) into structured, verifiable, and visually explainable analytical insights while providing a state-aware AI Agent to safely operate on the worksheet.
 
 The platform is engineered around an uncompromised foundational rule: **Python remains the authoritative source of numerical truth.** The AI application layer operates strictly as a natural language query planner and evidence-grounded explainer. It is architecturally forbidden from performing arithmetic directly. All mathematical aggregations, filters, groupings, and statistics are computed deterministically by the Python engine with complete cell-level calculation lineage.
 
@@ -31,13 +31,15 @@ The platform is engineered around an uncompromised foundational rule: **Python r
 | Module | Purpose | Input | Output | Status |
 |---|---|---|---|---|
 | **Ingestion & Inspection** | Parse workbook, preserve 2D cell coordinates, validate file format | `.xlsx`, `.xls`, `.xlsm`, `.csv` | Structured Dataset & Table Regions | **COMPLETED** |
-| **Actual Spreadsheet Viewer** | Inspect raw/parsed data with pagination, truncation & cell inspection | Dataset | Paginated Table & Cell Metadata | **COMPLETED** |
+| **Actual Spreadsheet Viewer** | Name box jump navigation, formula bar (`fx`), cell editing, inspection, pagination | Dataset | Paginated Grid, Name Box, Formula Bar | **COMPLETED** |
+| **Spreadsheet AI Agent** | State-aware workbook operator, multi-intent decomposition, idempotency, atomic undo & rollback | Natural Language / Range | Transactional Action Mutations | **COMPLETED** |
+| **Native Worksheet Visualizations** | First-class `CREATE_CHART`, spatial bounding box collision guard, deduplication, XLSX native charts | Natural Language / Range | Native Worksheet Charts, Fullscreen Modal, XLSX Export | **COMPLETED** |
 | **Table Detection & Profiling** | Detect table boundaries, layout orientation, and semantic column typing | Worksheet Cells | Table Regions & Column Semantics | **COMPLETED** |
 | **Data Quality & Hygiene** | Evaluate structural health, broken formulas, and missing values | Worksheet / Table | 0–100 Hygiene Score & Issues List | **COMPLETED** |
 | **Analysis Builder** | Construct multi-stage deterministic calculations point-and-click | User Configuration | Verified `AnalyticalResult` | **COMPLETED** |
 | **AI Query Planner** | Translate natural-language questions to structured analytical intent | User Query (EN / ID) | `AnalyticalInstruction` / Clarification | **COMPLETED** |
 | **Multi-Sheet AI Context** | Serialize workbook-level schema inventory for multi-sheet disambiguation | Workbook Sheets | Multi-Sheet Schema Inventory | **COMPLETED** |
-| **12-Model AI Selector** | Allowlist-controlled AI model selection (Qwen, DeepSeek, Gemini) | User Selection | Selected Model Configuration | **COMPLETED** |
+| **Compact AI Model Selector** | Allowlist-controlled AI model selection (Qwen, DeepSeek, Gemini) | User Selection | Selected Model Configuration | **COMPLETED** |
 | **AI Guardrail** | Pre-execution schema and data type validation gate | Instruction + Schema | Validated / Blocked Plan | **COMPLETED** |
 | **Analytical Engine** | Authoritative calculation of mathematical truth | Instruction + Data | Verified Result & Row Counts | **COMPLETED** |
 | **Evidence & Provenance** | Grounded explanation citing exact cell ranges & lineage | Result + Lineage | Factual Provenance Trace | **COMPLETED** |
@@ -46,284 +48,282 @@ The platform is engineered around an uncompromised foundational rule: **Python r
 | **Tab State & URL Persistence**| State-preserving workspace route (`/workspace/[id]`) and tab caching | Workspace Context | Persistent Analytical Workspace | **COMPLETED** |
 | **Theme System (Dark Mode)** | User-controlled Light / Dark / System theme toggle with persistence | Theme Context | Adaptive Visual Interface | **COMPLETED** |
 | **Safe Tabular CSV Export** | Deterministic CSV download of spreadsheet slices and verified results | Grid / Result Table | Formatted CSV File Download | **COMPLETED** |
-| **How to Use & Guidance** | Comprehensive 11-section in-app guide & explanatory modals | User Interaction | Interactive Modal Guidance | **COMPLETED** |
+| **How to Use & Guidance** | Comprehensive in-app guide, practical examples, & explanatory modals | User Interaction | Interactive Modal Guidance | **COMPLETED** |
 | **Multilingual Localization** | Canonical English base with complete Indonesian UI translation | Language Toggle (EN/ID) | Localized Interface | **COMPLETED** |
 
 ---
 
-## 2. Architecture & Principle: One Engine, Multiple Interfaces
+## 2. Product Positioning: AI Query Planner vs. Spreadsheet AI Agent
 
-Sheetsly implements a single, authoritative execution pipeline shared equally by visual click-based UI controls and natural-language query planners:
+Sheetsly clearly separates two distinct, complementary AI capabilities to prevent overclaiming and ensure operational safety:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       SHEETSLY WORKSPACE                                        │
+├───────────────────────────────────────────────┬─────────────────────────────────────────────────┤
+│              AI QUERY PLANNER                 │              SPREADSHEET AI AGENT               │
+│         (Read-Only Data Intelligence)         │          (State-Aware Workbook Operator)        │
+├───────────────────────────────────────────────┼─────────────────────────────────────────────────┤
+│ • Answers questions about data and dimensions │ • Operates directly on the actual spreadsheet   │
+│ • Explains dataset structure and hygiene      │ • Executes deterministic formula & value writes │
+│ • Discovers patterns, rankings & extremes     │ • Creates native worksheet visualizations       │
+│ • Produces verified analytical tables & PNGs  │ • Respects explicit coordinates & selected cell │
+│ • 0 spreadsheet mutations (Strictly read-only)│ • State-aware: avoids duplicate/redundant writes│
+│ • Grounded explanations with cell lineage     │ • Spatial collision safety (bounding boxes)     │
+│ • Multi-sheet inventory context               │ • Full natural-language Undo, Redo & Rollback   │
+└───────────────────────────────────────────────┴─────────────────────────────────────────────────┘
+```
+
+> **Important Positioning Principle**: The Spreadsheet AI Agent is **not** an unrestricted autonomous black box or a generic "AI Excel replacement." It is a **context-aware, state-aware spreadsheet operator** that acts deterministically, inspects current state before mutation, minimizes changes, avoids overwriting occupied cells without permission, and ensures 100% rollback safety.
+
+---
+
+## 3. Architecture & Core Workflow
+
+Sheetsly implements a single, authoritative execution pipeline shared equally by visual click-based UI controls, query planners, and the spreadsheet agent:
 
 ```
 User Natural Language Query                          Point-and-Click Operation Builder
 (English or Indonesian)                                      │
            │                                                 │
            ▼                                                 │
-[AI Query Planner Layer]                                     │
+[Intent Interpretation & Planning Layer]                     │
 (Multi-Sheet Workbook Context Aware)                         │
 [Selectable Providers: Qwen | DeepSeek | Gemini]             │
            │                                                 │
            ▼                                                 │
-[Structured Query Plan]                                      │
+[State Inspection & Pre-Condition Check]                     │
+(Target Coordinates, Formulas, Values, Charts)               │
            │                                                 │
            ▼                                                 │
-[AI Guardrail]                                               │
-(Detects Ambiguity / Incompatible Types)                     │
+[AI Guardrail & Collision Gate]                              │
+(Detects Ambiguity / Overlaps / Conflicting Data)            │
            │                                                 │
            ├────────────────────────────┬────────────────────┘
            ▼                            ▼
-[Ambiguity Detected]           AnalyticalInstruction
-           │                            │
-           ▼                            ▼
-[Structured Clarification UI]  [Instruction Validator]
-                                (Pre-execution Type & Shape Checks)
+[Clarification / Conflict UI]   Spreadsheet Actions Sequence
+(No Silent Overwrites)          - WRITE_FORMULA
+                                - WRITE_VALUE
+                                - CREATE_CHART
+                                         │
+                                         ▼
+                                [Instruction Validator]
+                                (Type, Bounds & Spatial Checks)
                                          │
                                          ▼
                                 [Deterministic Engine]
-                                (Python / Pandas Execution Layer)
+                                (Python Truth / Formula Evaluator)
                                          │
                                          ▼
-                             Verified AnalyticalResult
+                             [Verified Mutation Execution]
+                             (Atomic Transaction with Snapshot)
                                          │
                          ┌───────────────┴───────────────┐
                          ▼                               ▼
-            [Tabular / Scalar UI]          [Deterministic Visualization]
-            - Formatted Metrics            - Chart Compatibility Check
-            - Structured Tables            - Headless Matplotlib Renderer
-            - Cell Coordinate Lineage      - Static PNG Artifact + Provenance
-            - Safe Tabular CSV Export                    │
-                         │                               ▼
-                         ▼                 [Smart Generate Chart Engine]
-            [Evidence-Based Explainer]     (Schema-Aware Deterministic
-            (Cites Exact Lineage            Heuristic Discovery & Ranking)
-             Coordinates & Row Counts)
+            [Spreadsheet Grid Updated]      [Native Worksheet Chart]
+            - Formula in target cell        - Rendered at logical anchor
+            - Lineage audit trace           - Spatially disjoint placement
+            - Reversible with Undo          - Native OpenPyXL XLSX export
 ```
 
-### Core Architecture Rules
-1. **AI Interprets Intent, Python Calculates Truth**: The AI compiles natural language questions into validated `AnalyticalInstruction` models. It never performs arithmetic or invents numbers.
-2. **Multi-Sheet Workbook Awareness**: The AI planner receives a workbook-wide inventory of all sheets, tables, and column data types, enabling accurate sheet selection from natural language queries (e.g. *"Show total revenue in sheet Transactions"*).
-3. **Ambiguity Stops Execution (No Guessing)**: When a question has multiple valid interpretations (e.g. *"What is the total?"* on a table with both `Units` and `Revenue`), execution stops immediately and returns a structured clarification prompt with schema options.
-4. **Hard AI Guardrails**: Every AI-planned instruction must pass the `InstructionValidator` (type validation, valid columns, valid operators) before execution. If validation fails, execution is blocked and the error is displayed.
-5. **Evidence Grounding & Source Lineage**: Explanations cite only verified `AnalyticalResult` values and `CalculationLineage` coordinates (e.g. `Sheet1!E2:E9801`, $N$ included rows).
-6. **Deterministic Fallback**: If an AI provider is offline or unconfigured, the system continues running seamlessly in Deterministic Fallback Mode with 100% functionality via the Operation Builder and Smart Visualization engine.
-7. **Language Independence of Underlying Truth**: English remains canonical. Translations apply exclusively to presentation and user guidance. Dataset values, column names, cell references, and mathematical calculations are never translated.
+### The 7-Step Spreadsheet AI Agent Lifecycle
+
+The Spreadsheet AI Agent follows a strict seven-phase deterministic lifecycle:
+
+$$\textbf{Understand} \longrightarrow \textbf{Inspect} \longrightarrow \textbf{Resolve} \longrightarrow \textbf{Plan} \longrightarrow \textbf{Validate} \longrightarrow \textbf{Execute} \longrightarrow \textbf{Verify}$$
+
+1. **Understand**: Interprets the user's natural language request (e.g. `hitung total sales di D10`, `total sales di D10 dan berikan label TOTAL di C10`, `buatkan pie chart di B12 untuk Region berdasarkan Sales`, `ini sebenarnya data apa sih?`, `undo langkah tersebut`).
+2. **Inspect**: Examines actual workbook metadata and current grid state (available sheets, tables, column semantics, existing formulas, parsed cell values, selected cell/range, existing charts in `grid.charts`, and occupied 2D bounding boxes). The Agent **never assumes** an unmentioned column exists. If a metric like `Profit` is requested on a table that only contains `Sales`, it rejects the hallucination and clarifies that Profit is unavailable.
+3. **Resolve**: Resolves **WHAT** (metric, operation, chart type, dimension, measure) and **WHERE** (explicit coordinate vs. selected cell `"di sini"` / `"cells ini"` vs. safe placement fallback). Explicit coordinates always take precedence over selected-cell context.
+4. **Plan**: Decomposes requests into minimal, independent spreadsheet actions (`WRITE_FORMULA`, `WRITE_VALUE`, `CREATE_CHART`). Unnecessary mutations (unrequested labels, formatting, or helper tables) are strictly avoided.
+5. **Validate**: Validates column types, cell coordinates, and spatial bounding boxes against existing grid data and charts. Conflicting occupied cells trigger a clarification request instead of a silent destructive overwrite.
+6. **Execute**: Applies mutations inside an isolated `MutationTransaction` with pre-mutation snapshots for instant rollback.
+7. **Verify**: Confirms numerical values match Python evaluation (`FormulaEvaluator.evaluate`) and returns an evidence-grounded confirmation in the user's language (EN/ID).
 
 ---
 
-## 3. Implemented Modules & Capabilities
+## 4. State Awareness, Idempotency & Collision Safety
 
-### A. Spreadsheet Ingestion & Inspection
-- **Cell Preservation**: Reads raw cell values, evaluated values, and formula strings (`fx`) using OpenPyXL with coordinate retention (`CellCoordinate`).
-- **File Validation**: Supports `.xlsx`, `.xls`, `.xlsm`, `.xltx`, and `.csv` up to 50 MB.
-- **Truthful Ingestion UX**: Responsive horizontal progress bar reflecting actual background parsing and profiling operations.
-- **Dynamic Actual Spreadsheet Viewer**: High-performance paginated grid table with adaptive CSS truncation, rich hover inspection tooltips, cell coordinate inspection card, selectable page sizes (`10`, `25`, `50`, `100`), compact pagination with smart ellipsis (`1 2 3 ... 10`), debounced real-time column search, and tabular numeral row count tracking (`Showing 51–100 of 9,800 rows`).
-- **CSV Data Slice Export**: Deterministic client-side CSV download of filtered grid data and verified calculation tables.
+### A. Multi-Intent Decomposition & Partial Satisfaction
+When a user submits a multi-part request:
+- **Scenario**: User previously calculated `D10 = =SUM(D2:D7)`. Then asks: `total sales di D10 dan berikan label TOTAL di C10`.
+- **Behavior**: The agent inspects `D10` and recognizes that the formula `=SUM(D2:D7)` is **already satisfied**. Rather than rejecting the request due to `D10` being occupied or redundantly re-writing `D10`, the agent executes **only** the missing mutation: `WRITE_VALUE[C10] = "TOTAL"`.
+- **Response**: *"Total Sales di D10 sudah benar. Label TOTAL ditambahkan di C10."*
 
-### B. Sheet Understanding & Table Profiling
-- **Table Detection**: Boundary detection identifying multi-table layouts within a single worksheet.
-- **Orientation Analysis**: Determines `VERTICAL`, `HORIZONTAL`, `AMBIGUOUS`, or `IRREGULAR` layout with confidence scoring and structural signals.
-- **Column Semantic Typing**: Profiles columns into `numeric_measure`, `categorical`, `temporal`, `identifier`, `boolean`, and `text`.
-- **Data Quality & Hygiene Scoring**: Automated 0–100 quality scoring checking for missing values, mixed data types, and duplicate rows.
+### B. Formula & Cell Idempotency
+- If the requested formula or exact numerical result already exists in the target cell, the agent makes **0 mutations** and confirms that the result already exists.
+- If the target cell contains conflicting data (e.g. `D10` contains `=AVERAGE(D2:D7)` or an unrelated value), the agent refuses to silently overwrite it and returns a `CLARIFICATION` conflict prompt.
 
-### C. Deterministic Analytical Engine
-- **Typed Instruction Model**: Strongly-typed `AnalyticalInstruction` validating operation, target column, filters, multi-grouping, and sorting before calculation.
-- **Supported Operations**: `SUM`, `AVERAGE`, `MIN`, `MAX`, `MEDIAN`, `COUNT_ROWS`, `COUNT_VALUES`, `DISTINCT_COUNT`, `FILTER`, `SORT`, `GROUP_BY`, `SUMIFS`, `COUNTIFS`.
-- **Pre-execution Guardrails**: Immediate rejection of invalid operations (e.g. calculating arithmetic mean on text strings).
-- **Calculation Lineage**: Every result includes exact source worksheet and cell range addresses (e.g. `Sheet1!E2:E9801`), included/excluded row counts, filter conditions, and deterministic execution steps.
+### C. Native Worksheet Charting & Spatial Collision Safety
+- **Native Grid Anchor**: Charts are anchored at logical cell coordinates (e.g. `B12`) and rendered directly on the spreadsheet surface with zoom, pan, and fullscreen inspection modals.
+- **Spatial Bounding Boxes**: Charts occupy physical $7 \times 14$ cell rectangular areas (e.g. `B12:I25`). If a user requests a chart at an explicit cell that overlaps an existing chart region, the agent flags a spatial collision.
+- **Dynamic Safe Placement**: Auto-placed charts dynamically calculate free coordinates below all existing chart bounding boxes.
+- **Chart Deduplication**: If an equivalent chart `(dimension, measure, type, aggregation)` already exists (e.g. Pie chart of *Sales by Region* at `B12`), repeating the request results in **0 new charts**, returning: *"Pie chart 'Sales by Region' sudah tersedia di B12, jadi saya tidak membuat duplikat."*
+- **Native OpenPyXL XLSX Export**: Exporting to `.xlsx` attaches native OpenPyXL chart objects anchored at destination cells, preserving native Excel editing and rendering.
 
-### D. Deterministic Visualization Engine & Smart Generate
-- **Supported Chart Types**: `BAR`, `LINE`, `PIE`, `AREA`, `SCATTER`, `HISTOGRAM`.
-- **Intelligent "Smart Generate Chart"**: Deterministic, schema-aware visualization engine that evaluates table semantics without requiring manual chart configuration or LLM inference.
-  - Automatically derives time-series trends (`LINE` / `AREA`), categorical comparisons (`BAR`), part-to-whole proportions (`PIE` strictly $\le 7$ non-negative categories), numeric correlations (`SCATTER`), and continuous distributions (`HISTOGRAM`).
-  - **Identifier & High-Cardinality Protection**: Automatically filters primary keys and unique identifiers (e.g. `Order ID`, `SKU`, `User ID`) and rejects unreadable charts on high-cardinality columns (e.g. 9,800-bar charts).
-  - **Deduplication & Ranking**: Ranks candidates by analytical business value, enforces dimension and metric diversity, and caps output to top 5 visualizations with complete "Why this chart?" explainability disclosures.
-- **Conservative Compatibility**: Rule-based shape validation (e.g. pie charts rejected if negative values exist or categories $> 7$; scatter plots require two numeric columns).
-- **Headless Static Rendering**: High-resolution Matplotlib/Seaborn image generation stored in session storage and served via `/api/v1/datasets/{id}/charts/{chart_id}/image`.
-- **Integrated Lineage Footers**: Rendered charts include an audit footer linking the graphic to its source worksheet, cell range, and record count.
-
-### E. Interactive Operation Builder UI
-- **Point-and-Click Interface**: Build complex analytical queries without writing formulas or SQL.
-- **Type-Adaptive Filters**: 13 supported filter operators (`equals`, `contains`, `greater_than`, `between`, `in_list`, etc.) with `AND`/`OR` combination logic.
-- **Multi-Aggregation Grouping**: Group by multiple dimensions simultaneously and calculate independent aggregate metrics.
-- **Sort & Limit Controls**: Rank and limit top $N$ output rows.
-- **Export Calculation Results**: Direct CSV export button for verified analysis summaries and grouped datasets.
-
-### F. Multi-Model AI Query Planner & 12-Model Matrix
-- **Supported Providers**: Alibaba Cloud Model Studio (Qwen), DeepSeek, and Google Gemini API (v1beta REST generateContent).
-- **Active Default Model**: `qwen3.5-397b-a17b` (Note: `qwen3.5-plus` is fully retired).
-- **Strict 12-Model Allowlist**:
-  - **Qwen**: `qwen3.5-397b-a17b` (Default), `qwen3.5-flash`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
-  - **DeepSeek**: `deepseek-v4-flash`
-  - **Google Gemini**: `gemini-2.5-flash`, `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-3.6-flash`
-- **Spreadsheet AI Agent Workflow**:
-  - 10-step lifecycle: User instruction $\to$ intent interpretation $\to$ workbook context discovery $\to$ guardrails & safety $\to$ placement guard $\to$ formula preparation $\to$ independent Python verification $\to$ commit on success / atomic rollback on failure.
-  - Reversibility: Every committed transaction is recorded and can be reverted at any time using the `↩ Undo` button.
-- **Smart Analytics & Granular Temporal Calculations**:
-  - Natural-language query execution compiling into verified analytical instructions.
-  - Granular temporal calculations supporting Yearly (e.g. 2015, 2016), Quarterly (e.g. 2015 Q1), and continuous Monthly (e.g. 2015-01) date intervals with chronological sorting and Line/Column visualization recommendations.
-- **Full Workbook & Slices Export**:
-  - **XLSX Export**: Full multi-sheet workbook download preserving all worksheets, names, formulas, and evaluated data.
-  - **CSV Export**: Clean CSV download of active worksheet grids or filtered analytical results.
-- **Proactive Disambiguation**: Returns structured `CLARIFICATION` prompts when queries are ambiguous, enabling users to click candidate column options.
-- **AI Guardrail Validation**: Pre-execution check verifying that all planned columns and operations exist in the physical schema.
-- **Evidence-Based Explainer & Level 10 Provenance**: Grounded summaries citing verified numbers, source cell ranges, row counts, calculation steps, and verification status (`VERIFIED_NUMERIC_TRUTH`).
-- **Execution Stage Latency Grid**: Monospaced latency badges detailing milliseconds for Schema Resolution, AI Planning, Guardrails, Python Calculation, Visualization, and Explainer.
-
-### G. Workspace State Persistence & Routing
-- **Persistent Workspace Route (`/workspace/[sessionId]`)**: Shareable and reloadable URL route preserving active worksheet, tab selection, and analytical state.
-- **No State Loss on Tab Navigation**: Persistent DOM rendering ensures that active searches, pagination, custom charts, generated smart charts, Analysis Builder configurations, and AI query history are maintained across tab switches.
-- **Theme Switcher**: Segmented `Light | Dark | System` selector with complete dark mode styles across all workspaces, cards, tables, headers, and modals.
-
-### H. Multi-Language Localization (English Base + Indonesian UI)
-- **First-Class Indonesian UMKM Support**: Full presentation-layer Indonesian translation tailored for Indonesian business operators and micro/small/medium enterprises.
-- **Language Switcher**: Instant `EN | ID` segmented toggle in navigation.
-- **First-Visit Onboarding Modal**: Lightweight, dismissible language selector with `localStorage` persistence and brand asset integration.
-- **Bilingual AI Query Planning**: AI understands questions in both Indonesian (e.g. *"Berapa total pendapatan?"*, *"Tampilkan rata-rata unit per wilayah"*) and English.
-- **Contextual In-App Guidance**: Dedicated contextual help modals for Operation Builder, Smart Analytics, and Spreadsheet AI Agent, alongside the global 11-chapter How-To guide.
+### D. Schema-Aware Multi-Visualization
+- For requests like `visualisasikan semua kemungkinan yang relevan dari data ini`:
+  - Inspects table schema and identifies meaningful dimensions, temporal fields, and numeric measures.
+  - Automatically filters out candidate charts that **already exist** in `grid.charts`.
+  - Places remaining visualizations into disjoint, non-overlapping bounding boxes in a single atomic transaction.
+  - If all relevant visualizations already exist, it performs 0 mutations and reports that all visualizations are present.
 
 ---
 
-## 4. Repository Structure
+## 5. Natural Language Transaction Controls & Read-Only Inspection
+
+### A. Natural Language Undo, Redo, and Cancel
+The Agent processes conversational transaction commands directly against the workbook transaction log:
+
+| Intent | Supported Phrases (English & Indonesian) | Effect |
+|---|---|---|
+| **Undo** | `undo`, `please undo`, `undo langkah tersebut`, `undo perubahan tadi`, `batalkan langkah tadi`, `kembalikan seperti sebelumnya` | Reverts the last committed transaction, restoring cells, charts, and formats. |
+| **Redo** | `redo`, `redo langkah tersebut`, `ulangi langkah tadi`, `terapkan kembali` | Re-applies the previously undone transaction cleanly. |
+| **Cancel** | `cancel`, `cancel that`, `batalkan operasi ini`, `batalin` | Dismisses any pending clarification or operation with 0 mutations. |
+| **Inspect Changes**| `what did you change?`, `where did you put it?`, `show formula`, `perubahan apa yang dilakukan?`, `hasilnya ada di mana?` | Reports exact cell diffs, formulas, and parsed values from the last transaction. |
+
+### B. Read-Only Data Inquiries (Zero Mutations)
+The Agent answers contextual workbook questions without modifying the spreadsheet:
+- **Dataset Structure**: `ini sebenarnya data apa sih?`, `dataset ini tentang apa?` &rarr; Reports row counts, columns, semantic types, and hygiene score.
+- **Cell Inspection**: `apa yang ada di D2?`, `apa isi cell ini?` &rarr; Returns the exact formula string, parsed value, and data type of the coordinate.
+- **Deterministic Extremes & Superlatives**: `berapa sales terbesar?`, `region mana dengan sales tertinggi?` &rarr; Computes maximums, minimums, and cross-dimensional rankings via deterministic Python execution with 0 cell mutations.
+
+---
+
+## 6. How to Use Sheetsly
+
+### 1. Ask (Read-Only Insights)
+* `"ini sebenarnya data apa sih?"` — Explains dataset purpose, rows, and columns.
+* `"region mana dengan sales tertinggi?"` — Computes highest revenue region using deterministic aggregation.
+* `"berapa sales terbesar?"` — Identifies scalar extreme values.
+
+### 2. Calculate (Spreadsheet Formulas)
+* `"hitung total sales di D10"` — Writes `=SUM(D2:D7)` to `D10`.
+* `"hitung average sales di D11"` — Writes `=AVERAGE(D2:D7)` to `D11`.
+* `"hitung total keuntungan di E8"` — Resolves semantic metric *keuntungan* to `Profit` column and writes `=SUM(E2:E6)` to `E8`.
+
+### 3. Label & Multi-Intent
+* `"total sales di D10 dan berikan label TOTAL di C10"` — Decomposes into `WRITE_VALUE[C10] = "TOTAL"` and `WRITE_FORMULA[D10] = "=SUM(D2:D7)"`.
+* If `D10` is already calculated, it safely adds only `TOTAL` to `C10`.
+
+### 4. Visualize (Native Worksheet Charts)
+* `"buatkan pie chart di B12 untuk Region berdasarkan Sales"` — Creates a native Pie chart anchored at `B12`.
+* `"buatkan bar chart Category berdasarkan Sales"` — Places a Bar chart in the next safe, non-overlapping location.
+* `"visualisasikan semua kemungkinan yang relevan dari data ini"` — Generates bounded, schema-aware multi-chart visualizations without duplicates.
+
+### 5. Contextual Selected-Cell Placement
+1. Click cell **`B40`** in the spreadsheet grid.
+2. In the AI Chat, type: `"buatkan visualisasi sales by region di cells ini"`
+3. The Agent anchors the visualization directly at `B40`.
+
+### 6. Natural Language Control
+* `"undo langkah tersebut"` — Reverts the previous formula or chart creation.
+* `"redo langkah tersebut"` — Restores the reverted transaction.
+* `"batalkan operasi ini"` — Cancels pending actions.
+
+### 7. Cell & Change Inspection
+* `"apa yang ada di D2?"` — Displays cell `D2` value and formula.
+* `"perubahan apa yang dilakukan?"` — Summarizes exact target cells and formulas modified in the last operation.
+
+---
+
+## 7. Supported AI Models & 12-Model Matrix
+
+Sheetsly features a strict allowlist of 12 verified LLM configurations across Google Gemini, Alibaba Cloud Qwen, and DeepSeek:
+
+* **Google Gemini**: `gemini-3.1-flash-lite` (Active Default Base Model), `gemini-2.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-3.6-flash`
+* **Alibaba Cloud Qwen**: `qwen3.5-122b-a10b`, `qwen3.5-flash`, `qwen3.6-plus`, `qwen3.7-plus`, `qwen3.6-flash`, `qwen3.7-flash`
+* **DeepSeek**: `deepseek-v4-flash`
+
+> Note: `qwen3.5-plus` and `qwen3.5-397b-a17b` are permanently retired.
+
+---
+
+## 8. Repository Structure
 
 ```
 sheetsly/
+├── README.md                            # Comprehensive platform documentation & guide
 ├── BLUEPRINT.md                         # Authoritative architectural specification
-├── README.md                            # Comprehensive developer & operator documentation
-├── .gitignore                           # Root Git ignore rules
-├── .env.example                         # Root environment configuration template
-├── sales_q3.csv                         # Sample verification dataset (Sales)
-├── hr_payroll.xlsx                      # Sample verification dataset (Payroll/Quality)
-├── correlation_test.csv                 # Sample verification dataset (Scatter/Histogram)
-├── large_dataset_9800.csv               # Synthetic benchmark dataset (9,800 rows / 2 MB)
+├── .gitignore                           # Git ignore rules
+├── .env.example                         # Environment configuration template
+├── sales_q3.csv                         # Sample dataset (Sales)
+├── hr_payroll.xlsx                      # Sample dataset (Payroll & Data Quality)
+├── correlation_test.csv                 # Sample dataset (Scatter & Histogram)
 │
 ├── sheetsly_backend/                    # Python FastAPI Backend
-│   ├── .env.example                     # Backend environment variable template
-│   ├── .gitignore                       # Backend Git ignore rules
-│   ├── pytest.ini                       # Pytest test configuration
-│   ├── requirements.txt                 # Backend Python dependencies
-│   ├── storage/
-│   │   └── temp/                        # Session storage for uploaded files and charts
-│   │       └── .gitkeep
-│   ├── tests/                           # 312 automated unit & integration tests (100% pass rate)
-│   └── app/
-│       ├── main.py                      # FastAPI application entrypoint & lifespan
-│       ├── core/                        # Configuration, logging, domain errors
-│       ├── api/                         # REST API routes (/api/v1)
-│       │   ├── router.py                # Router aggregator
-│       │   └── routes/                  # Datasets, Sheets, Analytics, Visualization, AI, Agent
-│       ├── storage/                     # Isolated filesystem manager
-│       └── engine/
-│           ├── ingestion/               # OpenPyXL parser, orientation, quality engine
-│           ├── analytics/               # Analytical engine, filters, aggregations, lineage, temporal
-│           ├── visualization/           # Chart selector, renderer, recommendation, smart generator
-│           ├── mutation/                # Spreadsheet agent planner, safe placement, verification, rollback
-│           └── ai/                      # Multi-provider client (Qwen/DeepSeek/Gemini), planner, guardrails, explainer, orchestrator
+│   ├── app/
+│   │   ├── api/routes/                  # Datasets, Sheets, Analytics, Visualization, AI, Agent
+│   │   ├── core/                        # Configuration, logging, domain error handlers
+│   │   └── engine/
+│   │       ├── agent/                   # Spreadsheet Agent planner, validator, mutator, transaction manager
+│   │       ├── analytics/               # Deterministic formulas, aggregations, lineage tracking
+│   │       ├── visualization/           # Headless Matplotlib renderer, chart selector, smart generator
+│   │       ├── ingestion/               # OpenPyXL parser, cell preservation, orientation, hygiene
+│   │       └── ai/                      # Multi-provider client (Gemini/Qwen/DeepSeek), guardrails, explainer
+│   └── tests/                           # 118+ automated unit & integration tests (100% pass rate)
 │
-└── sheetsly_frontend/                   # Next.js 16 Frontend Workspace
-    ├── .env.example                     # Frontend environment variable template
-    ├── .gitignore                       # Frontend Git ignore rules
-    ├── package.json                     # Node.js dependencies (Next.js 16, React 19, Tailwind v4)
-    ├── tsconfig.json                    # TypeScript compiler configuration
-    ├── next.config.ts                   # Next.js configuration
-    ├── public/
-    │   └── assets/                      # Brand assets (logo.png)
+└── sheetsly_frontend/                   # Next.js 16 Workspace
     ├── app/
-    │   ├── layout.tsx                   # Root layout with ThemeProvider, LanguageProvider, WorkspaceProvider
-    │   ├── globals.css                  # Tailwind v4 dark variant, theme tokens, & tabular numbers
-    │   ├── page.tsx                     # Landing page & initial upload workflow
+    │   ├── page.tsx                     # Landing page & file upload workflow
     │   └── workspace/[sessionId]/page.tsx # Persistent workspace route with multi-tab state caching
     ├── components/
-    │   ├── upload/                      # SpreadsheetUploader with progressive loading
-    │   ├── workspace/                   # SheetList, DetectedTablesViewer, ActualDataViewer,
-    │   │                                # DataQualityPanel, VisualizationViewer, SmartVisualizationPanel,
-    │   │                                # WorkbookHeader, ThemeSwitcher, HowToUseModal, LanguageSwitcher,
-    │   │                                # SmartAnalyticsHelpModal, AnalysisBuilderHelpModal
-    │   ├── builder/                     # OperationBuilder, OperationSelector, FilterBuilder,
-    │   │                                # GroupByBuilder, SortLimitBuilder, AnalysisResultView
-    │   └── ai/                          # AIQueryWorkspace, AIModelSelector, GridAIChatPanel,
-    │                                    # SpreadsheetAgentHelpModal, PlanInterpretationCard,
-    │                                    # ClarificationPrompt, EvidenceExplanationCard, HowDoesThisWorkModal
+    │   ├── workspace/                   # ActualDataViewer, DetectedTablesViewer, VisualizationViewer, modals
+    │   ├── ai/                          # GridAIChatPanel, AIModelSelector, ChartFullscreenModal
+    │   └── builder/                     # OperationBuilder, FilterBuilder, GroupByBuilder
     └── lib/
-        ├── types.ts                     # TypeScript domain contracts & timing models
         ├── api.ts                       # Typed REST API client
         ├── export.ts                    # Safe tabular CSV & full XLSX workbook export utilities
-        ├── theme/                       # ThemeContext (Light / Dark / System)
-        ├── workspace/                   # Centralized WorkspaceContext & session state management
-        └── i18n/                        # Multilingual localization system (en / id)
+        └── i18n/                        # Multilingual localization system (English & Indonesian)
 ```
 
 ---
 
-## 5. Prerequisites
+## 9. Prerequisites & Installation
 
-- **Python**: `3.10` or higher (developed and verified on Python `3.12`)
+### Prerequisites
+- **Python**: `3.10` or higher (verified on Python `3.12`)
 - **Node.js**: `18.18` or higher (Next.js 16 compatible)
 - **Package Manager**: `npm` (v9+) or `pnpm`
-- **Operating System**: Windows, macOS, or Linux
-
----
-
-## 6. Setup & Execution Guide
 
 ### A. Backend Setup (FastAPI)
-
 ```powershell
-# 1. Navigate to backend directory
 cd sheetsly_backend
-
-# 2. (Optional) Create and activate a Python virtual environment
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-
-# 3. Install required Python packages
 pip install -r requirements.txt
-
-# 4. Create environment file from template
 Copy-Item .env.example .env
 
-# 5. Configure AI API credentials in .env:
-# DASHSCOPE_API_KEY=your_dashscope_api_key
-# GEMINI_API_KEY=your_gemini_api_key
-
-# 6. Start backend development server
+# Configure GEMINI_API_KEY or DASHSCOPE_API_KEY in .env
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-Backend will be live at: `http://127.0.0.1:8000` (Swagger interactive docs at `http://127.0.0.1:8000/docs`).
 
 ### B. Frontend Setup (Next.js)
-
 ```powershell
-# 1. Navigate to frontend directory
 cd sheetsly_frontend
-
-# 2. Install Node dependencies
 npm install
-
-# 3. Create environment file from template
 Copy-Item .env.example .env.local
-
-# 4. Start frontend development server
 npm run dev -- --port 3000
 ```
-Frontend workspace will be live at: `http://localhost:3000`.
+Workspace will be live at `http://localhost:3000`.
 
 ---
 
-## 7. Automated Testing & Verification
+## 10. Automated Testing & Verification
 
-### Running Backend Tests (Pytest)
+### Running All Agent & Core Backend Tests (Pytest)
 ```powershell
 cd sheetsly_backend
-python -m pytest -p no:pytest_ethereum -v
+pytest tests/test_phase14_workspace_agent.py \
+       tests/test_phase15_agent_visualization.py \
+       tests/test_phase16_agent_dashboard.py \
+       tests/test_phase17_agent_core.py \
+       tests/test_phase18_natural_language_control.py \
+       tests/test_phase18y_native_charts.py \
+       tests/test_phase19_intent_context_placement.py \
+       tests/test_phase20_state_awareness_and_idempotency.py -v
 ```
-*Current test suite: **312 unit & integration tests** covering ingestion, data grid search, quality scoring, scalar aggregations, multi-grouping, filters, lineage, chart rendering, deterministic smart chart generation, XLSX & CSV export, temporal trends, AI model selector, mutation engine, rollback verification, and REST API routes (**100% passing**).*
-
-### Running Direct Acceptance Certification
-```powershell
-python scratch/execute_all_manual_acceptance_tests.py
-```
-*Direct acceptance suite: **23 / 23 test cases passing (100%)**.*
+*Current test suite: **118 / 118 tests passed (100% passing)**.*
 
 ### Running Frontend Production Build
 ```powershell
@@ -334,7 +334,7 @@ npm run build
 
 ---
 
-## 8. Frontend Design & Impeccable Quality Standards
+## 11. Design & Impeccable Quality Standards
 
 The frontend interface strictly conforms to the **Impeccable `Operate` Mode** design standards:
 - **Zero AI Slop**: No emojis, no glowing cards, no glassmorphism, no purple/blue AI gradients, and no fake blinking/pulsing activity dots.

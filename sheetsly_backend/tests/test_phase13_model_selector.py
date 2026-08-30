@@ -12,13 +12,14 @@ def test_ai_status_default_model_and_catalog():
     assert res.status_code == 200
     data = res.json()
     
-    # 1. Default model must be qwen3.5-397b-a17b
-    assert data["default_model"] == "qwen3.5-397b-a17b"
+    # 1. Default model must be gemini-3.1-flash-lite
+    assert data["default_model"] == "gemini-3.1-flash-lite"
     
     # 2. Retired qwen3.5-plus must NOT be in available models
     models = [m["id"] for m in data["available_models"]]
     assert "qwen3.5-plus" not in models
-    assert "qwen3.5-397b-a17b" in models
+    assert "gemini-3.1-flash-lite" in models
+    assert "qwen3.5-122b-a10b" in models
     assert "qwen3.5-flash" in models
 
 

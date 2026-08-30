@@ -214,6 +214,8 @@ class IngestionPipeline:
                 column_headers=column_headers,
                 rows=rows_slice,
                 merged_cells=grid.merged_ranges,
+                charts=getattr(grid, "charts", {}),
+                kpis=getattr(grid, "kpis", {}),
             )
 
         # Standard unsearched pagination
@@ -236,6 +238,8 @@ class IngestionPipeline:
             column_headers=column_headers,
             rows=rows_slice,
             merged_cells=grid.merged_ranges,
+            charts=getattr(grid, "charts", {}),
+            kpis=getattr(grid, "kpis", {}),
         )
 
 

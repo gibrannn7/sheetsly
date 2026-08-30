@@ -32,6 +32,7 @@ class TransactionManager:
         self.max_history = max_history
         self.history: List[TransactionAuditRecord] = []
         self.committed_transactions: List[MutationTransaction] = []
+        self.undone_transactions: List[MutationTransaction] = []
         self.current_version: int = 1
 
     def execute_transaction(
@@ -127,7 +128,7 @@ class TransactionManager:
             )
 
         # 5. Post-Execution Verification
-        v_report = self._verify_transaction(transaction, grid)
+        v_report = self._verify_transaction(transaction, grid, sheet_grids)
         transaction.verification_report = v_report
 
         if not v_report.is_verified:
@@ -169,22 +170,25 @@ class TransactionManager:
                     execution_time_ms=(time.perf_counter() - start_time) * 1000,
                 )
 
-        # 7. Commit Transaction
+        # 7. Commit Phase
         transaction.status = TransactionStatusEnum.COMMITTED
         transaction.committed_at = datetime.now(timezone.utc).isoformat()
-        self.current_version += 1
-
         self.committed_transactions.append(transaction)
         if len(self.committed_transactions) > self.max_history:
             self.committed_transactions.pop(0)
 
+        # New forward mutation invalidates previous redo stack
+        self.undone_transactions.clear()
+
+        self.current_version += 1
+        transaction.version_after = self.current_version
         self._record_audit(transaction, "COMMITTED", verified=True, rolled_back=False)
 
         affected = [d.target_ref for d in diffs]
         return AgentExecutionResult(
             status=AgentResponseStatusEnum.SUCCESS,
             transaction=transaction,
-            message=f"Selesai. {transaction.resolved_intent}",
+            message=transaction.resolved_intent or "Operasi spreadsheet berhasil dieksekusi dan diverifikasi.",
             affected_ranges=affected,
             execution_time_ms=(time.perf_counter() - start_time) * 1000,
         )
@@ -193,25 +197,35 @@ class TransactionManager:
         self,
         grid: RawSheetGrid,
         sheet_grids: Optional[Dict[str, RawSheetGrid]] = None,
+        is_english: bool = False,
     ) -> AgentExecutionResult:
-        """Undoes the most recent committed transaction and records an undo audit entry."""
+        """Rolls back the most recently committed transaction atomically and saves to redo stack."""
         if not self.committed_transactions:
+            msg = "Nothing to undo." if is_english else "Tidak ada transaksi yang dapat di-undo."
             return AgentExecutionResult(
-                status=AgentResponseStatusEnum.VALIDATION_ERROR,
-                message="Tidak ada transaksi yang dapat di-undo.",
+                status=AgentResponseStatusEnum.ROLLBACK_FAILURE,
+                message=msg,
             )
 
         last_tx = self.committed_transactions.pop()
-        rb_ok = RollbackEngine.rollback_transaction(last_tx, grid, sheet_grids)
-
-        if not rb_ok:
+        success = RollbackEngine.rollback_transaction(last_tx, grid, sheet_grids)
+        if not success:
+            err_msg = f"Failed to undo transaction '{last_tx.transaction_id}'." if is_english else f"Gagal melakukan undo untuk transaksi '{last_tx.transaction_id}'."
             return AgentExecutionResult(
                 status=AgentResponseStatusEnum.ROLLBACK_FAILURE,
                 transaction=last_tx,
-                message="Transaksi gagal dan proses rollback mengalami masalah.",
+                message=err_msg,
             )
 
-        self.current_version += 1
+        last_tx.status = TransactionStatusEnum.ROLLED_BACK
+        last_tx.rolled_back_at = datetime.now(timezone.utc).isoformat()
+        last_tx.rollback_reason = "User requested undo operation."
+
+        # Add to redo stack
+        self.undone_transactions.append(last_tx)
+        if len(self.undone_transactions) > self.max_history:
+            self.undone_transactions.pop(0)
+
         undo_audit = TransactionAuditRecord(
             transaction_id=f"undo_{last_tx.transaction_id}",
             dataset_id=last_tx.dataset_id,
@@ -229,13 +243,112 @@ class TransactionManager:
         if len(self.history) > self.max_history:
             self.history.pop(0)
 
+        affected = [d.target_ref for d in last_tx.diff]
+        success_msg = "Undone. The last spreadsheet change was reverted." if is_english else "Selesai. Perubahan terakhir telah dibatalkan."
+
         return AgentExecutionResult(
             status=AgentResponseStatusEnum.ROLLBACK_SUCCESS,
             transaction=last_tx,
-            message=f"Undo berhasil: transaksi '{last_tx.transaction_id}' telah dibatalkan.",
+            message=success_msg,
+            affected_ranges=affected,
         )
 
-    def _verify_transaction(self, transaction: MutationTransaction, grid: RawSheetGrid) -> VerificationReport:
+    def redo_last_transaction(
+        self,
+        grid: RawSheetGrid,
+        workbook_index: Optional[WorkbookMetadataIndex] = None,
+        sheet_grids: Optional[Dict[str, RawSheetGrid]] = None,
+        save_hook: Optional[Callable[[], bool]] = None,
+        is_english: bool = False,
+    ) -> AgentExecutionResult:
+        """Re-applies the most recently undone transaction atomically."""
+        if not self.undone_transactions:
+            msg = "Nothing to redo." if is_english else "Tidak ada transaksi yang dapat di-redo."
+            return AgentExecutionResult(
+                status=AgentResponseStatusEnum.SUCCESS,
+                message=msg,
+            )
+
+        tx_to_redo = self.undone_transactions.pop()
+        start_time = time.perf_counter()
+
+        # Execute actions afresh
+        diffs: List[StateDiff] = []
+        try:
+            for act in tx_to_redo.actions:
+                target_g = grid
+                if sheet_grids and act.sheet_name in sheet_grids:
+                    target_g = sheet_grids[act.sheet_name]
+
+                d = GridMutator.execute_action(act, target_g, workbook_index, sheet_grids)
+                diffs.append(d)
+
+            tx_to_redo.diff = diffs
+        except Exception as exec_err:
+            tx_to_redo.status = TransactionStatusEnum.FAILED
+            err_msg = f"Redo failed: {str(exec_err)}" if is_english else f"Redo gagal: {str(exec_err)}"
+            return AgentExecutionResult(
+                status=AgentResponseStatusEnum.EXECUTION_ERROR,
+                transaction=tx_to_redo,
+                message=err_msg,
+                error_detail=str(exec_err),
+            )
+
+        # Post-execution verification
+        v_report = self._verify_transaction(tx_to_redo, grid, sheet_grids)
+        tx_to_redo.verification_report = v_report
+
+        if not v_report.is_verified:
+            err_msg = f"Redo verification failed: {', '.join(v_report.failures)}" if is_english else f"Verifikasi redo gagal: {', '.join(v_report.failures)}"
+            return AgentExecutionResult(
+                status=AgentResponseStatusEnum.VERIFICATION_ERROR,
+                transaction=tx_to_redo,
+                message=err_msg,
+            )
+
+        tx_to_redo.status = TransactionStatusEnum.COMMITTED
+        tx_to_redo.committed_at = datetime.now(timezone.utc).isoformat()
+        self.committed_transactions.append(tx_to_redo)
+        if len(self.committed_transactions) > self.max_history:
+            self.committed_transactions.pop(0)
+
+        self.current_version += 1
+        tx_to_redo.version_after = self.current_version
+
+        redo_audit = TransactionAuditRecord(
+            transaction_id=f"redo_{tx_to_redo.transaction_id}",
+            dataset_id=tx_to_redo.dataset_id,
+            sheet_name=tx_to_redo.sheet_name,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            user_request=f"Redo transaction '{tx_to_redo.transaction_id}'",
+            resolved_intent=f"Reapplied transaction '{tx_to_redo.transaction_id}'",
+            action_types=["REDO"],
+            affected_cells=[d.target_ref for d in diffs],
+            status="COMMITTED",
+            verified=True,
+            rolled_back=False,
+        )
+        self.history.append(redo_audit)
+        if len(self.history) > self.max_history:
+            self.history.pop(0)
+
+        affected = [d.target_ref for d in diffs]
+        success_msg = "Redone. The last reverted change was reapplied." if is_english else "Selesai. Perubahan yang dibatalkan telah diterapkan kembali."
+
+        return AgentExecutionResult(
+            status=AgentResponseStatusEnum.SUCCESS,
+            transaction=tx_to_redo,
+            message=success_msg,
+            affected_ranges=affected,
+            execution_time_ms=(time.perf_counter() - start_time) * 1000,
+        )
+
+    def _verify_transaction(
+        self,
+        transaction: MutationTransaction,
+        grid: RawSheetGrid,
+        sheet_grids: Optional[Dict[str, RawSheetGrid]] = None,
+    ) -> VerificationReport:
         """Performs deterministic verification comparing actual diff against planned modifications."""
         failures = []
         failure_reasons = []
@@ -245,16 +358,62 @@ class TransactionManager:
             failure_reasons.append(VerificationFailureReason.TARGET_CELL_MISSING)
 
         for act in transaction.actions:
+            target_g = sheet_grids.get(act.sheet_name, grid) if (sheet_grids and act.sheet_name in sheet_grids) else grid
+
+            # 1. Formula Verification
             if act.action_type == ActionTypeEnum.WRITE_FORMULA and act.target_cell:
                 col_s, row_i = coordinate_from_string(act.target_cell.upper())
                 col_i = column_index_from_string(col_s)
-                c_data = grid.get_cell(row_i, col_i)
+                c_data = target_g.get_cell(row_i, col_i)
                 if c_data.formula != act.formula:
                     failures.append(f"Formula at {act.target_cell} ('{c_data.formula}') does not match expected '{act.formula}'.")
                     failure_reasons.append(VerificationFailureReason.FORMULA_SYNTAX_ERROR)
                 if act.expected_result is not None and c_data.parsed_value != act.expected_result:
                     failures.append(f"Evaluated formula value ({c_data.parsed_value}) does not match expected ({act.expected_result}).")
                     failure_reasons.append(VerificationFailureReason.FORMULA_RESULT_MISMATCH)
+
+            # 2. Value Verification
+            elif act.action_type == ActionTypeEnum.WRITE_VALUE and act.target_cell:
+                col_s, row_i = coordinate_from_string(act.target_cell.upper())
+                col_i = column_index_from_string(col_s)
+                c_data = target_g.get_cell(row_i, col_i)
+                if c_data.is_empty and act.value is not None:
+                    failures.append(f"Cell {act.target_cell} is empty, expected value '{act.value}'.")
+                    failure_reasons.append(VerificationFailureReason.TARGET_CELL_MISSING)
+
+            # 3. Chart Creation Verification
+            elif act.action_type == ActionTypeEnum.CREATE_CHART and act.chart_spec:
+                cid = act.chart_spec.chart_id
+                if cid not in target_g.charts:
+                    failures.append(f"Chart '{cid}' was not found in worksheet grid charts.")
+                    failure_reasons.append(VerificationFailureReason.TARGET_CELL_MISSING)
+                else:
+                    c_entry = target_g.charts[cid]
+                    dest_actual = c_entry.get("destination_cell") if isinstance(c_entry, dict) else c_entry.destination_cell
+                    if dest_actual != act.chart_spec.destination_cell:
+                        failures.append(f"Chart anchor '{dest_actual}' does not match requested destination '{act.chart_spec.destination_cell}'.")
+                        failure_reasons.append(VerificationFailureReason.TARGET_CELL_COLLISION)
+
+            # 4. Chart Movement Verification
+            elif act.action_type == ActionTypeEnum.MOVE_CHART:
+                dest = act.target_cell or (act.chart_spec.destination_cell if act.chart_spec else None)
+                if dest and target_g.charts:
+                    found = False
+                    for cid, c_entry in target_g.charts.items():
+                        c_dest = c_entry.get("destination_cell") if isinstance(c_entry, dict) else c_entry.destination_cell
+                        if c_dest == dest:
+                            found = True
+                            break
+                    if not found:
+                        failures.append(f"Moved chart was not anchored at target destination '{dest}'.")
+                        failure_reasons.append(VerificationFailureReason.TARGET_CELL_MISSING)
+
+            # 5. KPI Verification
+            elif act.action_type == ActionTypeEnum.CREATE_KPI and act.kpi_spec:
+                kpid = act.kpi_spec.kpi_id
+                if kpid not in target_g.kpis:
+                    failures.append(f"KPI '{kpid}' was not found in worksheet grid KPIs.")
+                    failure_reasons.append(VerificationFailureReason.TARGET_CELL_MISSING)
 
         is_verified = len(failures) == 0
         return VerificationReport(

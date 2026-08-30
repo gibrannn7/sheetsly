@@ -118,6 +118,16 @@ class PlacementPolicy:
                 if cls._is_occupied(grid, summary_row, target_col_int):
                     is_safe = False
 
+            # Check if label cell is occupied
+            if label_cell and cls._is_occupied(grid, summary_row, label_col_int):
+                label_cell = None
+                for cand_c in range(1, target_col_int):
+                    if not cls._is_occupied(grid, summary_row, cand_c):
+                        label_col_int = cand_c
+                        label_col_letter = get_column_letter(label_col_int)
+                        label_cell = f"{label_col_letter}{summary_row}"
+                        break
+
         label_text = f"Total {measure_col.name}" if "total" in query.lower() or "sum" in query.lower() else f"Summary {measure_col.name}"
 
         return PlacementDecision(
@@ -139,7 +149,25 @@ class PlacementPolicy:
     def _is_occupied(cls, grid: RawSheetGrid, row: int, col: int) -> bool:
         if (row, col) in grid.cells:
             cell = grid.cells[(row, col)]
-            return not cell.is_empty and cell.original_value is not None and str(cell.original_value).strip() != ""
+            if not cell.is_empty and (cell.original_value is not None and str(cell.original_value).strip() != "" or cell.formula):
+                return True
+
+        # Check chart bounding boxes
+        if grid.charts:
+            for chart in grid.charts.values():
+                dest = chart.get("destination_cell") or chart.get("anchor_cell")
+                if not dest:
+                    continue
+                try:
+                    c_letter, r_start = coordinate_from_string(dest)
+                    c_start = column_index_from_string(c_letter)
+                    w = chart.get("width_cols", 8)
+                    h = chart.get("height_rows", 15)
+                    if c_start <= col < c_start + w and r_start <= row < r_start + h:
+                        return True
+                except Exception:
+                    pass
+
         return False
 
     @classmethod

@@ -342,9 +342,9 @@ def test_adversarial_cell_content_safety():
 
 
 def test_model_configuration_replacement_verification():
-    """Verify qwen3.5-397b-a17b is the configured default model in settings and models catalog."""
-    assert settings.QWEN_MODEL == "qwen3.5-397b-a17b"
-    assert DEFAULT_AI_MODEL == "qwen3.5-397b-a17b"
+    """Verify gemini-3.1-flash-lite is the configured default model in settings and models catalog."""
+    assert settings.QWEN_MODEL == "qwen3.5-122b-a10b"
+    assert DEFAULT_AI_MODEL == "gemini-3.1-flash-lite"
 
 
 def test_no_active_qwen_35_plus_runtime_reference():
@@ -353,8 +353,10 @@ def test_no_active_qwen_35_plus_runtime_reference():
     assert DEFAULT_AI_MODEL != "qwen3.5-plus"
 
 
-def test_qwen35_397b_a17b_is_active_default_model():
-    """Verify qwen3.5-397b-a17b is active and resolves to provider 'qwen'."""
-    assert "qwen3.5-397b-a17b" in ALLOWED_AI_MODELS
-    assert get_provider_for_model("qwen3.5-397b-a17b") == "qwen"
-    assert get_provider_for_model(None) == "qwen"
+def test_gemini_31_flash_lite_is_active_default_model():
+    """Verify gemini-3.1-flash-lite is active and resolves to provider 'gemini'."""
+    assert "gemini-3.1-flash-lite" in ALLOWED_AI_MODELS
+    assert "qwen3.5-122b-a10b" in ALLOWED_AI_MODELS
+    assert get_provider_for_model("gemini-3.1-flash-lite") == "gemini"
+    assert get_provider_for_model("qwen3.5-122b-a10b") == "qwen"
+    assert get_provider_for_model(None) == "gemini"

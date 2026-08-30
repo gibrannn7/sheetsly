@@ -28,14 +28,14 @@ class Settings(BaseSettings):
 
     # AI Configuration (Qwen / DashScope)
     DASHSCOPE_API_KEY: str = ""
-    QWEN_MODEL: str = "qwen3.5-397b-a17b"
+    QWEN_MODEL: str = "qwen3.5-122b-a10b"
     QWEN_BASE_URL: str = "https://ws-6avfe6m7o2twqw9n.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     QWEN_ENABLE_THINKING: bool = True
 
     # AI Configuration (Google Gemini)
     GEMINI_API_KEY: str = ""
     GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
-    GEMINI_DEFAULT_MODEL: str = "gemini-3.5-flash"
+    GEMINI_DEFAULT_MODEL: str = "gemini-3.1-flash-lite"
 
     # Database (Reserved for future, disabled in MVP)
     DATABASE_ENABLED: bool = False

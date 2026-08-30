@@ -38,6 +38,8 @@ class RollbackEngine:
                     grid.max_row = backup.max_row
                     grid.min_col = backup.min_col
                     grid.max_col = backup.max_col
+                    grid.charts = copy.deepcopy(getattr(backup, "charts", {}))
+                    grid.kpis = copy.deepcopy(getattr(backup, "kpis", {}))
                 if sheet_grids:
                     for s_name, s_grid in sheet_grids.items():
                         if s_name in deep_backup_grids:
@@ -47,6 +49,8 @@ class RollbackEngine:
                             s_grid.max_row = backup.max_row
                             s_grid.min_col = backup.min_col
                             s_grid.max_col = backup.max_col
+                            s_grid.charts = copy.deepcopy(getattr(backup, "charts", {}))
+                            s_grid.kpis = copy.deepcopy(getattr(backup, "kpis", {}))
                 return True
 
             # 2. Reverse action-by-action rollback
@@ -74,6 +78,24 @@ class RollbackEngine:
 
                 elif act.action_type == ActionTypeEnum.INSERT_COLUMN and act.column_index:
                     cls._reverse_insert_column(target_grid, act.column_index)
+
+                elif act.action_type in {ActionTypeEnum.CREATE_CHART, ActionTypeEnum.UPDATE_CHART} and act.chart_spec:
+                    target_grid.charts.pop(act.chart_spec.chart_id, None)
+
+                elif act.action_type == ActionTypeEnum.MOVE_CHART and act.chart_spec:
+                    if act.chart_spec.chart_id in target_grid.charts:
+                        # Restore previous destination
+                        target_grid.charts[act.chart_spec.chart_id]["destination_cell"] = act.chart_spec.destination_cell
+
+                elif act.action_type == ActionTypeEnum.DELETE_CHART and act.chart_spec:
+                    target_grid.charts[act.chart_spec.chart_id] = act.chart_spec.model_dump()
+
+                elif act.action_type == ActionTypeEnum.CREATE_KPI and act.kpi_spec:
+                    target_grid.kpis.pop(act.kpi_spec.kpi_id, None)
+
+                elif act.action_type == ActionTypeEnum.CREATE_WORKSHEET:
+                    if sheet_grids and act.sheet_name in sheet_grids:
+                        sheet_grids.pop(act.sheet_name, None)
 
             return True
         except Exception:

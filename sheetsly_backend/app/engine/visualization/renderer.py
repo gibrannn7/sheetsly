@@ -53,9 +53,9 @@ class ChartRenderer:
         ax.set_axisbelow(True)
 
         # -------------------------------------------------------------
-        # 1. BAR CHART
+        # 1. BAR & COLUMN CHART
         # -------------------------------------------------------------
-        if chart_type == ChartTypeEnum.BAR:
+        if chart_type in {ChartTypeEnum.BAR, ChartTypeEnum.COLUMN}:
             x_indices = np.arange(len(x_categories))
             num_series = len(series)
             bar_width = 0.8 / max(num_series, 1)
@@ -119,15 +119,30 @@ class ChartRenderer:
             ax.axis("off")  # Disable Cartesian axis for Pie
             s = series[0]
             clean_vals = [float(v) if v is not None else 0.0 for v in s.values]
-            colors = SHEETSLY_PALETTE[: len(x_categories)]
+            total_sum = sum(clean_vals)
+            if total_sum <= 0:
+                clean_vals = [1.0] * max(len(clean_vals), 1)
+                total_sum = float(len(clean_vals))
+
+            colors = [SHEETSLY_PALETTE[i % len(SHEETSLY_PALETTE)] for i in range(len(x_categories))]
+
+            def dynamic_autopct(pct):
+                # Hide percentage if slice is too small (< 3.5%) to prevent overflow/clipping
+                if pct < 3.5:
+                    return ""
+                return f"{pct:.1f}%"
+
+            use_legend = len(x_categories) > 4 or any(len(str(c)) > 10 for c in x_categories)
 
             wedges, texts, autotexts = ax.pie(
                 clean_vals,
-                labels=x_categories,
-                autopct="%1.1f%%",
+                labels=None if use_legend else x_categories,
+                labeldistance=1.05,
+                autopct=dynamic_autopct,
+                pctdistance=0.75,
                 startangle=140,
                 colors=colors,
-                wedgeprops=dict(width=0.45, edgecolor="white", linewidth=2),
+                wedgeprops=dict(width=0.48, edgecolor="white", linewidth=2),
                 textprops=dict(color="#1e293b", fontsize=9, fontweight="medium"),
             )
             for autotext in autotexts:
@@ -135,12 +150,33 @@ class ChartRenderer:
                 autotext.set_fontweight("bold")
                 autotext.set_fontsize(9)
 
+            if use_legend:
+                legend_labels = [
+                    f"{cat} ({(val / total_sum * 100):.1f}%)" if val > 0 else str(cat)
+                    for cat, val in zip(x_categories, clean_vals)
+                ]
+                ax.legend(
+                    wedges,
+                    legend_labels,
+                    title=x_axis_label or "Categories",
+                    loc="center left",
+                    bbox_to_anchor=(0.95, 0.5),
+                    frameon=True,
+                    facecolor="#f8fafc",
+                    edgecolor="#e2e8f0",
+                    fontsize=8.5,
+                    title_fontsize=9,
+                )
+
         # -------------------------------------------------------------
         # 5. SCATTER CHART
         # -------------------------------------------------------------
         elif chart_type == ChartTypeEnum.SCATTER:
             s = series[0]
-            x_nums = [float(x) for x in x_categories]
+            try:
+                x_nums = [float(x) for x in x_categories]
+            except (ValueError, TypeError):
+                x_nums = list(range(len(x_categories)))
             y_nums = [float(v) if v is not None else 0.0 for v in s.values]
             color = SHEETSLY_PALETTE[0]
 

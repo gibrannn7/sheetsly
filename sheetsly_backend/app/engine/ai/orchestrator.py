@@ -13,6 +13,7 @@ from app.engine.ai.guardrail import ai_guardrail
 from app.engine.ai.models import (
     AIQueryStatus,
     ClarificationRequest,
+    DEFAULT_AI_MODEL,
     NaturalLanguageQueryRequest,
     NaturalLanguageQueryResponse,
     QueryPlanOnlyResponse,
@@ -232,7 +233,7 @@ class AIOrchestrator:
                 ),
             )
 
-        target_model = request.model or settings.QWEN_MODEL or "qwen3.5-397b-a17b"
+        target_model = request.model or settings.GEMINI_DEFAULT_MODEL or DEFAULT_AI_MODEL
 
         # Check for multi-analysis "Semua Analisis" selection
         is_multi_all = bool(

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../../lib/i18n';
 
 interface SmartAnalyticsHelpModalProps {
@@ -14,6 +15,11 @@ export const SmartAnalyticsHelpModal: React.FC<SmartAnalyticsHelpModalProps> = (
 }) => {
   const { dictionary } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,13 +37,13 @@ export const SmartAnalyticsHelpModal: React.FC<SmartAnalyticsHelpModalProps> = (
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const t = dictionary.smartAnalytics.modal;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -47,7 +53,7 @@ export const SmartAnalyticsHelpModal: React.FC<SmartAnalyticsHelpModalProps> = (
     >
       <div
         ref={modalRef}
-        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transition-colors"
+        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transition-colors"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -71,25 +77,24 @@ export const SmartAnalyticsHelpModal: React.FC<SmartAnalyticsHelpModalProps> = (
 
         {/* Modal Body */}
         <div className="p-5 overflow-y-auto space-y-4 text-slate-700 dark:text-slate-300 text-xs">
-          {/* Core Numerical Truth Box */}
+          {/* Core Truth Box */}
           <div className="p-3.5 bg-slate-900 dark:bg-slate-950 text-white rounded-lg space-y-1 shadow-xs border border-slate-800">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-emerald-400 font-bold tracking-wider">
-                {t.coreTruthTitle}
-              </span>
-            </div>
-            <p className="text-slate-200 text-xs leading-relaxed pt-0.5">
+            <span className="font-bold text-slate-100 font-mono text-[11px] block uppercase tracking-wider">
+              {t.coreTruthTitle}
+            </span>
+            <p className="text-slate-200 text-xs leading-relaxed">
               {t.coreTruthDesc}
             </p>
           </div>
 
-          {/* Capabilities Grid */}
-          <div className="space-y-3 pt-1">
+          {/* Key Capabilities */}
+          <div className="space-y-2.5 pt-1">
             <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t.featuresTitle}
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Temporal */}
               <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-1">
                 <span className="font-bold text-slate-900 dark:text-slate-100 font-mono text-[11px] block">
                   {t.temporalTitle}
@@ -99,6 +104,7 @@ export const SmartAnalyticsHelpModal: React.FC<SmartAnalyticsHelpModalProps> = (
                 </p>
               </div>
 
+              {/* Top-N Ranking */}
               <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-1">
                 <span className="font-bold text-slate-900 dark:text-slate-100 font-mono text-[11px] block">
                   {t.rankingTitle}
@@ -168,4 +174,6 @@ export const SmartAnalyticsHelpModal: React.FC<SmartAnalyticsHelpModalProps> = (
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

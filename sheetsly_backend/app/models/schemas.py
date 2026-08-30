@@ -169,6 +169,8 @@ class SheetDataGridResponse(BaseModel):
     column_headers: List[str] = Field(default_factory=list, description="Column letters or detected names")
     rows: List[List[CellData]] = Field(default_factory=list, description="2D grid of cells")
     merged_cells: List[str] = Field(default_factory=list, description="Merged regions intersecting this sheet")
+    charts: Dict[str, Any] = Field(default_factory=dict, description="Active embedded chart objects on this worksheet")
+    kpis: Dict[str, Any] = Field(default_factory=dict, description="Active embedded KPI summary cards on this worksheet")
 
 
 class HealthResponse(BaseModel):

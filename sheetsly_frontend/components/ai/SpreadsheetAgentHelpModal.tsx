@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../../lib/i18n';
 
 interface SpreadsheetAgentHelpModalProps {
@@ -14,6 +15,11 @@ export const SpreadsheetAgentHelpModal: React.FC<SpreadsheetAgentHelpModalProps>
 }) => {
   const { dictionary } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,7 +37,7 @@ export const SpreadsheetAgentHelpModal: React.FC<SpreadsheetAgentHelpModalProps>
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const t = dictionary.agent.modal;
 
@@ -46,9 +52,9 @@ export const SpreadsheetAgentHelpModal: React.FC<SpreadsheetAgentHelpModalProps>
     { title: t.steps.step8Title, desc: t.steps.step8Desc },
   ];
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -58,7 +64,7 @@ export const SpreadsheetAgentHelpModal: React.FC<SpreadsheetAgentHelpModalProps>
     >
       <div
         ref={modalRef}
-        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transition-colors"
+        className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transition-colors"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -87,6 +93,27 @@ export const SpreadsheetAgentHelpModal: React.FC<SpreadsheetAgentHelpModalProps>
             <p className="text-slate-200 text-xs leading-relaxed">
               {t.intro}
             </p>
+          </div>
+
+          {/* Explicit Targeting & Formatting Highlights */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-1">
+              <span className="font-bold text-slate-900 dark:text-slate-100 font-mono text-[11px] block">
+                {t.explicitCoordTitle}
+              </span>
+              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+                {t.explicitCoordDesc}
+              </p>
+            </div>
+
+            <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-1">
+              <span className="font-bold text-slate-900 dark:text-slate-100 font-mono text-[11px] block">
+                {t.formattingTitle}
+              </span>
+              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+                {t.formattingDesc}
+              </p>
+            </div>
           </div>
 
           {/* Lifecycle Steps */}
@@ -147,4 +174,6 @@ export const SpreadsheetAgentHelpModal: React.FC<SpreadsheetAgentHelpModalProps>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

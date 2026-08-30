@@ -107,7 +107,7 @@ class GeminiClient:
                 is_configured=False,
             )
 
-        target_model = (model or settings.GEMINI_DEFAULT_MODEL or "gemini-3.5-flash").strip()
+        target_model = (model or settings.GEMINI_DEFAULT_MODEL or "gemini-3.1-flash-lite").strip()
         endpoint = self.get_endpoint(target_model)
 
         payload: Dict[str, Any] = {
@@ -330,7 +330,7 @@ class QwenClient:
         Calls LLM chat completions API requesting structured JSON output.
         Automatically routes to Gemini if model is a Gemini model, preserving backward compatibility.
         """
-        target_model = (model or settings.QWEN_MODEL or "qwen3.5-397b-a17b").strip()
+        target_model = (model or settings.QWEN_MODEL or "qwen3.5-122b-a10b").strip()
 
         # Route to Gemini if requested model is Gemini
         if target_model.startswith("gemini-"):
@@ -520,7 +520,7 @@ class AIProviderRouter:
         return {
             "qwen": qwen_diag,
             "gemini": gemini_diag,
-            "active_default": "qwen" if self.qwen.is_configured else ("gemini" if self.gemini.is_configured else "none"),
+            "active_default": "gemini" if self.gemini.is_configured else ("qwen" if self.qwen.is_configured else "none"),
         }
 
 

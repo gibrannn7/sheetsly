@@ -134,7 +134,7 @@ def test_e2e_user_scenario_buatkan_total_penjualan():
 
     # 1. Plan Agent Actions
     actions, status, req, msg = SpreadsheetAgentPlanner.plan_agent_actions(
-        user_request="buatkan total penjualan",
+        user_request="buatkan tabel rekap total penjualan",
         workbook_index=index,
         grid=grid_orders,
     )

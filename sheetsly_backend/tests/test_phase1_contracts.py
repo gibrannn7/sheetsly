@@ -37,7 +37,7 @@ from app.engine.analytics.instruction_model import OperationEnum, AnalyticalInst
 # ============================================================================
 
 def test_action_registry_contains_all_8_canonical_actions():
-    """Verify registry contains exactly the 8 supported canonical actions."""
+    """Verify registry contains all supported canonical actions including Phase 16 chart lifecycle & dashboard actions."""
     expected_actions = {
         "WRITE_VALUE",
         "WRITE_FORMULA",
@@ -47,10 +47,17 @@ def test_action_registry_contains_all_8_canonical_actions():
         "FORMAT_RANGE",
         "SET_NUMBER_FORMAT",
         "CLEAR_CONTENT",
+        "CREATE_CHART",
+        "UPDATE_CHART",
+        "MOVE_CHART",
+        "RESIZE_CHART",
+        "DELETE_CHART",
+        "CREATE_KPI",
+        "CREATE_WORKSHEET",
     }
     actual_actions = {a.value for a in SUPPORTED_ACTION_REGISTRY}
     assert actual_actions == expected_actions
-    assert len(SUPPORTED_ACTION_REGISTRY) == 8
+    assert len(SUPPORTED_ACTION_REGISTRY) == 15
 
 
 def test_valid_spreadsheet_actions():

@@ -63,6 +63,81 @@ class GridMutator:
         elif action.action_type == ActionTypeEnum.CLEAR_CONTENT:
             cls._apply_clear_content(grid, action.target_cell, action.target_range)
 
+        elif action.action_type in {ActionTypeEnum.CREATE_CHART, ActionTypeEnum.UPDATE_CHART}:
+            if action.chart_spec:
+                chart_id = action.chart_spec.chart_id
+                target_ref = action.chart_spec.destination_cell
+                grid.charts[chart_id] = action.chart_spec.model_dump()
+            elif action.target_cell and grid.charts:
+                # Update first matching or active chart
+                cid = list(grid.charts.keys())[0]
+                grid.charts[cid]["destination_cell"] = action.target_cell
+                target_ref = action.target_cell
+
+        elif action.action_type == ActionTypeEnum.MOVE_CHART:
+            dest = action.target_cell or (action.chart_spec.destination_cell if action.chart_spec else "")
+            target_ref = dest
+            if action.chart_spec and action.chart_spec.chart_id in grid.charts:
+                grid.charts[action.chart_spec.chart_id]["destination_cell"] = dest
+                if action.chart_spec.anchor_cell:
+                    grid.charts[action.chart_spec.chart_id]["anchor_cell"] = dest
+            elif grid.charts:
+                cid = list(grid.charts.keys())[0]
+                grid.charts[cid]["destination_cell"] = dest
+
+        elif action.action_type == ActionTypeEnum.RESIZE_CHART:
+            if action.chart_spec and action.chart_spec.chart_id in grid.charts:
+                grid.charts[action.chart_spec.chart_id]["width_cols"] = action.chart_spec.width_cols
+                grid.charts[action.chart_spec.chart_id]["height_rows"] = action.chart_spec.height_rows
+            elif grid.charts and action.chart_spec:
+                cid = list(grid.charts.keys())[0]
+                grid.charts[cid]["width_cols"] = action.chart_spec.width_cols
+                grid.charts[cid]["height_rows"] = action.chart_spec.height_rows
+
+        elif action.action_type == ActionTypeEnum.DELETE_CHART:
+            if action.chart_spec and action.chart_spec.chart_id in grid.charts:
+                del grid.charts[action.chart_spec.chart_id]
+            elif action.target_cell:
+                for cid, cdata in list(grid.charts.items()):
+                    if cdata.get("destination_cell") == action.target_cell:
+                        del grid.charts[cid]
+            elif grid.charts:
+                grid.charts.clear()
+
+        elif action.action_type == ActionTypeEnum.CREATE_KPI:
+            if action.kpi_spec:
+                kpi_id = action.kpi_spec.kpi_id
+                target_ref = action.kpi_spec.destination_cell
+                grid.kpis[kpi_id] = action.kpi_spec.model_dump()
+
+        elif action.action_type == ActionTypeEnum.CREATE_WORKSHEET:
+            target_ref = action.sheet_name
+            if sheet_grids is not None and action.sheet_name not in sheet_grids:
+                new_grid = RawSheetGrid(
+                    sheet_name=action.sheet_name,
+                    min_row=1,
+                    max_row=1,
+                    min_col=1,
+                    max_col=1,
+                    cells={},
+                    is_hidden=(action.sheet_name == "Sheetsly_Calc"),
+                )
+                sheet_grids[action.sheet_name] = new_grid
+            if workbook_index and action.sheet_name not in workbook_index.sheets:
+                from app.engine.profiler.workbook_index import SheetIndexEntry
+                s_entry = SheetIndexEntry(
+                    name=action.sheet_name,
+                    index=len(workbook_index.sheet_names),
+                    total_rows=1,
+                    total_columns=1,
+                    used_range="A1:A1",
+                    is_hidden=(action.sheet_name == "Sheetsly_Calc"),
+                )
+                workbook_index.sheets[action.sheet_name] = s_entry
+                if action.sheet_name not in workbook_index.sheet_names:
+                    workbook_index.sheet_names.append(action.sheet_name)
+                    workbook_index.sheet_count = len(workbook_index.sheet_names)
+
         after_snap = cls._snapshot_ref(grid, action.target_cell) if action.target_cell else None
 
         return StateDiff(
