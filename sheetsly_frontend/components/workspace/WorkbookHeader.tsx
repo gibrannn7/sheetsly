@@ -6,6 +6,7 @@ import { WorkbookOverview } from '../../lib/types';
 import { HowToUseModal } from './HowToUseModal';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { OpenAnotherFileModal } from './OpenAnotherFileModal';
 
 interface WorkbookHeaderProps {
   overview: WorkbookOverview;
@@ -15,6 +16,7 @@ interface WorkbookHeaderProps {
 export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onReset }) => {
   const { dictionary } = useTranslation();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -112,7 +114,7 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onRese
           {/* Open Another File Action */}
           <button
             type="button"
-            onClick={onReset}
+            onClick={() => setIsConfirmOpen(true)}
             aria-label={dictionary.common.openAnotherFile}
             title={dictionary.common.openAnotherFile}
             className="h-7 px-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-md transition-colors shadow-2xs cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 whitespace-nowrap"
@@ -127,6 +129,16 @@ export const WorkbookHeader: React.FC<WorkbookHeaderProps> = ({ overview, onRese
 
       {/* Guide Modal */}
       <HowToUseModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+
+      {/* Open Another File Confirmation Modal */}
+      <OpenAnotherFileModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          setIsConfirmOpen(false);
+          onReset();
+        }}
+      />
     </>
   );
 };

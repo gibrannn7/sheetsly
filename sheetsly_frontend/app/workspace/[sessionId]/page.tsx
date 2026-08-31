@@ -33,9 +33,10 @@ export default function WorkspaceSessionPage() {
 
   const [loading, setLoading] = useState(!overview || overview.dataset_id !== sessionId);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const isNavigatingAway = React.useRef(false);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || isNavigatingAway.current) return;
 
     if (!overview || overview.dataset_id !== sessionId) {
       setLoading(true);
@@ -43,6 +44,7 @@ export default function WorkspaceSessionPage() {
       api
         .getDatasetOverview(sessionId)
         .then((data) => {
+          if (isNavigatingAway.current) return;
           setOverview(data);
           if (data.sheets.length > 0 && !activeSheetName) {
             setActiveSheetName(data.sheets[0].name);
@@ -50,6 +52,7 @@ export default function WorkspaceSessionPage() {
           setLoading(false);
         })
         .catch((err) => {
+          if (isNavigatingAway.current) return;
           console.error('Failed to restore workspace session', err);
           setLoadError(err.message || 'Workspace session not found or expired.');
           setLoading(false);
@@ -60,6 +63,7 @@ export default function WorkspaceSessionPage() {
   }, [sessionId, overview, setOverview, activeSheetName, setActiveSheetName]);
 
   const handleReset = () => {
+    isNavigatingAway.current = true;
     resetWorkspace();
     router.push('/');
   };
