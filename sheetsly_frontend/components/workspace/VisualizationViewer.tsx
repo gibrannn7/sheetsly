@@ -245,9 +245,6 @@ export const VisualizationViewer: React.FC<VisualizationViewerProps> = ({
               disabled={smartLoading || loading || !activeTable}
               className="px-3.5 py-1.5 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900 rounded-md text-xs font-semibold shadow-2xs disabled:opacity-50 cursor-pointer transition-colors flex items-center space-x-1.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-slate-100"
             >
-              <svg className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
               <span>{dictionary.visualization.smartGenerateBtn}</span>
             </button>
 
