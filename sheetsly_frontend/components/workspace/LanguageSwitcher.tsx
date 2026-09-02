@@ -14,17 +14,17 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ className = 
     <div
       role="group"
       aria-label="Language selection"
-      className={`inline-flex items-center h-7 p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-xs font-mono select-none shadow-2xs transition-colors ${className}`}
+      className={`inline-flex items-center h-8 p-0.5 bg-zinc-900/90 border border-zinc-800 rounded-md text-xs font-mono select-none shadow-xs transition-colors ${className}`}
     >
       <button
         type="button"
         onClick={() => setLanguage('en')}
         aria-pressed={language === 'en'}
         aria-label="Switch language to English"
-        className={`h-full inline-flex items-center px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 ${
+        className={`h-full inline-flex items-center px-2 rounded text-[11px] font-semibold transition-all cursor-pointer ${
           language === 'en'
-            ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            ? 'bg-zinc-800 text-white shadow-2xs'
+            : 'text-zinc-400 hover:text-zinc-200'
         }`}
       >
         EN
@@ -35,10 +35,10 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ className = 
         onClick={() => setLanguage('id')}
         aria-pressed={language === 'id'}
         aria-label="Ganti bahasa ke Bahasa Indonesia"
-        className={`h-full inline-flex items-center px-1.5 rounded text-[11px] font-bold transition-all cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 ${
+        className={`h-full inline-flex items-center px-2 rounded text-[11px] font-semibold transition-all cursor-pointer ${
           language === 'id'
-            ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            ? 'bg-zinc-800 text-white shadow-2xs'
+            : 'text-zinc-400 hover:text-zinc-200'
         }`}
       >
         ID

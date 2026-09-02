@@ -786,6 +786,7 @@ export const en: TranslationDictionary = {
       capabilities: 'Capabilities',
       useCases: 'Use Cases',
       tryApp: 'Try Sheetsly',
+      scrollToTop: 'Scroll to top',
     },
     hero: {
       badge: 'Deterministic Spreadsheet Intelligence Workspace',

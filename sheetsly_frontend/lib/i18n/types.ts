@@ -718,6 +718,7 @@ export interface TranslationDictionary {
       capabilities: string;
       useCases: string;
       tryApp: string;
+      scrollToTop: string;
     };
     hero: {
       badge: string;

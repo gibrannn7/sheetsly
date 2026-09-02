@@ -786,6 +786,7 @@ export const id: TranslationDictionary = {
       capabilities: 'Kapabilitas',
       useCases: 'Kasus Penggunaan',
       tryApp: 'Coba Sheetsly',
+      scrollToTop: 'Kembali ke atas',
     },
     hero: {
       badge: 'Ruang Kerja Kecerdasan Spreadsheet Deterministik',
